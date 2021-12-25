@@ -18,7 +18,6 @@ define('BT_AT_SEI_01', 201); //精密攻撃
 define('BT_AT_SEI_02', 202); //精密攻撃
 define('BT_AT_SEI_03', 203); //精密攻撃
 define('BT_AT_SEI_04', 204); //精密攻撃
-define('BT_AT_SEI_04', 304); //精密攻撃
 define('BT_AT_BUI_01', 301); //部位破壊
 define('BT_AT_BUI_02', 302); //部位破壊
 define('BT_AT_BUI_03', 303); //部位破壊
