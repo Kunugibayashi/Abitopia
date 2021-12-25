@@ -39,6 +39,18 @@
         </li>
     </ul>
 
+    <h4 class="heading"><?= $this->Html->link(__('戦闘ステータス'), [
+        'controller' => 'Manual', 'action' => 'battleStatus'], ['class' => 'side-nav-item']) ?>
+    </h4>
+    <ul class="manual-menu">
+        <li><?= $this->Html->link(__('レベル'), [
+            'controller' => 'Manual', 'action' => 'battleStatus', '#' => 'level'], ['class' => 'side-nav-item']) ?>
+        </li>
+        <li><?= $this->Html->link(__('ステータス'), [
+            'controller' => 'Manual', 'action' => 'battleStatus', '#' => 'status'], ['class' => 'side-nav-item']) ?>
+        </li>
+    </ul>
+
     <h4 class="heading"><?= $this->Html->link(__('戦闘システム'), [
         'controller' => 'Manual', 'action' => 'battleSystem'], ['class' => 'side-nav-item']) ?>
     </h4>
@@ -54,6 +66,9 @@
         </li>
         <li><?= $this->Html->link(__('属性'), [
             'controller' => 'Manual', 'action' => 'battleSystem', '#' => 'zokusei'], ['class' => 'side-nav-item']) ?>
+        </li>
+        <li><?= $this->Html->link(__('コンボ'), [
+            'controller' => 'Manual', 'action' => 'battleSystem', '#' => 'combo'], ['class' => 'side-nav-item']) ?>
         </li>
         <li><?= $this->Html->link(__('スキル'), [
             'controller' => 'Manual', 'action' => 'battleSystem', '#' => 'sukiru'], ['class' => 'side-nav-item']) ?>

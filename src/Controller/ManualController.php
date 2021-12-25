@@ -13,7 +13,9 @@ class ManualController extends AppController
     public function beforeFilter(\Cake\Event\EventInterface $event)
     {
         parent::beforeFilter($event);
-        $this->Authentication->addUnauthenticatedActions(['index', 'setting', 'chatSystem', 'battleSystem', 'setup', ]);
+        $this->Authentication->addUnauthenticatedActions([
+            'index', 'setting', 'chatSystem', 'battleSystem', 'battleStatus', 'setup',
+        ]);
     }
 
     public function index()
@@ -29,6 +31,10 @@ class ManualController extends AppController
     }
 
     public function battleSystem()
+    {
+    }
+
+    public function battleStatus()
     {
     }
 
