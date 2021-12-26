@@ -16,6 +16,7 @@ declare(strict_types=1);
 namespace Cake\Shell\Helper;
 
 use Cake\Console\Helper;
+use UnexpectedValueException;
 
 /**
  * Create a visually pleasing ASCII art table
@@ -26,7 +27,7 @@ class TableHelper extends Helper
     /**
      * Default config for this helper.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'headers' => true,
@@ -38,14 +39,14 @@ class TableHelper extends Helper
      * Calculate the column widths
      *
      * @param array $rows The rows on which the columns width will be calculated on.
-     * @return int[]
+     * @return array<int>
      */
     protected function _calculateWidths(array $rows): array
     {
         $widths = [];
         foreach ($rows as $line) {
             foreach (array_values($line) as $k => $v) {
-                $columnLength = $this->_cellWidth($v);
+                $columnLength = $this->_cellWidth((string)$v);
                 if ($columnLength >= ($widths[$k] ?? 0)) {
                     $widths[$k] = $columnLength;
                 }
@@ -58,12 +59,12 @@ class TableHelper extends Helper
     /**
      * Get the width of a cell exclusive of style tags.
      *
-     * @param string|null $text The text to calculate a width for.
+     * @param string $text The text to calculate a width for.
      * @return int The width of the textual content in visible characters.
      */
-    protected function _cellWidth(?string $text): int
+    protected function _cellWidth(string $text): int
     {
-        if ($text === null) {
+        if ($text === '') {
             return 0;
         }
 
@@ -81,7 +82,7 @@ class TableHelper extends Helper
     /**
      * Output a row separator.
      *
-     * @param int[] $widths The widths of each column to output.
+     * @param array<int> $widths The widths of each column to output.
      * @return void
      */
     protected function _rowSeparator(array $widths): void
@@ -98,8 +99,8 @@ class TableHelper extends Helper
      * Output a row.
      *
      * @param array $row The row to output.
-     * @param int[] $widths The widths of each column to output.
-     * @param array $options Options to be passed.
+     * @param array<int> $widths The widths of each column to output.
+     * @param array<string, mixed> $options Options to be passed.
      * @return void
      */
     protected function _render(array $row, array $widths, array $options = []): void
@@ -110,11 +111,20 @@ class TableHelper extends Helper
 
         $out = '';
         foreach (array_values($row) as $i => $column) {
+            $column = (string)$column;
             $pad = $widths[$i] - $this->_cellWidth($column);
             if (!empty($options['style'])) {
                 $column = $this->_addStyle($column, $options['style']);
             }
-            $out .= '| ' . $column . str_repeat(' ', $pad) . ' ';
+            if ($column !== '' && preg_match('#(.*)<text-right>.+</text-right>(.*)#', $column, $matches)) {
+                if ($matches[1] !== '' || $matches[2] !== '') {
+                    throw new UnexpectedValueException('You cannot include text before or after the text-right tag.');
+                }
+                $column = str_replace(['<text-right>', '</text-right>'], '', $column);
+                $out .= '| ' . str_repeat(' ', $pad) . $column . ' ';
+            } else {
+                $out .= '| ' . $column . str_repeat(' ', $pad) . ' ';
+            }
         }
         $out .= '|';
         $this->_io->out($out);
@@ -126,29 +136,31 @@ class TableHelper extends Helper
      * Data will be output based on the order of the values
      * in the array. The keys will not be used to align data.
      *
-     * @param array $rows The data to render out.
+     * @param array $args The data to render out.
      * @return void
      */
-    public function output(array $rows): void
+    public function output(array $args): void
     {
-        if (empty($rows)) {
+        if (empty($args)) {
             return;
         }
 
+        $this->_io->setStyle('text-right', ['text' => null]);
+
         $config = $this->getConfig();
-        $widths = $this->_calculateWidths($rows);
+        $widths = $this->_calculateWidths($args);
 
         $this->_rowSeparator($widths);
         if ($config['headers'] === true) {
-            $this->_render(array_shift($rows), $widths, ['style' => $config['headerStyle']]);
+            $this->_render(array_shift($args), $widths, ['style' => $config['headerStyle']]);
             $this->_rowSeparator($widths);
         }
 
-        if (empty($rows)) {
+        if (empty($args)) {
             return;
         }
 
-        foreach ($rows as $line) {
+        foreach ($args as $line) {
             $this->_render($line, $widths);
             if ($config['rowSeparator'] === true) {
                 $this->_rowSeparator($widths);

@@ -18,7 +18,6 @@ declare(strict_types=1);
  */
 namespace Cake\Http\Session;
 
-use Cake\ORM\Entity;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use SessionHandlerInterface;
 
@@ -47,7 +46,7 @@ class DatabaseSession implements SessionHandlerInterface
      * Constructor. Looks at Session configuration information and
      * sets up the session model.
      *
-     * @param array $config The configuration for this engine. It requires the 'model'
+     * @param array<string, mixed> $config The configuration for this engine. It requires the 'model'
      * key to be present corresponding to the Table to use for managing the sessions.
      */
     public function __construct(array $config = [])
@@ -58,7 +57,7 @@ class DatabaseSession implements SessionHandlerInterface
         $tableLocator = $this->getTableLocator();
 
         if (empty($config['model'])) {
-            $config = $tableLocator->exists('Sessions') ? [] : ['table' => 'sessions'];
+            $config = $tableLocator->exists('Sessions') ? [] : ['table' => 'sessions', 'allowFallbackClass' => true];
             $this->_table = $tableLocator->get('Sessions', $config);
         } else {
             $this->_table = $tableLocator->get($config['model']);
@@ -85,11 +84,11 @@ class DatabaseSession implements SessionHandlerInterface
     /**
      * Method called on open of a database session.
      *
-     * @param string $savePath The path where to store/retrieve the session.
+     * @param string $path The path where to store/retrieve the session.
      * @param string $name The session name.
      * @return bool Success
      */
-    public function open($savePath, $name): bool
+    public function open($path, $name): bool
     {
         return true;
     }
@@ -108,9 +107,10 @@ class DatabaseSession implements SessionHandlerInterface
      * Method used to read from a database session.
      *
      * @param string $id ID that uniquely identifies session in database.
-     * @return string Session data or empty string if it does not exist.
+     * @return string|false Session data or false if it does not exist.
      */
-    public function read($id): string
+    #[\ReturnTypeWillChange]
+    public function read($id)
     {
         /** @var string $pkField */
         $pkField = $this->_table->getPrimaryKey();
@@ -150,14 +150,16 @@ class DatabaseSession implements SessionHandlerInterface
         if (!$id) {
             return false;
         }
-        $expires = time() + $this->_timeout;
-        $record = compact('data', 'expires');
+
         /** @var string $pkField */
         $pkField = $this->_table->getPrimaryKey();
-        $record[$pkField] = $id;
-        $result = $this->_table->save(new Entity($record));
+        $session = $this->_table->newEntity([
+            $pkField => $id,
+            'data' => $data,
+            'expires' => time() + $this->_timeout,
+        ], ['accessibleFields' => [$pkField => true]]);
 
-        return (bool)$result;
+        return (bool)$this->_table->save($session);
     }
 
     /**
@@ -170,10 +172,7 @@ class DatabaseSession implements SessionHandlerInterface
     {
         /** @var string $pkField */
         $pkField = $this->_table->getPrimaryKey();
-        $this->_table->delete(new Entity(
-            [$pkField => $id],
-            ['markNew' => false]
-        ));
+        $this->_table->deleteAll([$pkField => $id]);
 
         return true;
     }
@@ -182,12 +181,11 @@ class DatabaseSession implements SessionHandlerInterface
      * Helper function called on gc for database sessions.
      *
      * @param int $maxlifetime Sessions that have not updated for the last maxlifetime seconds will be removed.
-     * @return bool True on success, false on failure.
+     * @return int|false The number of deleted sessions on success, or false on failure.
      */
-    public function gc($maxlifetime): bool
+    #[\ReturnTypeWillChange]
+    public function gc($maxlifetime)
     {
-        $this->_table->deleteAll(['expires <' => time()]);
-
-        return true;
+        return $this->_table->deleteAll(['expires <' => time()]);
     }
 }

@@ -61,7 +61,7 @@ class CalledClassPass extends CodeCleanerPass
             $name = \strtolower($node->name);
             if (\in_array($name, ['get_class', 'get_called_class'])) {
                 $msg = \sprintf('%s() called without object from outside a class', $name);
-                throw new ErrorException($msg, 0, E_USER_WARNING, null, $node->getLine());
+                throw new ErrorException($msg, 0, \E_USER_WARNING, null, $node->getLine());
             }
         }
     }
@@ -76,7 +76,7 @@ class CalledClassPass extends CodeCleanerPass
         }
     }
 
-    private function isNull(Node $node)
+    private function isNull(Node $node): bool
     {
         return $node->value instanceof ConstFetch && \strtolower($node->value->name) === 'null';
     }

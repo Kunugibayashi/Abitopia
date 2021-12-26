@@ -1,7 +1,7 @@
 Authenticators
 ##############
 
-Authenticators handle convert request data into an authentication
+Authenticators handle converting request data into an authentication
 operations. They leverage :doc:`/identifiers` to find a
 known :doc:`/identity-object`.
 
@@ -46,6 +46,10 @@ Configuration options:
    string. Useful when a login form is on a different subdomain. Default is
    ``false``. This option does not work well when preserving unauthenticated
    redirects in the query string.
+
+If you are building an API and want to accept credentials via JSON requests make
+sure you have the ``BodyParserMiddleware`` applied **before** the
+``AuthenticationMiddleware``.
 
 .. warning::
     If you use the array syntax for the URL, the URL will be
@@ -98,13 +102,16 @@ example.
 -  **queryParam**: The query param to check for the token. The default
    is ``token``.
 -  **tokenPrefix**: The token prefix. Default is ``bearer``.
--  **algorithms**: An array of hashing algorithms for Firebase JWT.
-   Default is an array ``['HS256']``.
+-  **algorithm**: The hashing algorithm for Firebase JWT.
+   Default is ``'HS256'``.
 -  **returnPayload**: To return or not return the token payload directly
    without going through the identifiers. Default is ``true``.
 -  **secretKey**: Default is ``null`` but you’re **required** to pass a
    secret key if you’re not in the context of a CakePHP application that
    provides it through ``Security::salt()``.
+
+You need to add the lib `firebase/php-jwt <https://github.com/firebase/php-jwt>`_
+v5.5 or above to your app to use the ``JwtAuthenticator``.
 
 By default the ``JwtAuthenticator`` uses ``HS256`` symmetric key algorithm and uses
 the value of ``Cake\Utility\Security::salt()`` as encryption key.
@@ -122,7 +129,7 @@ created by external applications, eg: mobile apps.
 
 The following example allows you to identify the user based on the ``sub`` (subject) of the
 token by using ``JwtSubject`` identifier, and configures the ``Authenticator`` to use public key
-for token verification::
+for token verification.
 
 Add the following to your ``Application`` class::
 
@@ -133,12 +140,14 @@ Add the following to your ``Application`` class::
         $service->loadIdentifier('Authentication.JwtSubject');
         $service->loadAuthenticator('Authentication.Jwt', [
             'secretKey' => file_get_contents(CONFIG . '/jwt.pem'),
-            'algorithms' => ['RS256'],
+            'algorithm' => 'RS256',
             'returnPayload' => false
         ]);
     }
 
 In your ``UsersController``::
+
+    use Firebase\JWT\JWT;
 
     public function login()
     {
@@ -162,8 +171,8 @@ In your ``UsersController``::
         $this->viewBuilder()->setOption('serialize', 'json');
     }
 
-Beside from sharing the public key file to external application, you can distribute it via a JWKS endpoint by
-configuring your app as follows::
+Beside from sharing the public key file to external application, you can
+distribute it via a JWKS endpoint by configuring your app as follows::
 
     // config/routes.php
     $builder->setExtensions('json');
@@ -172,7 +181,7 @@ configuring your app as follows::
     ], [
         'controller' => '(jwks)',
     ]); // connect /.well-known/jwks.json to JwksController
-    
+
     // controller/JwksController.php
     public function index()
     {
@@ -192,14 +201,18 @@ configuring your app as follows::
         $this->set(compact('keys'));
         $this->viewBuilder()->setOption('serialize', 'keys');
     }
-    
-Refer to https://tools.ietf.org/html/rfc7517 or https://auth0.com/docs/tokens/concepts/jwks for
+
+Refer to https://datatracker.ietf.org/doc/html/rfc7517 or https://auth0.com/docs/tokens/json-web-tokens/json-web-key-sets for
 more information about JWKS.
 
 HttpBasic
 =========
 
 See https://en.wikipedia.org/wiki/Basic_access_authentication
+
+.. note::
+
+    This authenticator will halt the request when authentication credentials are missing or invalid.
 
 Configuration options:
 
@@ -210,6 +223,10 @@ HttpDigest
 ==========
 
 See https://en.wikipedia.org/wiki/Digest_access_authentication
+
+.. note::
+
+    This authenticator will halt the request when authentication credentials are missing or invalid.
 
 Configuration options:
 
@@ -237,12 +254,17 @@ Configuration options:
 -  **cookie**: Array of cookie options:
 
    -  **name**: Cookie name, default is ``CookieAuth``
-   -  **expire**: Expiration, default is ``null``
+   -  **expires**: Expiration, default is ``null``
    -  **path**: Path, default is ``/``
-   -  **domain**: Domain, default is an empty string \`\`
+   -  **domain**: Domain, default is an empty string.
    -  **secure**: Bool, default is ``false``
-   -  **httpOnly**: Bool, default is ``false``
-   -  **value**: Value, default is an empty string \`\`
+   -  **httponly**: Bool, default is ``false``
+   -  **value**: Value, default is an empty string.
+   -  **samesite**: String/null The value for the same site attribute.
+
+   The defaults for the various options besides ``cookie.name`` will be those
+   set for the ``Cake\Http\Cookie\Cookie`` class. See `Cookie::setDefaults() <https://api.cakephp.org/4.0/class-Cake.Http.Cookie.Cookie.html#setDefaults>`_
+   for the default values.
 
 -  **fields**: Array that maps ``username`` and ``password`` to the
    specified identity fields.
@@ -253,17 +275,49 @@ Configuration options:
 -  **passwordHasher**: Password hasher to use for token hashing. Default
    is ``DefaultPasswordHasher::class``.
 
-OAuth
-=====
+Usage
+-----
 
-There are currently no plans to implement an OAuth authenticator. The
-main reason for this is that OAuth 2.0 is not an authentication
-protocol.
+The cookie authenticator can be added to a Form & Session based
+authentication system. Cookie authentication will automatically re-login users
+after their session expires for as long as the cookie is valid. If a user is
+explicity logged out via ``AuthenticationComponent::logout()`` the
+authentication cookie is **also destroyed**. An example configuration would be::
 
-Read more about this topic
-`here <https://oauth.net/articles/authentication/>`__.
+    // In Application::getAuthService()
 
-We will maybe add an OpenID Connect authenticator in the future.
+    // Reuse fields in multiple authenticators.
+    $fields = [
+        IdentifierInterface::CREDENTIAL_USERNAME => 'email',
+        IdentifierInterface::CREDENTIAL_PASSWORD => 'password',
+    ];
+
+    // Put form authentication first so that users can re-login via
+    // the login form if necessary.
+    $service->loadAuthenticator('Authentication.Form', [
+        'loginUrl' => '/users/login',
+        'fields' => [
+            IdentifierInterface::CREDENTIAL_USERNAME => 'email',
+            IdentifierInterface::CREDENTIAL_PASSWORD => 'password',
+        ],
+    ]);
+    // Then use sessions if they are active.
+    $service->loadAuthenticator('Authentication.Session');
+
+    // If the user is on the login page, check for a cookie as well.
+    $service->loadAuthenticator('Authentication.Cookie', [
+        'fields' => $fields,
+        'loginUrl' => '/users/login',
+    ]);
+
+You'll also need to add a checkbox to your login form to have cookies created::
+
+    // In your login view
+    <?= $this->Form->control('remember_me', ['type' => 'checkbox']);
+
+After logging in, if the checkbox was checked you should see a ``CookieAuth``
+cookie in your browser dev tools. The cookie stores the username field and
+a hashed token that is used to reauthenticate later.
 
 Events
 ======
@@ -272,7 +326,7 @@ There is only one event that is fired by authentication:
 ``Authentication.afterIdentify``.
 
 If you don’t know what events are and how to use them `check the
-documentation <https://book.cakephp.org/3.0/en/core-libraries/events.html>`__.
+documentation <https://book.cakephp.org/4/en/core-libraries/events.html>`__.
 
 The ``Authentication.afterIdentify`` event is fired by the
 ``AuthenticationComponent`` after an identity was successfully
@@ -370,7 +424,7 @@ authenticators must send specific challenge headers in the response::
     // Load the authenticators leaving Basic as the last one.
     $service->loadAuthenticator('Authentication.Session');
     $service->loadAuthenticator('Authentication.Form');
-    $service->loadAuthenticator('Authentication.Token');
+    $service->loadAuthenticator('Authentication.HttpBasic');
 
 If you want to combine ``HttpBasic`` or ``HttpDigest`` with other
 authenticators, be aware that these authenticators will abort the request and
@@ -412,4 +466,30 @@ the redirect target safely from the query string parameter::
             }
             return $this->redirect($target);
         }
+    }
+
+Having Multiple Authentication Flows
+====================================
+
+In an application that provides both an API and a web interface
+you may want different authentication configurations based on
+whether the request is an API request or not. For example, you may use JWT
+authentication for your API, but sessions for your web interface. To support
+this flow you can return different authentication services based on the URL
+path, or any other request attribute::
+
+    public function getAuthenticationService(
+        ServerRequestInterface $request
+    ): AuthenticationServiceInterface {
+        $service = new AuthenticationService();
+
+        // Configuration common to both the API and web goes here.
+
+        if ($request->getParam('prefix') == 'Api') {
+            // Include API specific authenticators
+        } else {
+            // Web UI specific authenticators.
+        }
+
+        return $service;
     }

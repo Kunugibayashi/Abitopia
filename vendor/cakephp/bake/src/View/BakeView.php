@@ -33,14 +33,6 @@ class BakeView extends TwigView
     public const BAKE_TEMPLATE_FOLDER = 'bake';
 
     /**
-     * Path where bake's intermediary files are written.
-     * Defaults to `TMP . 'bake' . DS`.
-     *
-     * @var string
-     */
-    protected $_tmpLocation;
-
-    /**
      * @inheritDoc
      */
     protected $layout = 'Bake.default';
@@ -52,11 +44,6 @@ class BakeView extends TwigView
      */
     public function initialize(): void
     {
-        $this->_tmpLocation = TMP . 'bake' . DS;
-        if (!file_exists($this->_tmpLocation)) {
-            mkdir($this->_tmpLocation);
-        }
-
         $this->setConfig('environment', [
           'cache' => false,
           'strict_variables' => Configure::read('Bake.twigStrictVariables', false),
@@ -80,19 +67,16 @@ class BakeView extends TwigView
      *
      * View can also be a template string, rather than the name of a view file
      *
-     * @param string|null $view Name of view file to use, or a template string to render
+     * @param string|null $template Name of view file to use, or a template string to render
      * @param string|false|null $layout Layout to use. Not used, for consistency with other views only
-     * @return string Rendered content.
      * @throws \Cake\Core\Exception\Exception If there is an error in the view.
+     * @return string Rendered content.
      */
-    public function render(?string $view = null, $layout = null): string
+    public function render(?string $template = null, $layout = null): string
     {
-        $viewFileName = $this->_getTemplateFileName($view);
-        $templateEventName = str_replace(
-            ['.twig', DS],
-            ['', '.'],
-            explode('templates' . DS . static::BAKE_TEMPLATE_FOLDER . DS, $viewFileName)[1]
-        );
+        $viewFileName = $this->_getTemplateFileName($template);
+        [, $templateEventName] = pluginSplit($template);
+        $templateEventName = str_replace(['/', '\\'], '.', $templateEventName);
 
         $this->_currentType = static::TYPE_TEMPLATE;
         $this->dispatchEvent('View.beforeRender', [$viewFileName]);
@@ -142,7 +126,10 @@ class BakeView extends TwigView
     {
         $paths = parent::_paths($plugin, false);
         foreach ($paths as &$path) {
-            $path .= static::BAKE_TEMPLATE_FOLDER . DS;
+            // Append 'bake' to all directories that aren't the application override directory.
+            if (strpos($path, 'plugin' . DS . 'Bake') === false) {
+                $path .= static::BAKE_TEMPLATE_FOLDER . DS;
+            }
         }
 
         return $paths;

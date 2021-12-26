@@ -16,12 +16,14 @@ declare(strict_types=1);
  */
 namespace Cake\ORM\Locator;
 
+use Cake\Datasource\Locator\LocatorInterface as BaseLocatorInterface;
+use Cake\Datasource\RepositoryInterface;
 use Cake\ORM\Table;
 
 /**
  * Registries for Table objects should implement this interface.
  */
-interface LocatorInterface
+interface LocatorInterface extends BaseLocatorInterface
 {
     /**
      * Returns configuration for an alias or the full configuration array for
@@ -36,9 +38,9 @@ interface LocatorInterface
      * Stores a list of options to be used when instantiating an object
      * with a matching alias.
      *
-     * @param string|array $alias Name of the alias or array to completely
+     * @param array<string, mixed>|string $alias Name of the alias or array to completely
      *   overwrite current config.
-     * @param array|null $options list of options for the alias
+     * @param array<string, mixed>|null $options list of options for the alias
      * @return $this
      * @throws \RuntimeException When you attempt to configure an existing
      *   table instance.
@@ -49,40 +51,18 @@ interface LocatorInterface
      * Get a table instance from the registry.
      *
      * @param string $alias The alias name you want to get.
-     * @param array $options The options you want to build the table with.
+     * @param array<string, mixed> $options The options you want to build the table with.
      * @return \Cake\ORM\Table
      */
     public function get(string $alias, array $options = []): Table;
 
     /**
-     * Check to see if an instance exists in the registry.
-     *
-     * @param string $alias The alias to check for.
-     * @return bool
-     */
-    public function exists(string $alias): bool;
-
-    /**
-     * Set an instance.
+     * Set a table instance.
      *
      * @param string $alias The alias to set.
-     * @param \Cake\ORM\Table $object The table to set.
+     * @param \Cake\ORM\Table $repository The table to set.
      * @return \Cake\ORM\Table
+     * @psalm-suppress MoreSpecificImplementedParamType
      */
-    public function set(string $alias, Table $object): Table;
-
-    /**
-     * Clears the registry of configuration and instances.
-     *
-     * @return void
-     */
-    public function clear(): void;
-
-    /**
-     * Removes an instance from the registry.
-     *
-     * @param string $alias The alias to remove.
-     * @return void
-     */
-    public function remove(string $alias): void;
+    public function set(string $alias, RepositoryInterface $repository): Table;
 }

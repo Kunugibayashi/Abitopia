@@ -15,7 +15,7 @@ declare(strict_types=1);
  */
 namespace Cake\TestSuite\Fixture;
 
-use Cake\Core\Exception\Exception as CakeException;
+use Cake\Core\Exception\CakeException;
 use Cake\Database\ConstraintsInterface;
 use Cake\Database\Schema\TableSchema;
 use Cake\Database\Schema\TableSchemaAwareInterface;
@@ -53,7 +53,7 @@ class TestFixture implements ConstraintsInterface, FixtureInterface, TableSchema
     /**
      * Fields / Schema for the fixture.
      *
-     * This array should be compatible with Cake\Database\Schema\Schema.
+     * This array should be compatible with {@link \Cake\Database\Schema\Schema}.
      * The `_constraints`, `_options` and `_indexes` keys are reserved for defining
      * constraints, options and indexes respectively.
      *
@@ -90,14 +90,14 @@ class TestFixture implements ConstraintsInterface, FixtureInterface, TableSchema
     /**
      * Fixture constraints to be created.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_constraints = [];
 
     /**
      * Instantiate the fixture.
      *
-     * @throws \Cake\Core\Exception\Exception on invalid datasource usage.
+     * @throws \Cake\Core\Exception\CakeException on invalid datasource usage.
      */
     public function __construct()
     {
@@ -165,11 +165,7 @@ class TestFixture implements ConstraintsInterface, FixtureInterface, TableSchema
     {
         [, $class] = namespaceSplit(static::class);
         preg_match('/^(.*)Fixture$/', $class, $matches);
-        $table = $class;
-
-        if (isset($matches[1])) {
-            $table = $matches[1];
-        }
+        $table = $matches[1] ?? $class;
 
         return Inflector::tableize($table);
     }
@@ -212,7 +208,7 @@ class TestFixture implements ConstraintsInterface, FixtureInterface, TableSchema
      * Build fixture schema from a table in another datasource.
      *
      * @return void
-     * @throws \Cake\Core\Exception\Exception when trying to import from an empty table.
+     * @throws \Cake\Core\Exception\CakeException when trying to import from an empty table.
      */
     protected function _schemaFromImport(): void
     {
@@ -244,33 +240,35 @@ class TestFixture implements ConstraintsInterface, FixtureInterface, TableSchema
      * Build fixture schema directly from the datasource
      *
      * @return void
-     * @throws \Cake\Core\Exception\Exception when trying to reflect a table that does not exist
+     * @throws \Cake\Core\Exception\CakeException when trying to reflect a table that does not exist
      */
     protected function _schemaFromReflection(): void
     {
         $db = ConnectionManager::get($this->connection());
-        $schemaCollection = $db->getSchemaCollection();
-        $tables = $schemaCollection->listTables();
+        try {
+            $name = Inflector::camelize($this->table);
+            $ormTable = $this->fetchTable($name, ['connection' => $db]);
 
-        if (!in_array($this->table, $tables, true)) {
-            throw new CakeException(
-                sprintf(
-                    'Cannot describe schema for table `%s` for fixture `%s`: the table does not exist.',
-                    $this->table,
-                    static::class
-                )
+            /** @var \Cake\Database\Schema\TableSchema $schema */
+            $schema = $ormTable->getSchema();
+            $this->_schema = $schema;
+        } catch (CakeException $e) {
+            $message = sprintf(
+                'Cannot describe schema for table `%s` for fixture `%s`. The table does not exist.',
+                $this->table,
+                static::class
             );
+            throw new CakeException($message, null, $e);
         }
-
-        $this->_schema = $schemaCollection->describe($this->table);
     }
 
     /**
      * @inheritDoc
      */
-    public function create(ConnectionInterface $db): bool
+    public function create(ConnectionInterface $connection): bool
     {
-        if (empty($this->_schema)) {
+        /** @psalm-suppress RedundantPropertyInitializationCheck */
+        if (!isset($this->_schema)) {
             return false;
         }
 
@@ -279,9 +277,10 @@ class TestFixture implements ConstraintsInterface, FixtureInterface, TableSchema
         }
 
         try {
-            $queries = $this->_schema->createSql($db);
+            /** @psalm-suppress ArgumentTypeCoercion */
+            $queries = $this->_schema->createSql($connection);
             foreach ($queries as $query) {
-                $stmt = $db->prepare($query);
+                $stmt = $connection->prepare($query);
                 $stmt->execute();
                 $stmt->closeCursor();
             }
@@ -303,20 +302,22 @@ class TestFixture implements ConstraintsInterface, FixtureInterface, TableSchema
     /**
      * @inheritDoc
      */
-    public function drop(ConnectionInterface $db): bool
+    public function drop(ConnectionInterface $connection): bool
     {
-        if (empty($this->_schema)) {
+        /** @psalm-suppress RedundantPropertyInitializationCheck */
+        if (!isset($this->_schema)) {
             return false;
         }
 
         if (empty($this->import) && empty($this->fields)) {
-            return true;
+            return $this->truncate($connection);
         }
 
         try {
-            $sql = $this->_schema->dropSql($db);
+            /** @psalm-suppress ArgumentTypeCoercion */
+            $sql = $this->_schema->dropSql($connection);
             foreach ($sql as $stmt) {
-                $db->execute($stmt)->closeCursor();
+                $connection->execute($stmt)->closeCursor();
             }
         } catch (Exception $e) {
             return false;
@@ -328,11 +329,11 @@ class TestFixture implements ConstraintsInterface, FixtureInterface, TableSchema
     /**
      * @inheritDoc
      */
-    public function insert(ConnectionInterface $db)
+    public function insert(ConnectionInterface $connection)
     {
-        if (isset($this->records) && !empty($this->records)) {
+        if (!empty($this->records)) {
             [$fields, $values, $types] = $this->_getRecords();
-            $query = $db->newQuery()
+            $query = $connection->newQuery()
                 ->insert($fields, $types)
                 ->into($this->sourceName());
 
@@ -351,7 +352,7 @@ class TestFixture implements ConstraintsInterface, FixtureInterface, TableSchema
     /**
      * @inheritDoc
      */
-    public function createConstraints(ConnectionInterface $db): bool
+    public function createConstraints(ConnectionInterface $connection): bool
     {
         if (empty($this->_constraints)) {
             return true;
@@ -361,14 +362,15 @@ class TestFixture implements ConstraintsInterface, FixtureInterface, TableSchema
             $this->_schema->addConstraint($name, $data);
         }
 
-        $sql = $this->_schema->addConstraintSql($db);
+        /** @psalm-suppress ArgumentTypeCoercion */
+        $sql = $this->_schema->addConstraintSql($connection);
 
         if (empty($sql)) {
             return true;
         }
 
         foreach ($sql as $stmt) {
-            $db->execute($stmt)->closeCursor();
+            $connection->execute($stmt)->closeCursor();
         }
 
         return true;
@@ -377,20 +379,21 @@ class TestFixture implements ConstraintsInterface, FixtureInterface, TableSchema
     /**
      * @inheritDoc
      */
-    public function dropConstraints(ConnectionInterface $db): bool
+    public function dropConstraints(ConnectionInterface $connection): bool
     {
         if (empty($this->_constraints)) {
             return true;
         }
 
-        $sql = $this->_schema->dropConstraintSql($db);
+        /** @psalm-suppress ArgumentTypeCoercion */
+        $sql = $this->_schema->dropConstraintSql($connection);
 
         if (empty($sql)) {
             return true;
         }
 
         foreach ($sql as $stmt) {
-            $db->execute($stmt)->closeCursor();
+            $connection->execute($stmt)->closeCursor();
         }
 
         foreach ($this->_constraints as $name => $data) {
@@ -429,11 +432,12 @@ class TestFixture implements ConstraintsInterface, FixtureInterface, TableSchema
     /**
      * @inheritDoc
      */
-    public function truncate(ConnectionInterface $db): bool
+    public function truncate(ConnectionInterface $connection): bool
     {
-        $sql = $this->_schema->truncateSql($db);
+        /** @psalm-suppress ArgumentTypeCoercion */
+        $sql = $this->_schema->truncateSql($connection);
         foreach ($sql as $stmt) {
-            $db->execute($stmt)->closeCursor();
+            $connection->execute($stmt)->closeCursor();
         }
 
         return true;

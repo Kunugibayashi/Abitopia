@@ -10,10 +10,14 @@ use SlevomatCodingStandard\Sniffs\ControlStructures\AbstractControlStructureSpac
 use function array_key_exists;
 use function array_merge;
 use function in_array;
+use const T_ASPERAND;
+use const T_COALESCE;
 use const T_COLON;
+use const T_INLINE_ELSE;
+use const T_INLINE_THEN;
 use const T_OPEN_SHORT_ARRAY;
-use const T_PARENT;
 use const T_RETURN;
+use const T_STRING_CONCAT;
 use const T_YIELD;
 use const T_YIELD_FROM;
 
@@ -21,16 +25,16 @@ class ParentCallSpacingSniff extends AbstractControlStructureSpacing
 {
 
 	/** @var int */
-	public $linesCountBeforeParentCall = 1;
+	public $linesCountBefore = 1;
 
 	/** @var int */
-	public $linesCountBeforeFirstParentCall = 0;
+	public $linesCountBeforeFirst = 0;
 
 	/** @var int */
-	public $linesCountAfterParentCall = 1;
+	public $linesCountAfter = 1;
 
 	/** @var int */
-	public $linesCountAfterLastParentCall = 0;
+	public $linesCountAfterLast = 0;
 
 	/**
 	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
@@ -46,7 +50,7 @@ class ParentCallSpacingSniff extends AbstractControlStructureSpacing
 		}
 
 		$previousPointer = TokenHelper::findPreviousEffective($phpcsFile, $parentPointer - 1);
-		if (in_array($tokens[$previousPointer]['code'], Tokens::$castTokens, true)) {
+		if (in_array($tokens[$previousPointer]['code'], array_merge(Tokens::$castTokens, [T_ASPERAND]), true)) {
 			$previousPointer = TokenHelper::findPreviousEffective($phpcsFile, $previousPointer - 1);
 		}
 
@@ -54,7 +58,7 @@ class ParentCallSpacingSniff extends AbstractControlStructureSpacing
 			Tokens::$assignmentTokens,
 			Tokens::$equalityTokens,
 			Tokens::$booleanOperators,
-			[T_RETURN, T_YIELD, T_YIELD_FROM, T_OPEN_SHORT_ARRAY, T_COLON]
+			[T_RETURN, T_YIELD, T_YIELD_FROM, T_OPEN_SHORT_ARRAY, T_COLON, T_STRING_CONCAT, T_INLINE_THEN, T_INLINE_ELSE, T_COALESCE]
 		);
 		if (in_array($tokens[$previousPointer]['code'], $tokensToIgnore, true)) {
 			return;
@@ -66,37 +70,50 @@ class ParentCallSpacingSniff extends AbstractControlStructureSpacing
 	/**
 	 * @return string[]
 	 */
-	protected function getSupportedTokens(): array
+	protected function getSupportedKeywords(): array
 	{
-		return [T_PARENT];
+		return [self::KEYWORD_PARENT];
 	}
 
 	/**
 	 * @return string[]
 	 */
-	protected function getTokensToCheck(): array
+	protected function getKeywordsToCheck(): array
 	{
-		return ['T_PARENT'];
+		return [self::KEYWORD_PARENT];
 	}
 
 	protected function getLinesCountBefore(): int
 	{
-		return SniffSettingsHelper::normalizeInteger($this->linesCountBeforeParentCall);
+		return SniffSettingsHelper::normalizeInteger($this->linesCountBefore);
 	}
 
-	protected function getLinesCountBeforeFirst(): int
+	/**
+	 * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
+	 * @param File $phpcsFile
+	 * @param int $parentPointer
+	 * @return int
+	 */
+	protected function getLinesCountBeforeFirst(File $phpcsFile, int $parentPointer): int
 	{
-		return SniffSettingsHelper::normalizeInteger($this->linesCountBeforeFirstParentCall);
+		return SniffSettingsHelper::normalizeInteger($this->linesCountBeforeFirst);
 	}
 
 	protected function getLinesCountAfter(): int
 	{
-		return SniffSettingsHelper::normalizeInteger($this->linesCountAfterParentCall);
+		return SniffSettingsHelper::normalizeInteger($this->linesCountAfter);
 	}
 
-	protected function getLinesCountAfterLast(): int
+	/**
+	 * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
+	 * @param File $phpcsFile
+	 * @param int $parentPointer
+	 * @param int $parentEndPointer
+	 * @return int
+	 */
+	protected function getLinesCountAfterLast(File $phpcsFile, int $parentPointer, int $parentEndPointer): int
 	{
-		return SniffSettingsHelper::normalizeInteger($this->linesCountAfterLastParentCall);
+		return SniffSettingsHelper::normalizeInteger($this->linesCountAfterLast);
 	}
 
 }

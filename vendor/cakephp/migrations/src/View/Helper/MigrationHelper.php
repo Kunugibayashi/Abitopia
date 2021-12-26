@@ -236,8 +236,10 @@ class MigrationHelper extends Helper
         if (!empty($tableConstraints)) {
             foreach ($tableConstraints as $name) {
                 $constraint = $tableSchema->getConstraint($name);
-                if (isset($constraint['update'])) {
+                if ($constraint && isset($constraint['update'])) {
                     $constraint['update'] = $this->formatConstraintAction($constraint['update']);
+                }
+                if ($constraint && isset($constraint['delete'])) {
                     $constraint['delete'] = $this->formatConstraintAction($constraint['delete']);
                 }
                 $constraints[$name] = $constraint;
@@ -337,8 +339,14 @@ class MigrationHelper extends Helper
      */
     public function column($tableSchema, $column)
     {
+        $columnType = $tableSchema->getColumnType($column);
+        // Phinx doesn't understand timestampfractional.
+        if ($columnType === 'timestampfractional') {
+            $columnType = 'timestamp';
+        }
+
         return [
-            'columnType' => $tableSchema->getColumnType($column),
+            'columnType' => $columnType,
             'options' => $this->attributes($tableSchema, $column),
         ];
     }
@@ -396,7 +404,7 @@ class MigrationHelper extends Helper
     /**
      * Returns a string-like representation of a value
      *
-     * @param string|bool|null $value A value to represent as a string
+     * @param string|int|bool|null $value A value to represent as a string
      * @param bool $numbersAsString Set tu true to return as string.
      * @return mixed
      */
@@ -458,7 +466,7 @@ class MigrationHelper extends Helper
                     break;
                 case 'unsigned':
                     $option = 'signed';
-                    $value = (bool)!$value;
+                    $value = !$value;
                     break;
                 case 'unique':
                     $value = (bool)$value;
@@ -528,9 +536,9 @@ class MigrationHelper extends Helper
         $join = ', ';
         if ($options['indent']) {
             $join = ',';
-            $start = "\n" . str_repeat("    ", $options['indent']);
+            $start = "\n" . str_repeat('    ', $options['indent']);
             $join .= $start;
-            $end = "\n" . str_repeat("    ", $options['indent'] - 1);
+            $end = "\n" . str_repeat('    ', $options['indent'] - 1);
         }
 
         return $start . implode($join, $list) . ',' . $end;
@@ -628,7 +636,7 @@ class MigrationHelper extends Helper
         $indexes = array_filter($indexes, function ($index) use ($foreignKeys) {
             return !in_array($index['columns'], $foreignKeys, true);
         });
-        $result = compact('constraints', 'constraints', 'indexes', 'foreignKeys');
+        $result = compact('constraints', 'indexes', 'foreignKeys');
 
         return $result;
     }

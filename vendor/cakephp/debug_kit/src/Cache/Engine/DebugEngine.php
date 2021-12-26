@@ -28,7 +28,7 @@ class DebugEngine extends CacheEngine
     /**
      * Proxied cache engine config.
      *
-     * @var mixed
+     * @var array<string, mixed>
      */
     protected $_config;
 
@@ -159,10 +159,10 @@ class DebugEngine extends CacheEngine
     /**
      * @inheritDoc
      */
-    public function setMultiple($data, $ttl = null): bool
+    public function setMultiple($values, $ttl = null): bool
     {
         $start = microtime(true);
-        $result = $this->_engine->setMultiple($data);
+        $result = $this->_engine->setMultiple($values);
         $duration = microtime(true) - $start;
 
         $this->track('set');
@@ -196,7 +196,7 @@ class DebugEngine extends CacheEngine
     public function getMultiple($keys, $default = null): iterable
     {
         $start = microtime(true);
-        $result = $this->_engine->getMultiple($keys);
+        $result = $this->_engine->getMultiple($keys, $default);
         $duration = microtime(true) - $start;
 
         $this->track('get hit');
@@ -253,10 +253,10 @@ class DebugEngine extends CacheEngine
     /**
      * @inheritDoc
      */
-    public function deleteMultiple($data): bool
+    public function deleteMultiple($keys): bool
     {
         $start = microtime(true);
-        $result = $this->_engine->deleteMultiple($data);
+        $result = $this->_engine->deleteMultiple($keys);
         $duration = microtime(true) - $start;
 
         $this->track('delete');

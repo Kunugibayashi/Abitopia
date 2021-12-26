@@ -28,7 +28,7 @@ use Psr\Http\Message\RequestInterface;
 /**
  * Implements sending Cake\Http\Client\Request via ext/curl.
  *
- * In addition to the standard options documented in Cake\Http\Client,
+ * In addition to the standard options documented in {@link \Cake\Http\Client},
  * this adapter supports all available curl options. Additional curl options
  * can be set via the `curl` option key when making requests or configuring
  * a client.
@@ -77,7 +77,7 @@ class Curl implements AdapterInterface
      * Convert client options into curl options.
      *
      * @param \Psr\Http\Message\RequestInterface $request The request.
-     * @param array $options The client options
+     * @param array<string, mixed> $options The client options
      * @return array
      */
     public function buildOptions(RequestInterface $request, array $options): array
@@ -103,6 +103,10 @@ class Curl implements AdapterInterface
                 $out[CURLOPT_POST] = true;
                 break;
 
+            case Request::METHOD_HEAD:
+                $out[CURLOPT_NOBODY] = true;
+                break;
+
             default:
                 $out[CURLOPT_POST] = true;
                 $out[CURLOPT_CUSTOMREQUEST] = $request->getMethod();
@@ -113,7 +117,7 @@ class Curl implements AdapterInterface
         $body->rewind();
         $out[CURLOPT_POSTFIELDS] = $body->getContents();
         // GET requests with bodies require custom request to be used.
-        if (strlen($out[CURLOPT_POSTFIELDS]) && isset($out[CURLOPT_HTTPGET])) {
+        if ($out[CURLOPT_POSTFIELDS] !== '' && isset($out[CURLOPT_HTTPGET])) {
             $out[CURLOPT_CUSTOMREQUEST] = 'get';
         }
         if ($out[CURLOPT_POSTFIELDS] === '') {
@@ -187,12 +191,14 @@ class Curl implements AdapterInterface
     /**
      * Convert the raw curl response into an Http\Client\Response
      *
-     * @param resource $handle Curl handle
+     * @param resource|\CurlHandle $handle Curl handle
      * @param string $responseData string The response data from curl_exec
-     * @return \Cake\Http\Client\Response[]
+     * @return array<\Cake\Http\Client\Response>
+     * @psalm-suppress UndefinedDocblockClass
      */
     protected function createResponse($handle, $responseData): array
     {
+        /** @psalm-suppress PossiblyInvalidArgument */
         $headerSize = curl_getinfo($handle, CURLINFO_HEADER_SIZE);
         $headers = trim(substr($responseData, 0, $headerSize));
         $body = substr($responseData, $headerSize);
@@ -204,11 +210,13 @@ class Curl implements AdapterInterface
     /**
      * Execute the curl handle.
      *
-     * @param resource $ch Curl Resource handle
+     * @param resource|\CurlHandle $ch Curl Resource handle
      * @return string|bool
+     * @psalm-suppress UndefinedDocblockClass
      */
     protected function exec($ch)
     {
+        /** @psalm-suppress PossiblyInvalidArgument */
         return curl_exec($ch);
     }
 }

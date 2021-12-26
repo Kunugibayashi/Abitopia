@@ -16,7 +16,7 @@ declare(strict_types=1);
  */
 namespace Cake\I18n\Formatter;
 
-use Aura\Intl\FormatterInterface;
+use Cake\I18n\FormatterInterface;
 
 /**
  * A formatter that will interpolate variables using sprintf and
@@ -30,13 +30,11 @@ class SprintfFormatter implements FormatterInterface
      *
      * @param string $locale The locale in which the message is presented.
      * @param string $message The message to be translated
-     * @param array $vars The list of values to interpolate in the message
+     * @param array $tokenValues The list of values to interpolate in the message
      * @return string The formatted message
      */
-    public function format($locale, $message, array $vars): string
+    public function format(string $locale, string $message, array $tokenValues): string
     {
-        unset($vars['_singular']);
-
-        return vsprintf($message, $vars);
+        return vsprintf($message, $tokenValues);
     }
 }

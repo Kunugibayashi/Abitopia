@@ -14,11 +14,16 @@ declare(strict_types=1);
  * @since         3.3.0
  * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
+
 namespace Cake\Http;
 
 use Cake\Console\CommandCollection;
 use Cake\Controller\ControllerFactory;
 use Cake\Core\ConsoleApplicationInterface;
+use Cake\Core\Container;
+use Cake\Core\ContainerApplicationInterface;
+use Cake\Core\ContainerInterface;
+use Cake\Core\Exception\MissingPluginException;
 use Cake\Core\HttpApplicationInterface;
 use Cake\Core\Plugin;
 use Cake\Core\PluginApplicationInterface;
@@ -29,6 +34,7 @@ use Cake\Event\EventManagerInterface;
 use Cake\Routing\RouteBuilder;
 use Cake\Routing\Router;
 use Cake\Routing\RoutingApplicationInterface;
+use Closure;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -45,6 +51,7 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 abstract class BaseApplication implements
     ConsoleApplicationInterface,
+    ContainerApplicationInterface,
     HttpApplicationInterface,
     PluginApplicationInterface,
     RoutingApplicationInterface
@@ -71,11 +78,18 @@ abstract class BaseApplication implements
     protected $controllerFactory;
 
     /**
+     * Container
+     *
+     * @var \Cake\Core\ContainerInterface|null
+     */
+    protected $container;
+
+    /**
      * Constructor
      *
      * @param string $configDir The directory the bootstrap configuration is held in.
-     * @param \Cake\Event\EventManagerInterface $eventManager Application event manager instance.
-     * @param \Cake\Http\ControllerFactoryInterface $controllerFactory Controller factory.
+     * @param \Cake\Event\EventManagerInterface|null $eventManager Application event manager instance.
+     * @param \Cake\Http\ControllerFactoryInterface|null $controllerFactory Controller factory.
      */
     public function __construct(
         string $configDir,
@@ -122,6 +136,26 @@ abstract class BaseApplication implements
     }
 
     /**
+     * Add an optional plugin
+     *
+     * If it isn't available, ignore it.
+     *
+     * @param \Cake\Core\PluginInterface|string $name The plugin name or plugin object.
+     * @param array<string, mixed> $config The configuration data for the plugin if using a string for $name
+     * @return $this
+     */
+    public function addOptionalPlugin($name, array $config = [])
+    {
+        try {
+            $this->addPlugin($name, $config);
+        } catch (MissingPluginException $e) {
+            // Do not halt if the plugin is missing
+        }
+
+        return $this;
+    }
+
+    /**
      * Get the plugin collection in use.
      *
      * @return \Cake\Core\PluginCollection
@@ -152,7 +186,7 @@ abstract class BaseApplication implements
     /**
      * {@inheritDoc}
      *
-     * By default this will load `config/routes.php` for ease of use and backwards compatibility.
+     * By default, this will load `config/routes.php` for ease of use and backwards compatibility.
      *
      * @param \Cake\Routing\RouteBuilder $routes A route builder to add routes into.
      * @return void
@@ -161,7 +195,10 @@ abstract class BaseApplication implements
     {
         // Only load routes if the router is empty
         if (!Router::routes()) {
-            require $this->configDir . 'routes.php';
+            $return = require $this->configDir . 'routes.php';
+            if ($return instanceof Closure) {
+                $return($routes);
+            }
         }
     }
 
@@ -180,7 +217,7 @@ abstract class BaseApplication implements
     /**
      * Define the console commands for an application.
      *
-     * By default all commands in CakePHP, plugins and the application will be
+     * By default, all commands in CakePHP, plugins and the application will be
      * loaded using conventions based names.
      *
      * @param \Cake\Console\CommandCollection $commands The CommandCollection to add commands into.
@@ -204,6 +241,57 @@ abstract class BaseApplication implements
     }
 
     /**
+     * Get the dependency injection container for the application.
+     *
+     * The first time the container is fetched it will be constructed
+     * and stored for future calls.
+     *
+     * @return \Cake\Core\ContainerInterface
+     */
+    public function getContainer(): ContainerInterface
+    {
+        if ($this->container === null) {
+            $this->container = $this->buildContainer();
+        }
+
+        return $this->container;
+    }
+
+    /**
+     * Build the service container
+     *
+     * Override this method if you need to use a custom container or
+     * want to change how the container is built.
+     *
+     * @return \Cake\Core\ContainerInterface
+     */
+    protected function buildContainer(): ContainerInterface
+    {
+        $container = new Container();
+        $this->services($container);
+        foreach ($this->plugins->with('services') as $plugin) {
+            $plugin->services($container);
+        }
+
+        $event = $this->dispatchEvent('Application.buildContainer', ['container' => $container]);
+        if ($event->getResult() instanceof ContainerInterface) {
+            return $event->getResult();
+        }
+
+        return $container;
+    }
+
+    /**
+     * Register application container services.
+     *
+     * @param \Cake\Core\ContainerInterface $container The Container to update.
+     * @return void
+     */
+    public function services(ContainerInterface $container): void
+    {
+    }
+
+    /**
      * Invoke the application.
      *
      * - Convert the PSR response into CakePHP equivalents.
@@ -217,7 +305,7 @@ abstract class BaseApplication implements
         ServerRequestInterface $request
     ): ResponseInterface {
         if ($this->controllerFactory === null) {
-            $this->controllerFactory = new ControllerFactory();
+            $this->controllerFactory = new ControllerFactory($this->getContainer());
         }
 
         if (Router::getRequest() !== $request) {

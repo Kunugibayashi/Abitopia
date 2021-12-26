@@ -19,6 +19,7 @@ namespace Cake\Cache\Engine;
 use Cake\Cache\CacheEngine;
 use InvalidArgumentException;
 use Memcached;
+use RuntimeException;
 
 /**
  * Memcached storage engine for cache. Memcached has some limitations in the amount of
@@ -51,15 +52,15 @@ class MemcachedEngine extends CacheEngine
      *    the same persistent value will share a single underlying connection.
      * - `prefix` Prepended to all entries. Good for when you need to share a keyspace
      *    with either another cache config or another application.
-     * - `serialize` The serializer engine used to serialize data. Available engines are php,
-     *    igbinary and json. Beside php, the memcached extension must be compiled with the
+     * - `serialize` The serializer engine used to serialize data. Available engines are 'php',
+     *    'igbinary' and 'json'. Beside 'php', the memcached extension must be compiled with the
      *    appropriate serializer support.
      * - `servers` String or array of memcached servers. If an array MemcacheEngine will use
      *    them as a pool.
      * - `options` - Additional options for the memcached client. Should be an array of option => value.
      *    Use the \Memcached::OPT_* constants as keys.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'compress' => false,
@@ -79,14 +80,14 @@ class MemcachedEngine extends CacheEngine
     /**
      * List of available serializer engines
      *
-     * Memcached must be compiled with json and igbinary support to use these engines
+     * Memcached must be compiled with JSON and igbinary support to use these engines
      *
-     * @var array
+     * @var array<string, int>
      */
     protected $_serializers = [];
 
     /**
-     * @var string[]
+     * @var array<string>
      */
     protected $_compiledGroupNames = [];
 
@@ -95,7 +96,7 @@ class MemcachedEngine extends CacheEngine
      *
      * Called automatically by the cache frontend
      *
-     * @param array $config array of setting for the engine
+     * @param array<string, mixed> $config array of setting for the engine
      * @return bool True if the engine has been successfully initialized, false if not
      * @throws \InvalidArgumentException When you try use authentication without
      *   Memcached compiled with SASL support
@@ -103,7 +104,7 @@ class MemcachedEngine extends CacheEngine
     public function init(array $config = []): bool
     {
         if (!extension_loaded('memcached')) {
-            return false;
+            throw new RuntimeException('The `memcached` extension must be enabled to use MemcachedEngine.');
         }
 
         $this->_serializers = [
@@ -133,6 +134,7 @@ class MemcachedEngine extends CacheEngine
             $this->_config['servers'] = [$this->_config['servers']];
         }
 
+        /** @psalm-suppress RedundantPropertyInitializationCheck */
         if (isset($this->_Memcached)) {
             return true;
         }
@@ -144,7 +146,20 @@ class MemcachedEngine extends CacheEngine
         }
         $this->_setOptions();
 
-        if (count($this->_Memcached->getServerList())) {
+        $serverList = $this->_Memcached->getServerList();
+        if ($serverList) {
+            if ($this->_Memcached->isPersistent()) {
+                foreach ($serverList as $server) {
+                    if (!in_array($server['host'] . ':' . $server['port'], $this->_config['servers'], true)) {
+                        throw new InvalidArgumentException(
+                            'Invalid cache configuration. Multiple persistent cache configurations are detected' .
+                            ' with different `servers` values. `servers` values for persistent cache configurations' .
+                            ' must be the same when using the same persistence id.'
+                        );
+                    }
+                }
+            }
+
             return true;
         }
 
@@ -301,21 +316,21 @@ class MemcachedEngine extends CacheEngine
     /**
      * Write many cache entries to the cache at once
      *
-     * @param iterable $data An array of data to be stored in the cache
+     * @param iterable $values An array of data to be stored in the cache
      * @param \DateInterval|int|null $ttl Optional. The TTL value of this item. If no value is sent and
      *   the driver supports TTL then the library may set a default value
      *   for it or let the driver take care of that.
      * @return bool Whether the write was successful or not.
      */
-    public function setMultiple($data, $ttl = null): bool
+    public function setMultiple($values, $ttl = null): bool
     {
         $cacheData = [];
-        foreach ($data as $key => $value) {
+        foreach ($values as $key => $value) {
             $cacheData[$this->_key($key)] = $value;
         }
         $duration = $this->duration($ttl);
 
-        return (bool)$this->_Memcached->setMulti($cacheData, $duration);
+        return $this->_Memcached->setMulti($cacheData, $duration);
     }
 
     /**
@@ -455,7 +470,7 @@ class MemcachedEngine extends CacheEngine
      * If the group initial value was not found, then it initializes
      * the group accordingly.
      *
-     * @return string[]
+     * @return array<string>
      */
     public function groups(): array
     {

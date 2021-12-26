@@ -45,9 +45,7 @@ class ProxyAdapter extends AdapterWrapper
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @return void
+     * @inheritDoc
      */
     public function createTable(Table $table, array $columns = [], array $indexes = [])
     {
@@ -55,9 +53,7 @@ class ProxyAdapter extends AdapterWrapper
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @return void
+     * @inheritDoc
      */
     public function executeActions(Table $table, array $actions)
     {
@@ -68,7 +64,6 @@ class ProxyAdapter extends AdapterWrapper
      * Gets an array of the recorded commands in reverse.
      *
      * @throws \Phinx\Migration\IrreversibleMigrationException if a command cannot be reversed.
-     *
      * @return \Phinx\Db\Plan\Intent
      */
     public function getInvertedCommands()

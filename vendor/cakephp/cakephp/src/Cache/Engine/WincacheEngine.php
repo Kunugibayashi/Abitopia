@@ -17,6 +17,7 @@ declare(strict_types=1);
 namespace Cake\Cache\Engine;
 
 use Cake\Cache\CacheEngine;
+use RuntimeException;
 
 /**
  * Wincache storage engine for cache
@@ -29,7 +30,7 @@ class WincacheEngine extends CacheEngine
      * Contains the compiled group names
      * (prefixed with the global configuration prefix)
      *
-     * @var array
+     * @var array<string>
      */
     protected $_compiledGroupNames = [];
 
@@ -38,13 +39,13 @@ class WincacheEngine extends CacheEngine
      *
      * Called automatically by the cache frontend
      *
-     * @param array $config array of setting for the engine
+     * @param array<string, mixed> $config array of setting for the engine
      * @return bool True if the engine has been successfully initialized, false if not
      */
     public function init(array $config = []): bool
     {
         if (!extension_loaded('wincache')) {
-            return false;
+            throw new RuntimeException('The `wincache` extension must be enabled to use WincacheEngine.');
         }
 
         parent::init($config);
@@ -154,7 +155,7 @@ class WincacheEngine extends CacheEngine
      * If the group initial value was not found, then it initializes
      * the group accordingly.
      *
-     * @return string[]
+     * @return array<string>
      */
     public function groups(): array
     {

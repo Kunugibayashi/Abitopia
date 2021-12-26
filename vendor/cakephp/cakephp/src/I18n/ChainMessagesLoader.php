@@ -16,7 +16,6 @@ declare(strict_types=1);
  */
 namespace Cake\I18n;
 
-use Aura\Intl\Package;
 use RuntimeException;
 
 /**
@@ -28,7 +27,7 @@ class ChainMessagesLoader
     /**
      * The list of callables to execute one after another for loading messages
      *
-     * @var callable[]
+     * @var array<callable>
      */
     protected $_loaders = [];
 
@@ -36,7 +35,7 @@ class ChainMessagesLoader
      * Receives a list of callable functions or objects that will be executed
      * one after another until one of them returns a non-empty translations package
      *
-     * @param callable[] $loaders List of callables to execute
+     * @param array<callable> $loaders List of callables to execute
      */
     public function __construct(array $loaders)
     {
@@ -47,7 +46,7 @@ class ChainMessagesLoader
      * Executes this object returning the translations package as configured in
      * the chain.
      *
-     * @return \Aura\Intl\Package
+     * @return \Cake\I18n\Package
      * @throws \RuntimeException if any of the loaders in the chain is not a valid callable
      */
     public function __invoke(): Package

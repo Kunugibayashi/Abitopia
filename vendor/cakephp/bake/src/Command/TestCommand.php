@@ -29,7 +29,6 @@ use Cake\Filesystem\Filesystem;
 use Cake\Http\Response;
 use Cake\Http\ServerRequest as Request;
 use Cake\ORM\Table;
-use Cake\ORM\TableRegistry;
 use Cake\Utility\Inflector;
 use ReflectionClass;
 use UnexpectedValueException;
@@ -58,6 +57,7 @@ class TestCommand extends BakeCommand
         'Form' => 'Form',
         'Mailer' => 'Mailer',
         'Command' => 'Command',
+        'CommandHelper' => 'Command\Helper',
     ];
 
     /**
@@ -79,6 +79,7 @@ class TestCommand extends BakeCommand
         'Form' => 'Form',
         'Mailer' => 'Mailer',
         'Command' => 'Command',
+        'CommandHelper' => 'Helper',
     ];
 
     /**
@@ -205,7 +206,7 @@ class TestCommand extends BakeCommand
      * Get the possible classes for a given type.
      *
      * @param string $namespace The namespace fragment to look for classes in.
-     * @return array
+     * @return string[]
      */
     protected function _getClassOptions(string $namespace): array
     {
@@ -219,7 +220,7 @@ class TestCommand extends BakeCommand
         $files = (new Filesystem())->find($path);
         foreach ($files as $fileObj) {
             if ($fileObj->isFile()) {
-                $classes[] = substr($fileObj->getFileName(), 0, -4);
+                $classes[] = substr($fileObj->getFileName(), 0, -4) ?: '';
             }
         }
         sort($classes);
@@ -289,7 +290,6 @@ class TestCommand extends BakeCommand
             'type',
             'fullClassName',
             'mock',
-            'type',
             'preConstruct',
             'postConstruct',
             'construction',
@@ -338,10 +338,10 @@ class TestCommand extends BakeCommand
             if ($this->plugin) {
                 $name = $this->plugin . '.' . $name;
             }
-            if (TableRegistry::getTableLocator()->exists($name)) {
-                $instance = TableRegistry::getTableLocator()->get($name);
+            if ($this->getTableLocator()->exists($name)) {
+                $instance = $this->getTableLocator()->get($name);
             } else {
-                $instance = TableRegistry::getTableLocator()->get($name, [
+                $instance = $this->getTableLocator()->get($name, [
                     'connectionName' => $this->connection,
                 ]);
             }
@@ -415,7 +415,7 @@ class TestCommand extends BakeCommand
      * No parent methods will be returned
      *
      * @param string $className Name of class to look at.
-     * @return array Array of method names.
+     * @return string[] Array of method names.
      */
     public function getTestableMethods(string $className): array
     {
@@ -439,7 +439,7 @@ class TestCommand extends BakeCommand
      * loaded models.
      *
      * @param \Cake\ORM\Table|\Cake\Controller\Controller $subject The object you want to generate fixtures for.
-     * @return array Array of fixtures to be included in the test.
+     * @return string[] Array of fixtures to be included in the test.
      */
     public function generateFixtureList($subject): array
     {
@@ -535,7 +535,7 @@ class TestCommand extends BakeCommand
      *
      * @param string $type The Type of object you are generating tests for eg. controller
      * @param string $fullClassName The full classname of the class the test is being generated for.
-     * @return array Constructor snippets for the thing you are building.
+     * @return string[] Constructor snippets for the thing you are building.
      */
     public function generateConstructor(string $type, string $fullClassName): array
     {
@@ -543,26 +543,26 @@ class TestCommand extends BakeCommand
         $pre = $construct = $post = '';
         if ($type === 'Table') {
             $tableName = str_replace('Table', '', $className);
-            $pre = "\$config = TableRegistry::getTableLocator()->exists('{$tableName}') " .
+            $pre = "\$config = \$this->getTableLocator()->exists('{$tableName}') " .
                 "? [] : ['className' => {$className}::class];";
-            $construct = "TableRegistry::getTableLocator()->get('{$tableName}', \$config);";
+            $construct = "\$this->getTableLocator()->get('{$tableName}', \$config);";
         }
         if ($type === 'Behavior') {
-            $pre = "\$table = new Table();";
+            $pre = '$table = new Table();';
             $construct = "new {$className}(\$table);";
         }
         if ($type === 'Entity' || $type === 'Form') {
             $construct = "new {$className}();";
         }
         if ($type === 'Helper') {
-            $pre = "\$view = new View();";
+            $pre = '$view = new View();';
             $construct = "new {$className}(\$view);";
         }
         if ($type === 'Command') {
-            $construct = "\$this->useCommandRunner();";
+            $construct = '$this->useCommandRunner();';
         }
         if ($type === 'Component') {
-            $pre = "\$registry = new ComponentRegistry();";
+            $pre = '$registry = new ComponentRegistry();';
             $construct = "new {$className}(\$registry);";
         }
         if ($type === 'Shell') {
@@ -578,9 +578,9 @@ class TestCommand extends BakeCommand
             $pre .= "        \$this->response = \$this->getMockBuilder('Cake\Http\Response')->getMock();";
             $construct = "new {$className}(\$this->request, \$this->response);";
         }
-        if ($type === 'ShellHelper') {
+        if ($type === 'ShellHelper' || $type === 'CommandHelper') {
             $pre = "\$this->stub = new ConsoleOutput();\n";
-            $pre .= "        \$this->io = new ConsoleIo(\$this->stub);";
+            $pre .= '        $this->io = new ConsoleIo($this->stub);';
             $construct = "new {$className}(\$this->io);";
         }
 
@@ -628,6 +628,7 @@ class TestCommand extends BakeCommand
                 ];
                 break;
 
+            case 'CommandHelper':
             case 'ShellHelper':
                 $properties[] = [
                     'description' => 'ConsoleOutput stub',
@@ -658,7 +659,7 @@ class TestCommand extends BakeCommand
      *
      * @param string $type The Type of object you are generating tests for eg. controller
      * @param string $fullClassName The Classname of the class the test is being generated for.
-     * @return array An array containing used classes
+     * @return string[] An array containing used classes
      */
     public function generateUses(string $type, string $fullClassName): array
     {
@@ -666,13 +667,10 @@ class TestCommand extends BakeCommand
         if ($type === 'Component') {
             $uses[] = 'Cake\Controller\ComponentRegistry';
         }
-        if ($type === 'Table') {
-            $uses[] = 'Cake\ORM\TableRegistry';
-        }
         if ($type === 'Helper') {
             $uses[] = 'Cake\View\View';
         }
-        if ($type === 'ShellHelper') {
+        if ($type === 'ShellHelper' || $type === 'CommandHelper') {
             $uses[] = 'Cake\TestSuite\Stub\ConsoleOutput';
             $uses[] = 'Cake\Console\ConsoleIo';
         }

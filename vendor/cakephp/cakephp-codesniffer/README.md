@@ -1,6 +1,6 @@
 # CakePHP Code Sniffer
 
-[![Build Status](https://img.shields.io/travis/com/cakephp/cakephp-codesniffer/master.svg?style=flat-square)](https://travis-ci.com/cakephp/cakephp-codesniffer)
+![Build Status](https://github.com/cakephp/cakephp-codesniffer/actions/workflows/ci.yml/badge.svg?branch=master)
 [![Total Downloads](https://img.shields.io/packagist/dt/cakephp/cakephp-codesniffer.svg?style=flat-square)](https://packagist.org/packages/cakephp/cakephp-codesniffer)
 [![Latest Stable Version](https://img.shields.io/packagist/v/cakephp/cakephp-codesniffer.svg?style=flat-square)](https://packagist.org/packages/cakephp/cakephp-codesniffer)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE)
@@ -13,19 +13,13 @@ This sniffer package follows [PSR-12](https://www.php-fig.org/psr/psr-12/) compl
 [List of included sniffs](/docs)
 
 ## Which version should I use?
-
-| Sniffer version | CakePHP version | PHP min |
-| -------- | ------- | ------- |
-| 1.x | 2.x | PHP 5.4  |
-| 2.x | 3.x | PHP 5.5 |
-| 3.x | 3.x | PHP 5.6 |
-| 4.x | 4.x | PHP 7.2 |
+See [version map](https://github.com/cakephp/cakephp-codesniffer/wiki).
 
 ## Installation
 
 You should install this codesniffer with composer:
 
-	composer require --dev "cakephp/cakephp-codesniffer"
+	composer require --dev cakephp/cakephp-codesniffer
 	vendor/bin/phpcs --config-set installed_paths /path/to/your/app/vendor/cakephp/cakephp-codesniffer
 
 The second command lets `phpcs` know where to find your new sniffs. Ensure that
@@ -41,20 +35,20 @@ you have configured the CodeSniffer `installed_paths` setting.
 Depending on how you installed the code sniffer changes how you run it. If you have
 installed phpcs, and this package with PEAR, you can do the following:
 
-	vendor/bin/phpcs --colors -p -s --standard=CakePHP /path/to/code
+	vendor/bin/phpcs --colors -p -s --standard=CakePHP /path/to/code/
 
 You can also copy the `phpcs.xml.dist` file to your project's root folder as `phpcs.xml`.
 This file will import the CakePHP Coding Standard. From there you can edit it to
 include/exclude as needed. With this file in place, you can run:
 
-	vendor/bin/phpcs --colors -p -s /path/to/code
+	vendor/bin/phpcs --colors -p -s /path/to/code/
 
 If you are using Composer to manage your CakePHP project, you can also add the below to your composer.json file:
 
 ```json
 {
     "scripts": {
-        "cs-check": "vendor/bin/phpcs --colors -p -s --extensions=ctp,php ./src ./tests"
+        "cs-check": "vendor/bin/phpcs --colors -p -s --extensions=php src/ tests/"
     }
 }
 ```

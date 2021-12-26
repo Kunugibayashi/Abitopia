@@ -74,22 +74,23 @@ class AuthenticationService implements AuthenticationServiceInterface
      *   user data.
      * - `identityClass` - The class name of identity or a callable identity builder.
      * - `identityAttribute` - The request attribute used to store the identity. Default to `identity`.
-     *
-     *   ```
-     *   $service = new AuthenticationService([
-     *      'authenticators' => [
-     *          'Authentication.Form
-     *      ],
-     *      'identifiers' => [
-     *          'Authentication.Password'
-     *      ]
-     *   ]);
-     *   ```
-     * - `identityAttribute` - The request attribute to store the identity in.
      * - `unauthenticatedRedirect` - The URL to redirect unauthenticated errors to. See
      *    AuthenticationComponent::allowUnauthenticated()
-     * - `queryParam` - Set to a string to have unauthenticated redirects contain a `redirect` query string
-     *   parameter with the previously blocked URL.
+     * - `queryParam` - The name of the query string parameter containing the previously blocked URL
+     *   in case of unauthenticated redirect, or null to disable appending the denied URL.
+     *
+     * ### Example:
+     *
+     * ```
+     * $service = new AuthenticationService([
+     *    'authenticators' => [
+     *        'Authentication.Form
+     *    ],
+     *    'identifiers' => [
+     *        'Authentication.Password'
+     *    ]
+     * ]);
+     * ```
      *
      * @var array
      */
@@ -246,9 +247,7 @@ class AuthenticationService implements AuthenticationServiceInterface
             }
         }
 
-        if (!($identity instanceof IdentityInterface)) {
-            $identity = $this->buildIdentity($identity);
-        }
+        $identity = $this->buildIdentity($identity);
 
         return [
             'request' => $request->withAttribute($this->getConfig('identityAttribute'), $identity),
@@ -293,16 +292,16 @@ class AuthenticationService implements AuthenticationServiceInterface
      */
     public function getIdentity(): ?IdentityInterface
     {
-        if ($this->_result === null || !$this->_result->isValid()) {
+        if ($this->_result === null) {
             return null;
         }
 
-        $identity = $this->_result->getData();
-        if (!($identity instanceof IdentityInterface)) {
-            $identity = $this->buildIdentity($identity);
+        $identityData = $this->_result->getData();
+        if (!$this->_result->isValid() || $identityData === null) {
+            return null;
         }
 
-        return $identity;
+        return $this->buildIdentity($identityData);
     }
 
     /**
@@ -323,6 +322,10 @@ class AuthenticationService implements AuthenticationServiceInterface
      */
     public function buildIdentity($identityData): IdentityInterface
     {
+        if ($identityData instanceof IdentityInterface) {
+            return $identityData;
+        }
+
         $class = $this->getConfig('identityClass');
 
         if (is_callable($class)) {

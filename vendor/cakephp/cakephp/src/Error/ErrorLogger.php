@@ -17,7 +17,7 @@ declare(strict_types=1);
 namespace Cake\Error;
 
 use Cake\Core\Configure;
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 use Cake\Core\InstanceConfigTrait;
 use Cake\Log\Log;
 use Psr\Http\Message\ServerRequestInterface;
@@ -26,7 +26,7 @@ use Throwable;
 /**
  * Log errors and unhandled exceptions to `Cake\Log\Log`
  */
-class ErrorLogger
+class ErrorLogger implements ErrorLoggerInterface
 {
     use InstanceConfigTrait;
 
@@ -37,7 +37,7 @@ class ErrorLogger
      *   extend one of the listed exceptions will also not be logged.
      * - `trace` Should error logs include stack traces?
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'skipLog' => [],
@@ -47,7 +47,7 @@ class ErrorLogger
     /**
      * Constructor
      *
-     * @param array $config Config array.
+     * @param array<string, mixed> $config Config array.
      */
     public function __construct(array $config = [])
     {
@@ -55,11 +55,22 @@ class ErrorLogger
     }
 
     /**
-     * Generate the error log message.
-     *
-     * @param \Throwable $exception The exception to log a message for.
-     * @param \Psr\Http\Message\ServerRequestInterface|null $request The current request if available.
-     * @return bool
+     * @inheritDoc
+     */
+    public function logMessage($level, string $message, array $context = []): bool
+    {
+        if (!empty($context['request'])) {
+            $message .= $this->getRequestContext($context['request']);
+        }
+        if (!empty($context['trace'])) {
+            $message .= "\nTrace:\n" . $context['trace'] . "\n";
+        }
+
+        return Log::write($level, $message);
+    }
+
+    /**
+     * @inheritDoc
      */
     public function log(Throwable $exception, ?ServerRequestInterface $request = null): bool
     {
@@ -99,7 +110,7 @@ class ErrorLogger
         );
         $debug = Configure::read('debug');
 
-        if ($debug && $exception instanceof Exception) {
+        if ($debug && $exception instanceof CakeException) {
             $attributes = $exception->getAttributes();
             if ($attributes) {
                 $message .= "\nException Attributes: " . var_export($exception->getAttributes(), true);

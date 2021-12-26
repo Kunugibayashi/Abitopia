@@ -16,7 +16,7 @@ declare(strict_types=1);
  */
 namespace Cake\Database\Statement;
 
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 use Cake\Database\DriverInterface;
 use PDO;
 use PDOStatement as Statement;
@@ -44,6 +44,22 @@ class PDOStatement extends StatementDecorator
     {
         $this->_statement = $statement;
         $this->_driver = $driver;
+    }
+
+    /**
+     * Magic getter to return PDOStatement::$queryString as read-only.
+     *
+     * @param string $property internal property to get
+     * @return string|null
+     */
+    public function __get(string $property)
+    {
+        if ($property === 'queryString' && isset($this->_statement->queryString)) {
+            /** @psalm-suppress NoInterfaceProperties */
+            return $this->_statement->queryString;
+        }
+
+        return null;
     }
 
     /**
@@ -112,7 +128,7 @@ class PDOStatement extends StatementDecorator
         }
 
         if (!is_int($type)) {
-            throw new Exception(sprintf(
+            throw new CakeException(sprintf(
                 'Fetch type for PDOStatement must be an integer, found `%s` instead',
                 getTypeName($type)
             ));
@@ -149,7 +165,7 @@ class PDOStatement extends StatementDecorator
         }
 
         if (!is_int($type)) {
-            throw new Exception(sprintf(
+            throw new CakeException(sprintf(
                 'Fetch type for PDOStatement must be an integer, found `%s` instead',
                 getTypeName($type)
             ));

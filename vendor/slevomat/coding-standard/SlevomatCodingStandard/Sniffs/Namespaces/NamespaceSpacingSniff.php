@@ -81,8 +81,9 @@ class NamespaceSpacingSniff implements Sniff
 
 		$fix = $phpcsFile->addFixableError(
 			sprintf(
-				'Expected %d lines before namespace statement, found %d.',
+				'Expected %d line%s before namespace statement, found %d.',
 				$requiredLinesCountBeforeNamespace,
+				$requiredLinesCountBeforeNamespace === 1 ? '' : 's',
 				$actualLinesCountBeforeNamespace
 			),
 			$namespacePointer,
@@ -98,7 +99,10 @@ class NamespaceSpacingSniff implements Sniff
 		if ($tokens[$pointerBeforeNamespace]['code'] === T_OPEN_TAG) {
 			$phpcsFile->fixer->replaceToken($pointerBeforeNamespace, '<?php');
 		} elseif ($isInlineCommentBefore) {
-			$phpcsFile->fixer->replaceToken($pointerBeforeNamespace, rtrim($tokens[$pointerBeforeNamespace]['content'], $phpcsFile->eolChar));
+			$phpcsFile->fixer->replaceToken(
+				$pointerBeforeNamespace,
+				rtrim($tokens[$pointerBeforeNamespace]['content'], $phpcsFile->eolChar)
+			);
 		}
 
 		for ($i = $pointerBeforeNamespace + 1; $i < $namespacePointer; $i++) {
@@ -135,8 +139,9 @@ class NamespaceSpacingSniff implements Sniff
 
 		$fix = $phpcsFile->addFixableError(
 			sprintf(
-				'Expected %d lines after namespace statement, found %d.',
+				'Expected %d line%s after namespace statement, found %d.',
 				$requiredLinesCountAfterNamespace,
+				$requiredLinesCountAfterNamespace === 1 ? '' : 's',
 				$actualLinesCountAfterNamespace
 			),
 			$namespacePointer,

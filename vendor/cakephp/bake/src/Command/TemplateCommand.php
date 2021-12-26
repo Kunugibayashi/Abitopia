@@ -27,7 +27,6 @@ use Cake\Core\Configure;
 use Cake\Datasource\ConnectionManager;
 use Cake\Datasource\EntityInterface;
 use Cake\ORM\Table;
-use Cake\ORM\TableRegistry;
 use Cake\Utility\Inflector;
 use Cake\View\Exception\MissingTemplateException;
 use RuntimeException;
@@ -64,6 +63,13 @@ class TemplateCommand extends BakeCommand
      * @var string[]
      */
     public $scaffoldActions = ['index', 'view', 'add', 'edit'];
+
+    /**
+     * Actions that exclude hidden fields
+     *
+     * @var string[]
+     */
+    public $excludeHiddenActions = ['index', 'view'];
 
     /**
      * AssociationFilter utility
@@ -260,10 +266,10 @@ class TemplateCommand extends BakeCommand
      */
     protected function _loadController(ConsoleIo $io): array
     {
-        if (TableRegistry::getTableLocator()->exists($this->modelName)) {
-            $modelObject = TableRegistry::getTableLocator()->get($this->modelName);
+        if ($this->getTableLocator()->exists($this->modelName)) {
+            $modelObject = $this->getTableLocator()->get($this->modelName);
         } else {
-            $modelObject = TableRegistry::getTableLocator()->get($this->modelName, [
+            $modelObject = $this->getTableLocator()->get($this->modelName, [
                 'connectionName' => $this->connection,
             ]);
         }
@@ -271,7 +277,7 @@ class TemplateCommand extends BakeCommand
         $namespace = Configure::read('App.namespace');
 
         $primaryKey = $displayField = $singularVar = $singularHumanName = null;
-        $schema = $fields = $modelClass = null;
+        $schema = $fields = $hidden = $modelClass = null;
         try {
             $primaryKey = (array)$modelObject->getPrimaryKey();
             $displayField = $modelObject->getDisplayField();
@@ -279,6 +285,7 @@ class TemplateCommand extends BakeCommand
             $singularHumanName = $this->_singularHumanName($this->controllerName);
             $schema = $modelObject->getSchema();
             $fields = $schema->columns();
+            $hidden = $modelObject->newEmptyEntity()->getHidden() ?: ['token', 'password', 'passwd'];
             $modelClass = $this->modelName;
         } catch (\Exception $exception) {
             $io->error($exception->getMessage());
@@ -313,6 +320,7 @@ class TemplateCommand extends BakeCommand
             'singularHumanName',
             'pluralHumanName',
             'fields',
+            'hidden',
             'associations',
             'keyFields',
             'namespace'
@@ -374,13 +382,17 @@ class TemplateCommand extends BakeCommand
             $this->abort();
         }
 
+        if (in_array($action, $this->excludeHiddenActions)) {
+            $vars['fields'] = array_diff($vars['fields'], $vars['hidden']);
+        }
+
         $renderer = new TemplateRenderer($args->getOption('theme'));
         $renderer->set('action', $action);
         $renderer->set('plugin', $this->plugin);
         $renderer->set($vars);
 
         $indexColumns = 0;
-        if ($action === "index" && $args->getOption('index-columns') !== null) {
+        if ($action === 'index' && $args->getOption('index-columns') !== null) {
             $indexColumns = $args->getOption('index-columns');
         }
         $renderer->set('indexColumns', $indexColumns);

@@ -16,7 +16,7 @@ declare(strict_types=1);
  */
 namespace Cake\Database\Type;
 
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 use Cake\Database\DriverInterface;
 use Cake\Utility\Text;
 use PDO;
@@ -36,15 +36,20 @@ class BinaryUuidType extends BaseType
      *
      * @param mixed $value The value to convert.
      * @param \Cake\Database\DriverInterface $driver The driver instance to convert with.
-     * @return string|resource
+     * @return resource|string|null
      */
     public function toDatabase($value, DriverInterface $driver)
     {
-        if (is_string($value)) {
-            return $this->convertStringToBinaryUuid($value);
+        if (!is_string($value)) {
+            return $value;
         }
 
-        return $value;
+        $length = strlen($value);
+        if ($length !== 36 && $length !== 32) {
+            return null;
+        }
+
+        return $this->convertStringToBinaryUuid($value);
     }
 
     /**
@@ -63,7 +68,7 @@ class BinaryUuidType extends BaseType
      * @param mixed $value The value to convert.
      * @param \Cake\Database\DriverInterface $driver The driver instance to convert with.
      * @return resource|string|null
-     * @throws \Cake\Core\Exception\Exception
+     * @throws \Cake\Core\Exception\CakeException
      */
     public function toPHP($value, DriverInterface $driver)
     {
@@ -77,7 +82,7 @@ class BinaryUuidType extends BaseType
             return $value;
         }
 
-        throw new Exception(sprintf('Unable to convert %s into binary uuid.', gettype($value)));
+        throw new CakeException(sprintf('Unable to convert %s into binary uuid.', gettype($value)));
     }
 
     /**
@@ -114,11 +119,11 @@ class BinaryUuidType extends BaseType
      */
     protected function convertBinaryUuidToString($binary): string
     {
-        $string = unpack("H*", $binary);
+        $string = unpack('H*', $binary);
 
         $string = preg_replace(
-            "/([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12})/",
-            "$1-$2-$3-$4-$5",
+            '/([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12})/',
+            '$1-$2-$3-$4-$5',
             $string
         );
 
@@ -126,7 +131,7 @@ class BinaryUuidType extends BaseType
     }
 
     /**
-     * Converts a string uuid to a binary representation
+     * Converts a string UUID (36 or 32 char) to a binary representation.
      *
      * @param string $string The value to convert.
      * @return string Converted value.
@@ -135,6 +140,6 @@ class BinaryUuidType extends BaseType
     {
         $string = str_replace('-', '', $string);
 
-        return pack("H*", $string);
+        return pack('H*', $string);
     }
 }

@@ -23,7 +23,7 @@ namespace Cake\TestSuite\Constraint\Response;
 class StatusOk extends StatusCodeBase
 {
     /**
-     * @var int[]
+     * @var array<int, int>|int
      */
     protected $code = [200, 204];
 

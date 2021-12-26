@@ -21,6 +21,7 @@ use Cake\Mailer\Message;
 use Cake\Network\Exception\SocketException;
 use Cake\Network\Socket;
 use Exception;
+use RuntimeException;
 
 /**
  * Send mail using SMTP protocol
@@ -30,7 +31,7 @@ class SmtpTransport extends AbstractTransport
     /**
      * Default config for this class
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'host' => 'localhost',
@@ -114,7 +115,7 @@ class SmtpTransport extends AbstractTransport
      */
     public function connected(): bool
     {
-        return $this->_socket !== null && $this->_socket->connected;
+        return $this->_socket !== null && $this->_socket->isConnected();
     }
 
     /**
@@ -196,7 +197,7 @@ class SmtpTransport extends AbstractTransport
     /**
      * Parses and stores the response lines in `'code' => 'message'` format.
      *
-     * @param string[] $responseLines Response lines to parse.
+     * @param array<string> $responseLines Response lines to parse.
      * @return void
      */
     protected function _bufferResponseLines(array $responseLines): void
@@ -231,6 +232,9 @@ class SmtpTransport extends AbstractTransport
 
         $host = 'localhost';
         if (isset($config['client'])) {
+            if (empty($config['client'])) {
+                throw new SocketException('Cannot use an empty client name.');
+            }
             $host = $config['client'];
         } else {
             /** @var string $httpHost */
@@ -271,26 +275,66 @@ class SmtpTransport extends AbstractTransport
      */
     protected function _auth(): void
     {
-        if (isset($this->_config['username'], $this->_config['password'])) {
-            $replyCode = (string)$this->_smtpSend('AUTH LOGIN', '334|500|502|504');
-            if ($replyCode === '334') {
-                try {
-                    $this->_smtpSend(base64_encode($this->_config['username']), '334');
-                } catch (SocketException $e) {
-                    throw new SocketException('SMTP server did not accept the username.', null, $e);
-                }
-                try {
-                    $this->_smtpSend(base64_encode($this->_config['password']), '235');
-                } catch (SocketException $e) {
-                    throw new SocketException('SMTP server did not accept the password.', null, $e);
-                }
-            } elseif ($replyCode === '504') {
-                throw new SocketException('SMTP authentication method not allowed, check if SMTP server requires TLS.');
-            } else {
-                throw new SocketException(
-                    'AUTH command not recognized or not implemented, SMTP server may not require authentication.'
-                );
+        if (!isset($this->_config['username'], $this->_config['password'])) {
+            return;
+        }
+
+        $username = $this->_config['username'];
+        $password = $this->_config['password'];
+
+        $replyCode = $this->_authPlain($username, $password);
+        if ($replyCode === '235') {
+            return;
+        }
+
+        $this->_authLogin($username, $password);
+    }
+
+    /**
+     * Authenticate using AUTH PLAIN mechanism.
+     *
+     * @param string $username Username.
+     * @param string $password Password.
+     * @return string|null Response code for the command.
+     */
+    protected function _authPlain(string $username, string $password): ?string
+    {
+        return $this->_smtpSend(
+            sprintf(
+                'AUTH PLAIN %s',
+                base64_encode(chr(0) . $username . chr(0) . $password)
+            ),
+            '235|504|534|535'
+        );
+    }
+
+    /**
+     * Authenticate using AUTH LOGIN mechanism.
+     *
+     * @param string $username Username.
+     * @param string $password Password.
+     * @return void
+     */
+    protected function _authLogin(string $username, string $password): void
+    {
+        $replyCode = $this->_smtpSend('AUTH LOGIN', '334|500|502|504');
+        if ($replyCode === '334') {
+            try {
+                $this->_smtpSend(base64_encode($username), '334');
+            } catch (SocketException $e) {
+                throw new SocketException('SMTP server did not accept the username.', null, $e);
             }
+            try {
+                $this->_smtpSend(base64_encode($password), '235');
+            } catch (SocketException $e) {
+                throw new SocketException('SMTP server did not accept the password.', null, $e);
+            }
+        } elseif ($replyCode === '504') {
+            throw new SocketException('SMTP authentication method not allowed, check if SMTP server requires TLS.');
+        } else {
+            throw new SocketException(
+                'AUTH command not recognized or not implemented, SMTP server may not require authentication.'
+            );
         }
     }
 
@@ -496,7 +540,7 @@ class SmtpTransport extends AbstractTransport
     protected function _socket(): Socket
     {
         if ($this->_socket === null) {
-            throw new \RuntimeException('Socket is null, but must be set.');
+            throw new RuntimeException('Socket is null, but must be set.');
         }
 
         return $this->_socket;

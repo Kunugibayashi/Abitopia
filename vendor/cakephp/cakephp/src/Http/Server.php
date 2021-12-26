@@ -68,7 +68,7 @@ class Server implements EventDispatcherInterface
      * - Run the middleware queue including the application.
      *
      * @param \Psr\Http\Message\ServerRequestInterface|null $request The request to use or null.
-     * @param \Cake\Http\MiddlewareQueue $middlewareQueue MiddlewareQueue or null.
+     * @param \Cake\Http\MiddlewareQueue|null $middlewareQueue MiddlewareQueue or null.
      * @return \Psr\Http\Message\ResponseInterface
      * @throws \RuntimeException When the application does not make a response.
      */
@@ -99,16 +99,14 @@ class Server implements EventDispatcherInterface
     /**
      * Application bootstrap wrapper.
      *
-     * Calls `bootstrap()` and `events()` if application implements `EventApplicationInterface`.
-     * After the application is bootstrapped and events are attached, plugins are bootstrapped
-     * and have their events attached.
+     * Calls the application's `bootstrap()` hook. After the application the
+     * plugins are bootstrapped.
      *
      * @return void
      */
     protected function bootstrap(): void
     {
         $this->app->bootstrap();
-
         if ($this->app instanceof PluginApplicationInterface) {
             $this->app->pluginBootstrap();
         }

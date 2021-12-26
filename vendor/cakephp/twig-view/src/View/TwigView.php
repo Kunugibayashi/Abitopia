@@ -195,6 +195,7 @@ class TwigView extends View
      */
     protected function initializeTokenParser(): void
     {
+        $this->getTwig()->addTokenParser(new TokenParser\LayoutParser());
         $this->getTwig()->addTokenParser(new TokenParser\CellParser());
         $this->getTwig()->addTokenParser(new TokenParser\ElementParser());
     }
@@ -212,7 +213,10 @@ class TwigView extends View
 
         // Twig core extensions
         $twig->addExtension(new StringLoaderExtension());
-        $twig->addExtension(new DebugExtension());
+
+        if (Configure::read('debug', false)) {
+            $twig->addExtension(new DebugExtension());
+        }
 
         // CakePHP bridging extensions
         $twig->addExtension(new Extension\ArraysExtension());

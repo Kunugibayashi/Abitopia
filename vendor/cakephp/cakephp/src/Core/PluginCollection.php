@@ -40,21 +40,21 @@ class PluginCollection implements Iterator, Countable
     /**
      * Plugin list
      *
-     * @var \Cake\Core\PluginInterface[]
+     * @var array<\Cake\Core\PluginInterface>
      */
     protected $plugins = [];
 
     /**
      * Names of plugins
      *
-     * @var string[]
+     * @var array<string>
      */
     protected $names = [];
 
     /**
      * Iterator position stack.
      *
-     * @var int[]
+     * @var array<int>
      */
     protected $positions = [];
 
@@ -68,7 +68,7 @@ class PluginCollection implements Iterator, Countable
     /**
      * Constructor
      *
-     * @param \Cake\Core\PluginInterface[] $plugins The map of plugins to add to the collection.
+     * @param array<\Cake\Core\PluginInterface> $plugins The map of plugins to add to the collection.
      */
     public function __construct(array $plugins = [])
     {
@@ -94,9 +94,9 @@ class PluginCollection implements Iterator, Countable
             return;
         }
         $vendorFile = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'cakephp-plugins.php';
-        if (!file_exists($vendorFile)) {
+        if (!is_file($vendorFile)) {
             $vendorFile = dirname(dirname(dirname(dirname(__DIR__)))) . DIRECTORY_SEPARATOR . 'cakephp-plugins.php';
-            if (!file_exists($vendorFile)) {
+            if (!is_file($vendorFile)) {
                 Configure::write(['plugins' => []]);
 
                 return;
@@ -122,6 +122,9 @@ class PluginCollection implements Iterator, Countable
      */
     public function findPath(string $name): string
     {
+        // Ensure plugin config is loaded each time. This is necessary primarily
+        // for testing because the Configure::clear() call in TestCase::tearDown()
+        // wipes out all configuration including plugin paths config.
         $this->loadConfig();
 
         $path = Configure::read('plugins.' . $name);
@@ -223,15 +226,13 @@ class PluginCollection implements Iterator, Countable
      * Create a plugin instance from a name/classname and configuration.
      *
      * @param string $name The plugin name or classname
-     * @param array $config Configuration options for the plugin.
+     * @param array<string, mixed> $config Configuration options for the plugin.
      * @return \Cake\Core\PluginInterface
      * @throws \Cake\Core\Exception\MissingPluginException When plugin instance could not be created.
-     * @psalm-var class-string<\Cake\Core\PluginInterface> $name
      */
     public function create(string $name, array $config = []): PluginInterface
     {
         if (strpos($name, '\\') !== false) {
-            // phpcs:ignore SlevomatCodingStandard.Commenting.InlineDocCommentDeclaration.InvalidFormat
             /** @var \Cake\Core\PluginInterface */
             return new $name($config);
         }
@@ -325,7 +326,7 @@ class PluginCollection implements Iterator, Countable
      * Filter the plugins to those with the named hook enabled.
      *
      * @param string $hook The hook to filter plugins by
-     * @return \Generator A generator containing matching plugins.
+     * @return \Generator<\Cake\Core\PluginInterface> A generator containing matching plugins.
      * @throws \InvalidArgumentException on invalid hooks
      */
     public function with(string $hook): Generator

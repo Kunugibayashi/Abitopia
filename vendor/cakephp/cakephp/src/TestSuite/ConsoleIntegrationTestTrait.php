@@ -19,7 +19,6 @@ use Cake\Command\Command;
 use Cake\Console\CommandRunner;
 use Cake\Console\ConsoleIo;
 use Cake\Console\Exception\StopException;
-use Cake\Core\Configure;
 use Cake\TestSuite\Constraint\Console\ContentsContain;
 use Cake\TestSuite\Constraint\Console\ContentsContainRow;
 use Cake\TestSuite\Constraint\Console\ContentsEmpty;
@@ -32,31 +31,22 @@ use Cake\TestSuite\Stub\MissingConsoleInputException;
 use RuntimeException;
 
 /**
- * A test case class intended to make integration tests of cake console commands
- * easier.
+ * A bundle of methods that makes testing commands
+ * and shell classes easier.
+ *
+ * Enables you to call commands/shells with a
+ * full application context.
  */
 trait ConsoleIntegrationTestTrait
 {
+    use ContainerStubTrait;
+
     /**
-     * Whether or not to use the CommandRunner
+     * Whether to use the CommandRunner
      *
      * @var bool
      */
     protected $_useCommandRunner = false;
-
-    /**
-     * The customized application class name.
-     *
-     * @var string|null
-     */
-    protected $_appClass;
-
-    /**
-     * The customized application constructor arguments.
-     *
-     * @var array|null
-     */
-    protected $_appArgs;
 
     /**
      * Last exit code
@@ -87,7 +77,7 @@ trait ConsoleIntegrationTestTrait
     protected $_in;
 
     /**
-     * Runs cli integration test
+     * Runs CLI integration test
      *
      * @param string $command Command to run
      * @param array $input Input values to pass to an interactive shell
@@ -141,8 +131,6 @@ trait ConsoleIntegrationTestTrait
         $this->_err = null;
         $this->_in = null;
         $this->_useCommandRunner = false;
-        $this->_appClass = null;
-        $this->_appArgs = null;
     }
 
     /**
@@ -154,19 +142,6 @@ trait ConsoleIntegrationTestTrait
     public function useCommandRunner(): void
     {
         $this->_useCommandRunner = true;
-    }
-
-    /**
-     * Configure the application class to use in console integration tests.
-     *
-     * @param string $class The application class name.
-     * @param array|null $constructorArgs The constructor arguments for your application class.
-     * @return void
-     */
-    public function configApplication(string $class, ?array $constructorArgs): void
-    {
-        $this->_appClass = $class;
-        $this->_appArgs = $constructorArgs;
     }
 
     /**
@@ -305,10 +280,10 @@ trait ConsoleIntegrationTestTrait
     protected function makeRunner()
     {
         if ($this->_useCommandRunner) {
-            $appClass = $this->_appClass ?: Configure::read('App.namespace') . '\Application';
-            $appArgs = $this->_appArgs ?: [CONFIG];
+            /** @var \Cake\Core\ConsoleApplicationInterface $app */
+            $app = $this->createApp();
 
-            return new CommandRunner(new $appClass(...$appArgs));
+            return new CommandRunner($app);
         }
 
         return new LegacyCommandRunner();
@@ -318,7 +293,7 @@ trait ConsoleIntegrationTestTrait
      * Creates an $argv array from a command string
      *
      * @param string $command Command string
-     * @return string[]
+     * @return array<string>
      */
     protected function commandStringToArgs(string $command): array
     {
@@ -332,7 +307,7 @@ trait ConsoleIntegrationTestTrait
 
             // end of argument
             if ($char === ' ' && !$inDQuote && !$inSQuote) {
-                if (strlen($arg)) {
+                if ($arg !== '') {
                     $argv[] = $arg;
                 }
                 $arg = '';

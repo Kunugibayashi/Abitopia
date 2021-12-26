@@ -16,7 +16,7 @@ declare(strict_types=1);
  */
 namespace Cake\Event;
 
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 
 /**
  * The event manager is responsible for keeping track of event listeners, passing the correct
@@ -36,7 +36,7 @@ class EventManager implements EventManagerInterface
     /**
      * The globally available instance, used for dispatching events attached from any scope
      *
-     * @var \Cake\Event\EventManager
+     * @var \Cake\Event\EventManager|null
      */
     protected static $_generalManager;
 
@@ -130,7 +130,7 @@ class EventManager implements EventManagerInterface
      */
     protected function _attachSubscriber(EventListenerInterface $subscriber): void
     {
-        foreach ((array)$subscriber->implementedEvents() as $eventKey => $function) {
+        foreach ($subscriber->implementedEvents() as $eventKey => $function) {
             $options = [];
             $method = $function;
             if (is_array($function) && isset($function['callable'])) {
@@ -151,7 +151,7 @@ class EventManager implements EventManagerInterface
 
     /**
      * Auxiliary function to extract and return a PHP callback type out of the callable definition
-     * from the return value of the `implementedEvents` method on a Cake\Event\EventListenerInterface
+     * from the return value of the `implementedEvents()` method on a {@link \Cake\Event\EventListenerInterface}
      *
      * @param array $function the array taken from a handler definition for an event
      * @param \Cake\Event\EventListenerInterface $object The handler object
@@ -184,7 +184,7 @@ class EventManager implements EventManagerInterface
 
         if (!is_string($eventKey)) {
             if (!is_callable($eventKey)) {
-                throw new Exception(
+                throw new CakeException(
                     'First argument of EventManager::off() must be ' .
                     ' string or EventListenerInterface instance or callable.'
                 );
@@ -234,7 +234,7 @@ class EventManager implements EventManagerInterface
      */
     protected function _detachSubscriber(EventListenerInterface $subscriber, ?string $eventKey = null): void
     {
-        $events = (array)$subscriber->implementedEvents();
+        $events = $subscriber->implementedEvents();
         if (!empty($eventKey) && empty($events[$eventKey])) {
             return;
         }
@@ -406,7 +406,7 @@ class EventManager implements EventManagerInterface
      */
     public function trackEvents(bool $enabled)
     {
-        $this->_trackEvents = (bool)$enabled;
+        $this->_trackEvents = $enabled;
 
         return $this;
     }
@@ -451,7 +451,7 @@ class EventManager implements EventManagerInterface
     /**
      * Debug friendly object properties.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function __debugInfo(): array
     {
@@ -472,7 +472,7 @@ class EventManager implements EventManagerInterface
                 try {
                     $subject = $event->getSubject();
                     $properties['_dispatchedEvents'][] = $event->getName() . ' with subject ' . get_class($subject);
-                } catch (Exception $e) {
+                } catch (CakeException $e) {
                     $properties['_dispatchedEvents'][] = $event->getName() . ' with no subject';
                 }
             }

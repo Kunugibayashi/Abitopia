@@ -45,7 +45,7 @@ interface I18nDateTimeInterface extends ChronosInterface, JsonSerializable
      *
      * The format to be used is stored in the static property `Time::niceFormat`.
      *
-     * @param string|\DateTimeZone|null $timezone Timezone string or DateTimeZone object
+     * @param \DateTimeZone|string|null $timezone Timezone string or DateTimeZone object
      * in which the date will be displayed. The timezone stored for this object will not
      * be changed.
      * @param string|null $locale The locale name in which the date should be displayed (e.g. pt-BR)
@@ -103,7 +103,7 @@ interface I18nDateTimeInterface extends ChronosInterface, JsonSerializable
      * taken from the `intl.default_locale` ini config.
      *
      * @param string|int|null $format Format string.
-     * @param string|\DateTimeZone|null $timezone Timezone string or DateTimeZone object
+     * @param \DateTimeZone|string|null $timezone Timezone string or DateTimeZone object
      * in which the date will be displayed. The timezone stored for this object will not
      * be changed.
      * @param string|null $locale The locale name in which the date should be displayed (e.g. pt-BR)
@@ -122,15 +122,27 @@ interface I18nDateTimeInterface extends ChronosInterface, JsonSerializable
     /**
      * Sets the default format used when type converting instances of this type to string
      *
-     * @param string|array|int $format Format.
+     * @param array<int>|string|int $format Format.
      * @return void
      */
     public static function setToStringFormat($format): void;
 
     /**
-     * Sets the default format used when converting this object to json
+     * Sets the default format used when converting this object to JSON
      *
-     * @param string|array|int $format Format.
+     * The format should be either the formatting constants from IntlDateFormatter as
+     * described in (https://secure.php.net/manual/en/class.intldateformatter.php) or a pattern
+     * as specified in (http://www.icu-project.org/apiref/icu4c/classSimpleDateFormat.html#details)
+     *
+     * It is possible to provide an array of 2 constants. In this case, the first position
+     * will be used for formatting the date part of the object and the second position
+     * will be used to format the time part.
+     *
+     * Alternatively, the format can provide a callback. In this case, the callback
+     * can receive this datetime object and return a formatted string.
+     *
+     * @see \Cake\I18n\Time::i18nFormat()
+     * @param \Closure|array|string|int $format Format.
      * @return void
      */
     public static function setJsonEncodeFormat($format): void;
@@ -154,7 +166,7 @@ interface I18nDateTimeInterface extends ChronosInterface, JsonSerializable
      * ```
      *
      * @param string $time The time string to parse.
-     * @param string|int[]|null $format Any format accepted by IntlDateFormatter.
+     * @param array<int>|string|null $format Any format accepted by IntlDateFormatter.
      * @param \DateTimeZone|string|null $tz The timezone for the instance
      * @return static|null
      * @throws \InvalidArgumentException If $format is a single int instead of array of constants
@@ -180,7 +192,7 @@ interface I18nDateTimeInterface extends ChronosInterface, JsonSerializable
      * ```
      *
      * @param string $date The date string to parse.
-     * @param string|int|array|null $format Any format accepted by IntlDateFormatter.
+     * @param array|string|int|null $format Any format accepted by IntlDateFormatter.
      * @return static|null
      */
     public static function parseDate(string $date, $format = null);

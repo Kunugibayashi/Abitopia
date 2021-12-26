@@ -33,7 +33,7 @@ class ReconnectStrategy implements RetryStrategyInterface
      *
      * This is a static variable to enable opcache to inline the values.
      *
-     * @var array
+     * @var array<string>
      */
     protected static $causes = [
         'gone away',
@@ -72,12 +72,10 @@ class ReconnectStrategy implements RetryStrategyInterface
     }
 
     /**
-     * Checks whether or not the exception was caused by a lost connection,
-     * and returns true if it was able to successfully reconnect.
+     * {@inheritDoc}
      *
-     * @param \Exception $exception The exception to check for its message
-     * @param int $retryCount The number of times the action has been already called
-     * @return bool Whether or not it is OK to retry the action
+     * Checks whether the exception was caused by a lost connection,
+     * and returns true if it was able to successfully reconnect.
      */
     public function shouldRetry(Exception $exception, int $retryCount): bool
     {
@@ -95,7 +93,7 @@ class ReconnectStrategy implements RetryStrategyInterface
     /**
      * Tries to re-establish the connection to the server, if it is safe to do so
      *
-     * @return bool Whether or not the connection was re-established
+     * @return bool Whether the connection was re-established
      */
     protected function reconnect(): bool
     {

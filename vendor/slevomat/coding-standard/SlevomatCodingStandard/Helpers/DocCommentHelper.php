@@ -29,22 +29,31 @@ use const T_STATIC;
 use const T_TRAIT;
 use const T_WHITESPACE;
 
+/**
+ * @internal
+ */
 class DocCommentHelper
 {
 
 	public static function hasDocComment(File $phpcsFile, int $pointer): bool
 	{
-		return self::findDocCommentOpenToken($phpcsFile, $pointer) !== null;
+		return self::findDocCommentOpenPointer($phpcsFile, $pointer) !== null;
 	}
 
 	public static function getDocComment(File $phpcsFile, int $pointer): ?string
 	{
-		$docCommentOpenToken = self::findDocCommentOpenToken($phpcsFile, $pointer);
+		$docCommentOpenToken = self::findDocCommentOpenPointer($phpcsFile, $pointer);
 		if ($docCommentOpenToken === null) {
 			return null;
 		}
 
-		return trim(TokenHelper::getContent($phpcsFile, $docCommentOpenToken + 1, $phpcsFile->getTokens()[$docCommentOpenToken]['comment_closer'] - 1));
+		return trim(
+			TokenHelper::getContent(
+				$phpcsFile,
+				$docCommentOpenToken + 1,
+				$phpcsFile->getTokens()[$docCommentOpenToken]['comment_closer'] - 1
+			)
+		);
 	}
 
 	/**
@@ -54,7 +63,7 @@ class DocCommentHelper
 	 */
 	public static function getDocCommentDescription(File $phpcsFile, int $pointer): ?array
 	{
-		$docCommentOpenPointer = self::findDocCommentOpenToken($phpcsFile, $pointer);
+		$docCommentOpenPointer = self::findDocCommentOpenPointer($phpcsFile, $pointer);
 
 		if ($docCommentOpenPointer === null) {
 			return null;
@@ -111,7 +120,7 @@ class DocCommentHelper
 		return self::getDocCommentDescription($phpcsFile, $pointer) !== null;
 	}
 
-	public static function findDocCommentOpenToken(File $phpcsFile, int $pointer): ?int
+	public static function findDocCommentOpenPointer(File $phpcsFile, int $pointer): ?int
 	{
 		$tokens = $phpcsFile->getTokens();
 
@@ -137,7 +146,14 @@ class DocCommentHelper
 
 		$nextPointer = TokenHelper::findNextExcluding($phpcsFile, T_WHITESPACE, $tokens[$docCommentOpenPointer]['comment_closer'] + 1);
 
-		if ($nextPointer !== null && in_array($tokens[$nextPointer]['code'], [T_PUBLIC, T_PROTECTED, T_PRIVATE, T_FINAL, T_STATIC, T_ABSTRACT, T_CONST, T_CLASS, T_INTERFACE, T_TRAIT], true)) {
+		if (
+			$nextPointer !== null
+			&& in_array(
+				$tokens[$nextPointer]['code'],
+				[T_PUBLIC, T_PROTECTED, T_PRIVATE, T_FINAL, T_STATIC, T_ABSTRACT, T_CONST, T_CLASS, T_INTERFACE, T_TRAIT],
+				true
+			)
+		) {
 			return false;
 		}
 

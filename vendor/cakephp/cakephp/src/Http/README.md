@@ -9,7 +9,7 @@ handle incoming server requests and send outgoing HTTP requests.
 
 ## Using the Http Client
 
-Sending requests is straight forward. Doing a GET request looks like
+Sending requests is straight forward. Doing a GET request looks like:
 
 ```php
 use Cake\Http\Client;
@@ -34,13 +34,16 @@ To learn more read the [Http Client documentation](https://book.cakephp.org/4/en
 
 The Http Server allows an `HttpApplicationInterface` to process requests and
 emit responses. To get started first implement the
-`Cake\Http\HttpApplicationInterface`  A minimal example would could look like:
+`Cake\Http\HttpApplicationInterface`  A minimal example could look like:
 
 ```php
 namespace App;
 
 use Cake\Core\HttpApplicationInterface;
 use Cake\Http\MiddlewareQueue;
+use Cake\Http\Response;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 class Application implements HttpApplicationInterface
 {
@@ -65,6 +68,17 @@ class Application implements HttpApplicationInterface
     {
         // Add middleware for your application.
         return $middlewareQueue;
+    }
+
+    /**
+     * Handle incoming server request and return a response.
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request The request
+     * @return \Psr\Http\Message\ResponseInterface
+     */
+    public function handle(ServerRequestInterface $request): ResponseInterface
+    {
+        return new Response(['body'=>'Hello World!']);
     }
 }
 ```

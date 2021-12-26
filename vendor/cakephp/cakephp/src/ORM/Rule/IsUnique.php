@@ -17,6 +17,7 @@ declare(strict_types=1);
 namespace Cake\ORM\Rule;
 
 use Cake\Datasource\EntityInterface;
+use Cake\Utility\Hash;
 
 /**
  * Checks that a list of fields from an entity are unique in the table
@@ -26,25 +27,33 @@ class IsUnique
     /**
      * The list of fields to check
      *
-     * @var string[]
+     * @var array<string>
      */
     protected $_fields;
 
     /**
-     * The options to use.
+     * The unique check options
      *
-     * @var array
+     * @var array<string, mixed>
      */
-    protected $_options;
+    protected $_options = [
+        'allowMultipleNulls' => false,
+    ];
 
     /**
      * Constructor.
      *
-     * @param string[] $fields The list of fields to check uniqueness for
+     * ### Options
+     *
+     * - `allowMultipleNulls` Allows any field to have multiple null values. Defaults to false.
+     *
+     * @param array<string> $fields The list of fields to check uniqueness for
+     * @param array<string, mixed> $options The options for unique checks.
      */
-    public function __construct(array $fields)
+    public function __construct(array $fields, array $options = [])
     {
         $this->_fields = $fields;
+        $this->_options = $options + $this->_options;
     }
 
     /**
@@ -52,7 +61,7 @@ class IsUnique
      *
      * @param \Cake\Datasource\EntityInterface $entity The entity from where to extract the fields
      *   where the `repository` key is required.
-     * @param array $options Options passed to the check,
+     * @param array<string, mixed> $options Options passed to the check,
      * @return bool
      */
     public function __invoke(EntityInterface $entity, array $options): bool
@@ -61,12 +70,17 @@ class IsUnique
             return true;
         }
 
+        $fields = $entity->extract($this->_fields);
+        if ($this->_options['allowMultipleNulls'] && array_filter($fields, 'is_null')) {
+            return true;
+        }
+
         $alias = $options['repository']->getAlias();
-        $conditions = $this->_alias($alias, $entity->extract($this->_fields));
+        $conditions = $this->_alias($alias, $fields);
         if ($entity->isNew() === false) {
             $keys = (array)$options['repository']->getPrimaryKey();
             $keys = $this->_alias($alias, $entity->extract($keys));
-            if (array_filter($keys, 'strlen')) {
+            if (Hash::filter($keys)) {
                 $conditions['NOT'] = $keys;
             }
         }

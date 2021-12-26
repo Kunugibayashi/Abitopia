@@ -134,7 +134,7 @@ class IdentifierQuoter
     protected function _basicQuoter(array $part): array
     {
         $result = [];
-        foreach ((array)$part as $alias => $value) {
+        foreach ($part as $alias => $value) {
             $value = !is_string($value) ? $value : $this->_driver->quoteIdentifier($value);
             $alias = is_numeric($alias) ? $alias : $this->_driver->quoteIdentifier($alias);
             $result[$alias] = $value;
@@ -178,7 +178,11 @@ class IdentifierQuoter
      */
     protected function _quoteInsert(Query $query): void
     {
-        [$table, $columns] = $query->clause('insert');
+        $insert = $query->clause('insert');
+        if (!isset($insert[0]) || !isset($insert[1])) {
+            return;
+        }
+        [$table, $columns] = $insert;
         $table = $this->_driver->quoteIdentifier($table);
         foreach ($columns as &$column) {
             if (is_scalar($column)) {

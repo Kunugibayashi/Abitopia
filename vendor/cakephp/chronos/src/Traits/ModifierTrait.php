@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Cake\Chronos\Traits;
 
 use Cake\Chronos\ChronosInterface;
+use ReturnTypeWillChange;
 
 /**
  * Provides a suite of modifier methods.
@@ -109,6 +110,7 @@ trait ModifierTrait
      * @param int $day The day to set.
      * @return static
      */
+    #[ReturnTypeWillChange]
     public function setDate($year, $month, $day): ChronosInterface
     {
         return $this->modify('+0 day')->setDateParent($year, $month, $day);
@@ -158,7 +160,7 @@ trait ModifierTrait
      */
     public function setTimeFromTimeString(string $time): ChronosInterface
     {
-        $time = explode(":", $time);
+        $time = explode(':', $time);
         $hour = $time[0];
         $minute = $time[1] ?? 0;
         $second = $time[2] ?? 0;
@@ -241,6 +243,17 @@ trait ModifierTrait
     public function second(int $value): ChronosInterface
     {
         return $this->setTime($this->hour, $this->minute, $value);
+    }
+
+    /**
+     * Set the instance's microsecond
+     *
+     * @param int $value The microsecond value.
+     * @return static
+     */
+    public function microsecond(int $value): ChronosInterface
+    {
+        return $this->setTime($this->hour, $this->minute, $this->second, $value);
     }
 
     /**

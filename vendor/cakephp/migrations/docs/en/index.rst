@@ -264,7 +264,7 @@ an invalid value. Default field type is ``string``:
 
 * id: integer
 * created, modified, updated: datetime
-* latitude, longitude: decimal
+* latitude, longitude (or short forms lat, lng): decimal
 
 Creating a table
 ----------------
@@ -769,7 +769,7 @@ To seed your database, you can use the ``seed`` subcommand:
     # You can specify only one seeder to be run using the `--seed` option
     bin/cake migrations seed --seed ArticlesSeed
 
-    # You can run seeders from an alternative directory
+    # You can run seeders from an alternative directory, relative to config
     bin/cake migrations seed --source AlternativeSeeds
 
     # You can run seeders from a plugin
@@ -830,6 +830,59 @@ Dump files are created in the same directory as your migrations files.
 
 You can also use the ``--source``, ``--connection`` and ``--plugin`` options
 just like for the ``migrate`` command.
+
+
+Using Migrations for Tests
+==========================
+
+If you are using migrations for your application schema you can also use those
+same migrations to build schema in your tests. In your application's
+``tests/bootstrap.php`` file you can use the ``Migrator`` class to build schema
+when tests are run. The ``Migrator`` will use existing schema if it is current,
+and if the migration history that is in the database differs from what is in the
+filesystem, all tables will be dropped and migrations will be rerun from the
+beginning::
+
+    // in tests/bootstrap.php
+    use Migrations\TestSuite\Migrator;
+
+    $migrator = new Migrator();
+
+    // Simple setup for with no plugins
+    $migrator->run();
+
+    // Run a non 'test' database
+    $migrator->run(['connection' => 'test_other']);
+
+    // Run migrations for plugins
+    $migrator->run(['plugin' => 'Contacts']);
+
+    // Run the Documents migrations on the test_docs connection.
+    $migrator->run(['plugin' => 'Documents', 'connection' => 'test_docs']);
+
+
+If you need to run multiple sets of migrations, those can be run as follows::
+
+    // Run migrations for plugin Contacts on the ``test`` connection, and Documents on the ``test_docs`` connection
+    $migrator->runMany([
+        ['plugin' => 'Contacts'],
+        ['plugin' => 'Documents', 'connection' => 'test_docs']
+    ]);
+
+If your database also contains tables that are not managed by your application
+like those created by PostGIS, then you can exclude those tables from the drop
+& truncate behavior using the ``skip`` option::
+
+    $migrator->run(['connection' => 'test', 'skip' => 'postgis*']);
+
+The ``skip`` option accepts a ``fnmatch()`` compatible pattern to exclude tables
+from drop & truncate operations.
+
+If you need to see additional debugging output from migrations are being run,
+you can enable a ``debug`` level logger.
+
+.. versionadded: 3.2.0
+    Migrator was added to complement the new fixtures in CakePHP 4.3.0.
 
 Using Migrations In Plugins
 ===========================

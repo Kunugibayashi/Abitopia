@@ -26,6 +26,7 @@ use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\ORM\Marshaller;
 use Cake\ORM\Query;
 use Cake\ORM\Table;
+use Cake\Utility\Hash;
 
 /**
  * This class provides a way to translate dynamic data by keeping translations
@@ -44,7 +45,7 @@ class ShadowTableStrategy implements TranslateStrategyInterface
      *
      * These are merged with user-provided configuration.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'fields' => [],
@@ -61,7 +62,7 @@ class ShadowTableStrategy implements TranslateStrategyInterface
      * Constructor
      *
      * @param \Cake\ORM\Table $table Table instance.
-     * @param array $config Configuration.
+     * @param array<string, mixed> $config Configuration.
      */
     public function __construct(Table $table, array $config = [])
     {
@@ -81,7 +82,10 @@ class ShadowTableStrategy implements TranslateStrategyInterface
 
         $this->setConfig($config);
         $this->table = $table;
-        $this->translationTable = $this->getTableLocator()->get($this->_config['translationTable']);
+        $this->translationTable = $this->getTableLocator()->get(
+            $this->_config['translationTable'],
+            ['allowFallbackClass' => true]
+        );
 
         $this->setupAssociations();
     }
@@ -98,7 +102,8 @@ class ShadowTableStrategy implements TranslateStrategyInterface
     {
         $config = $this->getConfig();
 
-        $this->table->hasMany($config['translationTable'], [
+        $targetAlias = $this->translationTable->getAlias();
+        $this->table->hasMany($targetAlias, [
             'className' => $config['translationTable'],
             'foreignKey' => 'id',
             'strategy' => $config['strategy'],
@@ -119,13 +124,56 @@ class ShadowTableStrategy implements TranslateStrategyInterface
      */
     public function beforeFind(EventInterface $event, Query $query, ArrayObject $options)
     {
-        $locale = $this->getLocale();
+        $locale = Hash::get($options, 'locale', $this->getLocale());
+        $config = $this->getConfig();
 
-        if ($locale === $this->getConfig('defaultLocale')) {
+        if ($locale === $config['defaultLocale']) {
             return;
         }
 
+        $this->setupHasOneAssociation($locale, $options);
+
+        $fieldsAdded = $this->addFieldsToQuery($query, $config);
+        $orderByTranslatedField = $this->iterateClause($query, 'order', $config);
+        $filteredByTranslatedField =
+            $this->traverseClause($query, 'where', $config) ||
+            $config['onlyTranslated'] ||
+            ($options['filterByCurrentLocale'] ?? null);
+
+        if (!$fieldsAdded && !$orderByTranslatedField && !$filteredByTranslatedField) {
+            return;
+        }
+
+        $query->contain([$config['hasOneAlias']]);
+
+        $query->formatResults(function ($results) use ($locale) {
+            return $this->rowMapper($results, $locale);
+        }, $query::PREPEND);
+    }
+
+    /**
+     * Create a hasOne association for record with required locale.
+     *
+     * @param string $locale Locale
+     * @param \ArrayObject $options Find options
+     * @return void
+     */
+    protected function setupHasOneAssociation(string $locale, ArrayObject $options): void
+    {
         $config = $this->getConfig();
+
+        [$plugin] = pluginSplit($config['translationTable']);
+        $hasOneTargetAlias = $plugin ? ($plugin . '.' . $config['hasOneAlias']) : $config['hasOneAlias'];
+        if (!$this->getTableLocator()->exists($hasOneTargetAlias)) {
+            // Load table before hand with fallback class usage enabled
+            $this->getTableLocator()->get(
+                $hasOneTargetAlias,
+                [
+                    'className' => $config['translationTable'],
+                    'allowFallbackClass' => true,
+                ]
+            );
+        }
 
         if (isset($options['filterByCurrentLocale'])) {
             $joinType = $options['filterByCurrentLocale'] ? 'INNER' : 'LEFT';
@@ -142,20 +190,6 @@ class ShadowTableStrategy implements TranslateStrategyInterface
                 $config['hasOneAlias'] . '.locale' => $locale,
             ],
         ]);
-
-        $fieldsAdded = $this->addFieldsToQuery($query, $config);
-        $orderByTranslatedField = $this->iterateClause($query, 'order', $config);
-        $filteredByTranslatedField = $this->traverseClause($query, 'where', $config);
-
-        if (!$fieldsAdded && !$orderByTranslatedField && !$filteredByTranslatedField) {
-            return;
-        }
-
-        $query->contain([$config['hasOneAlias']]);
-
-        $query->formatResults(function ($results) use ($locale) {
-            return $this->rowMapper($results, $locale);
-        }, $query::PREPEND);
     }
 
     /**
@@ -168,7 +202,7 @@ class ShadowTableStrategy implements TranslateStrategyInterface
      * add the locale field though.
      *
      * @param \Cake\ORM\Query $query The query to check.
-     * @param array $config The config to use for adding fields.
+     * @param array<string, mixed> $config The config to use for adding fields.
      * @return bool Whether a join to the translation table is required.
      */
     protected function addFieldsToQuery($query, array $config)
@@ -210,7 +244,7 @@ class ShadowTableStrategy implements TranslateStrategyInterface
      *
      * @param \Cake\ORM\Query $query the query to check.
      * @param string $name The clause name.
-     * @param array $config The config to use for adding fields.
+     * @param array<string, mixed> $config The config to use for adding fields.
      * @return bool Whether a join to the translation table is required.
      */
     protected function iterateClause($query, $name = '', $config = []): bool
@@ -232,6 +266,7 @@ class ShadowTableStrategy implements TranslateStrategyInterface
                     return $c;
                 }
 
+                /** @psalm-suppress ParadoxicalCondition */
                 if (in_array($field, $fields, true)) {
                     $joinRequired = true;
                     $field = "$alias.$field";
@@ -255,7 +290,7 @@ class ShadowTableStrategy implements TranslateStrategyInterface
      *
      * @param \Cake\ORM\Query $query the query to check.
      * @param string $name The clause name.
-     * @param array $config The config to use for adding fields.
+     * @param array<string, mixed> $config The config to use for adding fields.
      * @return bool Whether a join to the translation table is required.
      */
     protected function traverseClause($query, $name = '', $config = []): bool
@@ -288,6 +323,7 @@ class ShadowTableStrategy implements TranslateStrategyInterface
                     return;
                 }
 
+                /** @psalm-suppress ParadoxicalCondition */
                 if (in_array($field, $mainTableFields, true)) {
                     $expression->setField("$mainTableAlias.$field");
                 }
@@ -438,7 +474,7 @@ class ShadowTableStrategy implements TranslateStrategyInterface
     {
         $allowEmpty = $this->_config['allowEmptyTranslations'];
 
-        return $results->map(function ($row) use ($allowEmpty) {
+        return $results->map(function ($row) use ($allowEmpty, $locale) {
             /** @var \Cake\Datasource\EntityInterface|array|null $row */
             if ($row === null) {
                 return $row;
@@ -447,10 +483,11 @@ class ShadowTableStrategy implements TranslateStrategyInterface
             $hydrated = !is_array($row);
 
             if (empty($row['translation'])) {
-                $row['_locale'] = $this->getLocale();
+                $row['_locale'] = $locale;
                 unset($row['translation']);
 
                 if ($hydrated) {
+                    /** @psalm-suppress PossiblyInvalidMethodCall */
                     $row->clean();
                 }
 
@@ -482,6 +519,7 @@ class ShadowTableStrategy implements TranslateStrategyInterface
             unset($row['translation']);
 
             if ($hydrated) {
+                /** @psalm-suppress PossiblyInvalidMethodCall */
                 $row->clean();
             }
 

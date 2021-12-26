@@ -65,7 +65,7 @@ class FloatType extends BaseType implements BatchCastingInterface
      * @param mixed $value The value to convert.
      * @param \Cake\Database\DriverInterface $driver The driver instance to convert with.
      * @return float|null
-     * @throws \Cake\Core\Exception\Exception
+     * @throws \Cake\Core\Exception\CakeException
      */
     public function toPHP($value, DriverInterface $driver): ?float
     {
@@ -93,7 +93,7 @@ class FloatType extends BaseType implements BatchCastingInterface
     }
 
     /**
-     * Get the correct PDO binding type for integer data.
+     * Get the correct PDO binding type for float data.
      *
      * @param mixed $value The value being bound.
      * @param \Cake\Database\DriverInterface $driver The driver.
@@ -129,10 +129,10 @@ class FloatType extends BaseType implements BatchCastingInterface
     }
 
     /**
-     * Sets whether or not to parse numbers passed to the marshal() function
+     * Sets whether to parse numbers passed to the marshal() function
      * by using a locale aware parser.
      *
-     * @param bool $enable Whether or not to enable
+     * @param bool $enable Whether to enable
      * @return $this
      */
     public function useLocaleParser(bool $enable = true)

@@ -30,7 +30,7 @@ class ContextFactory
     /**
      * Context providers.
      *
-     * @var array
+     * @var array<string, array>
      */
     protected $providers = [];
 
@@ -61,17 +61,17 @@ class ContextFactory
                 'type' => 'orm',
                 'callable' => function ($request, $data) {
                     if ($data['entity'] instanceof EntityInterface) {
-                        return new EntityContext($request, $data);
+                        return new EntityContext($data);
                     }
                     if (isset($data['table'])) {
-                        return new EntityContext($request, $data);
+                        return new EntityContext($data);
                     }
                     if (is_iterable($data['entity'])) {
                         $pass = (new Collection($data['entity']))->first() !== null;
                         if ($pass) {
-                            return new EntityContext($request, $data);
+                            return new EntityContext($data);
                         } else {
-                            return new NullContext($request, $data);
+                            return new NullContext($data);
                         }
                     }
                 },
@@ -80,7 +80,7 @@ class ContextFactory
                 'type' => 'form',
                 'callable' => function ($request, $data) {
                     if ($data['entity'] instanceof Form) {
-                        return new FormContext($request, $data);
+                        return new FormContext($data);
                     }
                 },
             ],
@@ -88,7 +88,7 @@ class ContextFactory
                 'type' => 'array',
                 'callable' => function ($request, $data) {
                     if (is_array($data['entity']) && isset($data['entity']['schema'])) {
-                        return new ArrayContext($request, $data['entity']);
+                        return new ArrayContext($data['entity']);
                     }
                 },
             ],
@@ -96,7 +96,7 @@ class ContextFactory
                 'type' => 'null',
                 'callable' => function ($request, $data) {
                     if ($data['entity'] === null) {
-                        return new NullContext($request, $data);
+                        return new NullContext($data);
                     }
                 },
             ],
@@ -134,9 +134,9 @@ class ContextFactory
      * If no type can be matched a NullContext will be returned.
      *
      * @param \Cake\Http\ServerRequest $request Request instance.
-     * @param array $data The data to get a context provider for.
+     * @param array<string, mixed> $data The data to get a context provider for.
      * @return \Cake\View\Form\ContextInterface Context provider.
-     * @throws \RuntimeException When a context instace cannot be generated for given entity.
+     * @throws \RuntimeException When a context instance cannot be generated for given entity.
      */
     public function get(ServerRequest $request, array $data = []): ContextInterface
     {

@@ -23,6 +23,8 @@ use IntlDateFormatter;
  * Extends the Date class provided by Chronos.
  *
  * Adds handy methods and locale-aware formatting helpers
+ *
+ * @deprecated 4.3.0 Use the immutable alternative `FrozenDate` instead.
  */
 class Date extends MutableDate implements I18nDateTimeInterface
 {
@@ -40,10 +42,10 @@ class Date extends MutableDate implements I18nDateTimeInterface
      * will be used for formatting the date part of the object and the second position
      * will be used to format the time part.
      *
-     * @var string|array|int
+     * @var array<int>|string|int
      * @see \Cake\I18n\DateFormatTrait::i18nFormat()
      */
-    protected static $_toStringFormat = [IntlDateFormatter::SHORT, -1];
+    protected static $_toStringFormat = [IntlDateFormatter::SHORT, IntlDateFormatter::NONE];
 
     /**
      * The format to use when converting this object to JSON.
@@ -56,19 +58,19 @@ class Date extends MutableDate implements I18nDateTimeInterface
      * will be used for formatting the date part of the object and the second position
      * will be used to format the time part.
      *
-     * @var string|array|int
+     * @var \Closure|array<int>|string|int
      * @see \Cake\I18n\Time::i18nFormat()
      */
-    protected static $_jsonEncodeFormat = "yyyy-MM-dd";
+    protected static $_jsonEncodeFormat = 'yyyy-MM-dd';
 
     /**
      * The format to use when formatting a time using `Cake\I18n\Date::timeAgoInWords()`
      * and the difference is more than `Cake\I18n\Date::$wordEnd`
      *
-     * @var string|array|int
+     * @var array<int>|string|int
      * @see \Cake\I18n\DateFormatTrait::parseDate()
      */
-    public static $wordFormat = [IntlDateFormatter::SHORT, -1];
+    public static $wordFormat = [IntlDateFormatter::SHORT, IntlDateFormatter::NONE];
 
     /**
      * The format to use when formatting a time using `Cake\I18n\Date::nice()`
@@ -81,16 +83,16 @@ class Date extends MutableDate implements I18nDateTimeInterface
      * will be used for formatting the date part of the object and the second position
      * will be used to format the time part.
      *
-     * @var string|array|int
+     * @var array<int>|string|int
      * @see \Cake\I18n\DateFormatTrait::nice()
      */
-    public static $niceFormat = [IntlDateFormatter::MEDIUM, -1];
+    public static $niceFormat = [IntlDateFormatter::MEDIUM, IntlDateFormatter::NONE];
 
     /**
      * The format to use when formatting a time using `Date::timeAgoInWords()`
      * and the difference is less than `Date::$wordEnd`
      *
-     * @var string[]
+     * @var array<string>
      * @see \Cake\I18n\Date::timeAgoInWords()
      */
     public static $wordAccuracy = [
@@ -122,15 +124,20 @@ class Date extends MutableDate implements I18nDateTimeInterface
      *
      * Date instances lack time components, however due to limitations in PHP's
      * internal Datetime object the time will always be set to 00:00:00, and the
-     * timezone will always be UTC. Normalizing the timezone allows for
+     * timezone will always be the server local time. Normalizing the timezone allows for
      * subtraction/addition to have deterministic results.
      *
-     * @param string|int|\DateTimeInterface|null $time Fixed or relative time
+     * @param \DateTime|\DateTimeImmutable|string|int|null $time Fixed or relative time
      * @param \DateTimeZone|string|null $tz The timezone in which the date is taken.
      *                                  Ignored if `$time` is a DateTimeInterface instance.
      */
     public function __construct($time = 'now', $tz = null)
     {
+        deprecationWarning(
+            'The `Date` class has been deprecated. Use the immutable alternative `FrozenDate` instead',
+            0
+        );
+
         parent::__construct($time, $tz);
     }
 
@@ -165,7 +172,7 @@ class Date extends MutableDate implements I18nDateTimeInterface
      *
      * NOTE: If the difference is one week or more, the lowest level of accuracy is day.
      *
-     * @param array $options Array of options.
+     * @param array<string, mixed> $options Array of options.
      * @return string Relative time string.
      */
     public function timeAgoInWords(array $options = []): string

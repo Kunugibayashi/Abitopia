@@ -110,7 +110,7 @@ if (!function_exists('namespaceSplit')) {
      * Commonly used like `list($namespace, $className) = namespaceSplit($class);`.
      *
      * @param string $class The full class name, ie `Cake\Core\App`.
-     * @return string[] Array with 2 indexes. 0 => namespace, 1 => classname.
+     * @return array<string> Array with 2 indexes. 0 => namespace, 1 => classname.
      */
     function namespaceSplit(string $class): array
     {
@@ -128,8 +128,8 @@ if (!function_exists('pr')) {
     /**
      * print_r() convenience function.
      *
-     * In terminals this will act similar to using print_r() directly, when not run on cli
-     * print_r() will also wrap <pre> tags around the output of given variable. Similar to debug().
+     * In terminals this will act similar to using print_r() directly, when not run on CLI
+     * print_r() will also wrap `<pre>` tags around the output of given variable. Similar to debug().
      *
      * This function returns the same variable that was passed.
      *
@@ -154,10 +154,10 @@ if (!function_exists('pr')) {
 
 if (!function_exists('pj')) {
     /**
-     * json pretty print convenience function.
+     * JSON pretty print convenience function.
      *
-     * In terminals this will act similar to using json_encode() with JSON_PRETTY_PRINT directly, when not run on cli
-     * will also wrap <pre> tags around the output of given variable. Similar to pr().
+     * In terminals this will act similar to using json_encode() with JSON_PRETTY_PRINT directly, when not run on CLI
+     * will also wrap `<pre>` tags around the output of given variable. Similar to pr().
      *
      * This function returns the same variable that was passed.
      *
@@ -173,7 +173,7 @@ if (!function_exists('pj')) {
         }
 
         $template = PHP_SAPI !== 'cli' && PHP_SAPI !== 'phpdbg' ? '<pre class="pj">%s</pre>' : "\n%s\n\n";
-        printf($template, trim(json_encode($var, JSON_PRETTY_PRINT)));
+        printf($template, trim(json_encode($var, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)));
 
         return $var;
     }
@@ -206,12 +206,8 @@ if (!function_exists('env')) {
             $key = 'SCRIPT_URL';
         }
 
-        $val = null;
-        if (isset($_SERVER[$key])) {
-            $val = $_SERVER[$key];
-        } elseif (isset($_ENV[$key])) {
-            $val = $_ENV[$key];
-        } elseif (getenv($key) !== false) {
+        $val = $_SERVER[$key] ?? $_ENV[$key] ?? null;
+        if ($val == null && getenv($key) !== false) {
             $val = getenv($key);
         }
 
@@ -256,10 +252,9 @@ if (!function_exists('triggerWarning')) {
      */
     function triggerWarning(string $message): void
     {
-        $stackFrame = 1;
         $trace = debug_backtrace();
-        if (isset($trace[$stackFrame])) {
-            $frame = $trace[$stackFrame];
+        if (isset($trace[1])) {
+            $frame = $trace[1];
             $frame += ['file' => '[internal]', 'line' => '??'];
             $message = sprintf(
                 '%s - %s, line: %s',
@@ -292,14 +287,35 @@ if (!function_exists('deprecationWarning')) {
             $frame = $trace[$stackFrame];
             $frame += ['file' => '[internal]', 'line' => '??'];
 
+            $relative = str_replace(DIRECTORY_SEPARATOR, '/', substr($frame['file'], strlen(ROOT) + 1));
+            $patterns = (array)Configure::read('Error.ignoredDeprecationPaths');
+            foreach ($patterns as $pattern) {
+                $pattern = str_replace(DIRECTORY_SEPARATOR, '/', $pattern);
+                if (fnmatch($pattern, $relative)) {
+                    return;
+                }
+            }
+
             $message = sprintf(
-                '%s - %s, line: %s' . "\n" .
-                ' You can disable deprecation warnings by setting `Error.errorLevel` to' .
-                ' `E_ALL & ~E_USER_DEPRECATED` in your config/app.php.',
+                "%s\n%s, line: %s\n" .
+                'You can disable all deprecation warnings by setting `Error.errorLevel` to ' .
+                '`E_ALL & ~E_USER_DEPRECATED`. Adding `%s` to `Error.ignoredDeprecationPaths` ' .
+                'in your `config/app.php` config will mute deprecations from that file only.',
                 $message,
                 $frame['file'],
-                $frame['line']
+                $frame['line'],
+                $relative
             );
+        }
+
+        static $errors = [];
+        $checksum = md5($message);
+        $duplicate = (bool)Configure::read('Error.allowDuplicateDeprecations', false);
+        if (isset($errors[$checksum]) && !$duplicate) {
+            return;
+        }
+        if (!$duplicate) {
+            $errors[$checksum] = true;
         }
 
         trigger_error($message, E_USER_DEPRECATED);

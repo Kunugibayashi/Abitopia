@@ -58,7 +58,7 @@ abstract class AbstractAdapter implements AdapterInterface
      * @param \Symfony\Component\Console\Input\InputInterface|null $input Input Interface
      * @param \Symfony\Component\Console\Output\OutputInterface|null $output Output Interface
      */
-    public function __construct(array $options, InputInterface $input = null, OutputInterface $output = null)
+    public function __construct(array $options, ?InputInterface $input = null, ?OutputInterface $output = null)
     {
         $this->setOptions($options);
         if ($input !== null) {
@@ -158,7 +158,6 @@ abstract class AbstractAdapter implements AdapterInterface
 
     /**
      * @inheritDoc
-     *
      * @return array
      */
     public function getVersions()
@@ -182,7 +181,6 @@ abstract class AbstractAdapter implements AdapterInterface
      * Sets the schema table name.
      *
      * @param string $schemaTableName Schema Table Name
-     *
      * @return $this
      */
     public function setSchemaTableName($schemaTableName)
@@ -298,9 +296,7 @@ abstract class AbstractAdapter implements AdapterInterface
 
     /**
      * @inheritDoc
-     *
      * @throws \InvalidArgumentException
-     *
      * @return void
      */
     public function createSchemaTable()
@@ -353,18 +349,18 @@ abstract class AbstractAdapter implements AdapterInterface
         /** @var \Symfony\Component\Console\Input\InputInterface|null $input */
         $input = $this->getInput();
 
-        return ($input && $input->hasOption('dry-run')) ? (bool)$input->getOption('dry-run') : false;
+        return $input && $input->hasOption('dry-run') ? (bool)$input->getOption('dry-run') : false;
     }
 
     /**
      * Adds user-created tables (e.g. not phinxlog) to a cached list
      *
      * @param string $tableName The name of the table
-     *
      * @return void
      */
     protected function addCreatedTable($tableName)
     {
+        $tableName = $this->quoteTableName($tableName);
         if (substr_compare($tableName, 'phinxlog', -strlen('phinxlog')) !== 0) {
             $this->createdTables[] = $tableName;
         }
@@ -375,11 +371,12 @@ abstract class AbstractAdapter implements AdapterInterface
      *
      * @param string $tableName Original name of the table
      * @param string $newTableName New name of the table
-     *
      * @return void
      */
     protected function updateCreatedTableName($tableName, $newTableName)
     {
+        $tableName = $this->quoteTableName($tableName);
+        $newTableName = $this->quoteTableName($newTableName);
         $key = array_search($tableName, $this->createdTables, true);
         if ($key !== false) {
             $this->createdTables[$key] = $newTableName;
@@ -390,11 +387,11 @@ abstract class AbstractAdapter implements AdapterInterface
      * Removes table from the cached created list
      *
      * @param string $tableName The name of the table
-     *
      * @return void
      */
     protected function removeCreatedTable($tableName)
     {
+        $tableName = $this->quoteTableName($tableName);
         $key = array_search($tableName, $this->createdTables, true);
         if ($key !== false) {
             unset($this->createdTables[$key]);
@@ -405,11 +402,12 @@ abstract class AbstractAdapter implements AdapterInterface
      * Check if the table is in the cached list of created tables
      *
      * @param string $tableName The name of the table
-     *
      * @return bool
      */
     protected function hasCreatedTable($tableName)
     {
+        $tableName = $this->quoteTableName($tableName);
+
         return in_array($tableName, $this->createdTables, true);
     }
 }

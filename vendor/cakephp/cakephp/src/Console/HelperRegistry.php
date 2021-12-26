@@ -52,7 +52,7 @@ class HelperRegistry extends ObjectRegistry
      * Will prefer helpers defined in Command\Helper over those
      * defined in Shell\Helper.
      *
-     * Part of the template method for Cake\Core\ObjectRegistry::load()
+     * Part of the template method for {@link \Cake\Core\ObjectRegistry::load()}.
      *
      * @param string $class Partial classname to resolve.
      * @return string|null Either the correct class name or null.
@@ -94,14 +94,13 @@ class HelperRegistry extends ObjectRegistry
      *
      * @param string $class The classname to create.
      * @param string $alias The alias of the helper.
-     * @param array $settings An array of settings to use for the helper.
+     * @param array<string, mixed> $config An array of settings to use for the helper.
      * @return \Cake\Console\Helper The constructed helper class.
      * @psalm-suppress MoreSpecificImplementedParamType
      */
-    protected function _create($class, string $alias, array $settings): Helper
+    protected function _create($class, string $alias, array $config): Helper
     {
-        // phpcs:ignore SlevomatCodingStandard.Commenting.InlineDocCommentDeclaration.InvalidFormat
         /** @var \Cake\Console\Helper */
-        return new $class($this->_io, $settings);
+        return new $class($this->_io, $config);
     }
 }

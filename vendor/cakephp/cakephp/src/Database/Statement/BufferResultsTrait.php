@@ -24,21 +24,21 @@ namespace Cake\Database\Statement;
 trait BufferResultsTrait
 {
     /**
-     * Whether or not to buffer results in php
+     * Whether to buffer results in php
      *
      * @var bool
      */
     protected $_bufferResults = true;
 
     /**
-     * Whether or not to buffer results in php
+     * Whether to buffer results in php
      *
      * @param bool $buffer Toggle buffering
      * @return $this
      */
     public function bufferResults(bool $buffer)
     {
-        $this->_bufferResults = (bool)$buffer;
+        $this->_bufferResults = $buffer;
 
         return $this;
     }

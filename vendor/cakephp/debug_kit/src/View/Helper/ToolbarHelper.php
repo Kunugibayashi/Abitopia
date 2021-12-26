@@ -16,6 +16,11 @@ declare(strict_types=1);
 namespace DebugKit\View\Helper;
 
 use ArrayAccess;
+use Cake\Error\Debug\ArrayItemNode;
+use Cake\Error\Debug\ArrayNode;
+use Cake\Error\Debug\HtmlFormatter;
+use Cake\Error\Debug\ScalarNode;
+use Cake\Error\Debugger;
 use Cake\View\Helper;
 use Closure;
 use Iterator;
@@ -56,6 +61,66 @@ class ToolbarHelper extends Helper
     }
 
     /**
+     * Dump an array of nodes
+     *
+     * @param \Cake\Error\Debug\NodeInterface[] $nodes An array of dumped variables.
+     *   Variables should be keyed by the name they had in the view.
+     * @return string Formatted HTML
+     */
+    public function dumpNodes(array $nodes): string
+    {
+        /** @psalm-suppress InternalMethod */
+        $formatter = new HtmlFormatter();
+        if ($this->sort) {
+            ksort($nodes);
+        }
+        $items = [];
+        foreach ($nodes as $key => $value) {
+            $items[] = new ArrayItemNode(new ScalarNode('string', $key), $value);
+        }
+        $root = new ArrayNode($items);
+
+        return implode([
+            '<div class="cake-debug-output cake-debug" style="direction:ltr">',
+            $formatter->dump($root),
+            '</div>',
+        ]);
+    }
+
+    /**
+     * Dump the value in $value into an interactive HTML output.
+     *
+     * @param mixed $value The value to output.
+     * @return string Formatted HTML
+     * @deprecated 4.4.0
+     */
+    public function dump($value)
+    {
+        $debugger = Debugger::getInstance();
+        $exportFormatter = $debugger->getConfig('exportFormatter');
+        $restore = false;
+        if ($exportFormatter !== HtmlFormatter::class) {
+            $restore = true;
+            $debugger->setConfig('exportFormatter', HtmlFormatter::class);
+        }
+
+        if ($this->sort && is_array($value)) {
+            ksort($value);
+        }
+
+        $contents = Debugger::exportVar($value, 25);
+        if ($restore) {
+            $debugger->setConfig('exportFormatter', $exportFormatter);
+        }
+
+        return implode([
+            '<div class="cake-debug-output cake-debug" style="direction:ltr">',
+            $contents,
+            '</div>',
+        ]);
+    }
+
+    /**
      * Recursively goes through an array and makes neat HTML out of it.
      *
      * @param mixed $values Array to make pretty.
@@ -65,6 +130,7 @@ class ToolbarHelper extends Helper
      * @param \SplObjectStorage $currentAncestors Object references found down
      * the path.
      * @return string
+     * @deprecated 4.4.0 Use ToolbarHelper::dump() instead.
      */
     public function makeNeatArray(
         $values,

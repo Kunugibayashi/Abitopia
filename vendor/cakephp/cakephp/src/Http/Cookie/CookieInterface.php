@@ -50,6 +50,8 @@ interface CookieInterface
 
     /**
      * Valid values for "SameSite" attribute.
+     *
+     * @var array<string>
      */
     public const SAMESITE_VALUES = [
         self::SAMESITE_LAX,
@@ -75,7 +77,7 @@ interface CookieInterface
     /**
      * Gets the cookie value
      *
-     * @return string|array
+     * @return array|string
      */
     public function getValue();
 
@@ -91,7 +93,7 @@ interface CookieInterface
     /**
      * Create a cookie with an updated value.
      *
-     * @param string|array $value Value of the cookie to set
+     * @param array|string $value Value of the cookie to set
      * @return static
      */
     public function withValue($value);
@@ -239,14 +241,14 @@ interface CookieInterface
     /**
      * Get cookie options
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function getOptions(): array;
 
     /**
      * Get cookie data as array.
      *
-     * @return array With keys `name`, `value`, `expires` etc. options.
+     * @return array<string, mixed> With keys `name`, `value`, `expires` etc. options.
      */
     public function toArray(): array;
 

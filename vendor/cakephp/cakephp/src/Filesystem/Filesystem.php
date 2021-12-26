@@ -16,7 +16,7 @@ declare(strict_types=1);
  */
 namespace Cake\Filesystem;
 
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 use CallbackFilterIterator;
 use FilesystemIterator;
 use Iterator;
@@ -27,7 +27,11 @@ use RegexIterator;
 use SplFileInfo;
 
 /**
- * @since 4.0.0
+ * This provides convenience wrappers around common filesystem queries.
+ *
+ * This is an internal helper class that should not be used in application code
+ * as it provides no guarantee for compatibility.
+ *
  * @internal
  */
 class Filesystem
@@ -124,7 +128,7 @@ class Filesystem
      * @param string $filename File path.
      * @param string $content Content to dump.
      * @return void
-     * @throws \Cake\Core\Exception\Exception When dumping fails.
+     * @throws \Cake\Core\Exception\CakeException When dumping fails.
      */
     public function dumpFile(string $filename, string $content): void
     {
@@ -144,7 +148,7 @@ class Filesystem
         }
 
         if ($success === false) {
-            throw new Exception(sprintf('Failed dumping content to file `%s`', $dir));
+            throw new CakeException(sprintf('Failed dumping content to file `%s`', $dir));
         }
 
         if (!$exists) {
@@ -158,7 +162,7 @@ class Filesystem
      * @param string $dir Directory path.
      * @param int $mode Octal mode passed to mkdir(). Defaults to 0755.
      * @return void
-     * @throws \Cake\Core\Exception\Exception When directory creation fails.
+     * @throws \Cake\Core\Exception\CakeException When directory creation fails.
      */
     public function mkdir(string $dir, int $mode = 0755): void
     {
@@ -170,7 +174,7 @@ class Filesystem
         // phpcs:ignore
         if (@mkdir($dir, $mode, true) === false) {
             umask($old);
-            throw new Exception(sprintf('Failed to create directory "%s"', $dir));
+            throw new CakeException(sprintf('Failed to create directory "%s"', $dir));
         }
 
         umask($old);
@@ -181,7 +185,7 @@ class Filesystem
      *
      * @param string $path Directory path.
      * @return bool
-     * @throws \Cake\Core\Exception\Exception If path is not a directory.
+     * @throws \Cake\Core\Exception\CakeException If path is not a directory.
      */
     public function deleteDir(string $path): bool
     {
@@ -190,7 +194,7 @@ class Filesystem
         }
 
         if (!is_dir($path)) {
-            throw new Exception(sprintf('"%s" is not a directory', $path));
+            throw new CakeException(sprintf('"%s" is not a directory', $path));
         }
 
         $iterator = new RecursiveIteratorIterator(
@@ -200,15 +204,23 @@ class Filesystem
 
         $result = true;
         foreach ($iterator as $fileInfo) {
-            if ($fileInfo->getType() === self::TYPE_DIR) {
+            $isWindowsLink = DIRECTORY_SEPARATOR === '\\' && $fileInfo->getType() === 'link';
+            if ($fileInfo->getType() === self::TYPE_DIR || $isWindowsLink) {
                 // phpcs:ignore
                 $result = $result && @rmdir($fileInfo->getPathname());
+                unset($fileInfo);
                 continue;
             }
 
             // phpcs:ignore
             $result = $result && @unlink($fileInfo->getPathname());
+            // possible inner iterators need to be unset too in order for locks on parents to be released
+            unset($fileInfo);
         }
+
+        // unsetting iterators helps releasing possible locks in certain environments,
+        // which could otherwise make `rmdir()` fail
+        unset($iterator);
 
         // phpcs:ignore
         $result = $result && @rmdir($path);

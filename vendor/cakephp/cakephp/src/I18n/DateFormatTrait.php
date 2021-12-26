@@ -17,10 +17,10 @@ declare(strict_types=1);
 namespace Cake\I18n;
 
 use Cake\Chronos\DifferenceFormatterInterface;
+use Closure;
 use DateTime;
 use DateTimeZone;
 use IntlDateFormatter;
-use InvalidArgumentException;
 use RuntimeException;
 
 /**
@@ -35,14 +35,23 @@ trait DateFormatTrait
      *
      * Use static::setDefaultLocale() and static::getDefaultLocale() instead.
      *
-     * @var string
+     * @var string|null
      */
     protected static $defaultLocale;
 
     /**
+     * Whether lenient parsing is enabled for IntlDateFormatter.
+     *
+     * Defaults to true which is the default for IntlDateFormatter.
+     *
+     * @var bool
+     */
+    protected static $lenientParsing = true;
+
+    /**
      * In-memory cache of date formatters
      *
-     * @var \IntlDateFormatter[]
+     * @var array<\IntlDateFormatter>
      */
     protected static $_formatters = [];
 
@@ -59,7 +68,9 @@ trait DateFormatTrait
     /**
      * Sets the default locale.
      *
-     * @param string|null $locale The default locale string to be used or null.
+     * Set to null to use IntlDateFormatter default.
+     *
+     * @param string|null $locale The default locale string to be used.
      * @return void
      */
     public static function setDefaultLocale(?string $locale = null): void
@@ -68,11 +79,41 @@ trait DateFormatTrait
     }
 
     /**
+     * Gets whether locale format parsing is set to lenient.
+     *
+     * @return bool
+     */
+    public static function lenientParsingEnabled(): bool
+    {
+        return static::$lenientParsing;
+    }
+
+    /**
+     * Enables lenient parsing for locale formats.
+     *
+     * @return void
+     */
+    public static function enableLenientParsing(): void
+    {
+        static::$lenientParsing = true;
+    }
+
+    /**
+     * Enables lenient parsing for locale formats.
+     *
+     * @return void
+     */
+    public static function disableLenientParsing(): void
+    {
+        static::$lenientParsing = false;
+    }
+
+    /**
      * Returns a nicely formatted date string for this object.
      *
      * The format to be used is stored in the static property `Time::niceFormat`.
      *
-     * @param string|\DateTimeZone|null $timezone Timezone string or DateTimeZone object
+     * @param \DateTimeZone|string|null $timezone Timezone string or DateTimeZone object
      * in which the date will be displayed. The timezone stored for this object will not
      * be changed.
      * @param string|null $locale The locale name in which the date should be displayed (e.g. pt-BR)
@@ -90,7 +131,7 @@ trait DateFormatTrait
      * It is possible to specify the desired format for the string to be displayed.
      * You can either pass `IntlDateFormatter` constants as the first argument of this
      * function, or pass a full ICU date formatting string as specified in the following
-     * resource: http://www.icu-project.org/apiref/icu4c/classSimpleDateFormat.html#details.
+     * resource: https://unicode-org.github.io/icu/userguide/format_parse/datetime/#datetime-format-syntax.
      *
      * Additional to `IntlDateFormatter` constants and date formatting string you can use
      * Time::UNIX_TIMESTAMP_FORMAT to get a unix timestamp
@@ -129,8 +170,8 @@ trait DateFormatTrait
      * You can control the default locale used through `Time::setDefaultLocale()`.
      * If empty, the default will be taken from the `intl.default_locale` ini config.
      *
-     * @param string|int|array|null $format Format string.
-     * @param string|\DateTimeZone|null $timezone Timezone string or DateTimeZone object
+     * @param array<int>|string|int|null $format Format string.
+     * @param \DateTimeZone|string|null $timezone Timezone string or DateTimeZone object
      * in which the date will be displayed. The timezone stored for this object will not
      * be changed.
      * @param string|null $locale The locale name in which the date should be displayed (e.g. pt-BR)
@@ -161,18 +202,18 @@ trait DateFormatTrait
      * Implements what IntlDateFormatter::formatObject() is in PHP 5.5+
      *
      * @param \DateTime|\DateTimeImmutable $date Date.
-     * @param string|int|array $format Format.
+     * @param array<int>|string|int $format Format.
      * @param string|null $locale The locale name in which the date should be displayed.
      * @return string
      */
     protected function _formatObject($date, $format, ?string $locale): string
     {
-        $pattern = $timeFormat = null;
+        $pattern = '';
 
         if (is_array($format)) {
             [$dateFormat, $timeFormat] = $format;
-        } elseif (is_numeric($format)) {
-            $dateFormat = $format;
+        } elseif (is_int($format)) {
+            $dateFormat = $timeFormat = $format;
         } else {
             $dateFormat = $timeFormat = IntlDateFormatter::FULL;
             $pattern = $format;
@@ -182,8 +223,12 @@ trait DateFormatTrait
             $locale = I18n::getLocale();
         }
 
-        // phpcs:ignore Generic.Files.LineLength
-        if (preg_match('/@calendar=(japanese|buddhist|chinese|persian|indian|islamic|hebrew|coptic|ethiopic)/', $locale)) {
+        if (
+            preg_match(
+                '/@calendar=(japanese|buddhist|chinese|persian|indian|islamic|hebrew|coptic|ethiopic)/',
+                $locale
+            )
+        ) {
             $calendar = IntlDateFormatter::TRADITIONAL;
         } else {
             $calendar = IntlDateFormatter::GREGORIAN;
@@ -200,13 +245,13 @@ trait DateFormatTrait
             }
             $formatter = datefmt_create(
                 $locale,
-                (int)$dateFormat,
-                (int)$timeFormat,
+                $dateFormat,
+                $timeFormat,
                 $timezone,
                 $calendar,
-                (string)$pattern
+                $pattern
             );
-            if ($formatter === false) {
+            if (empty($formatter)) {
                 throw new RuntimeException(
                     'Your version of icu does not support creating a date formatter for ' .
                     "`$key`. You should try to upgrade libicu and the intl extension."
@@ -248,7 +293,7 @@ trait DateFormatTrait
      * will be used for formatting the date part of the object and the second position
      * will be used to format the time part.
      *
-     * @param string|array|int $format Format.
+     * @param array<int>|string|int $format Format.
      * @return void
      */
     public static function setToStringFormat($format): void
@@ -257,19 +302,7 @@ trait DateFormatTrait
     }
 
     /**
-     * Sets the default format used when converting this object to json
-     *
-     * The format should be either the formatting constants from IntlDateFormatter as
-     * described in (https://secure.php.net/manual/en/class.intldateformatter.php) or a pattern
-     * as specified in (http://www.icu-project.org/apiref/icu4c/classSimpleDateFormat.html#details)
-     *
-     * It is possible to provide an array of 2 constants. In this case, the first position
-     * will be used for formatting the date part of the object and the second position
-     * will be used to format the time part.
-     *
-     * @see \Cake\I18n\Time::i18nFormat()
-     * @param string|array|int $format Format.
-     * @return void
+     * @inheritDoc
      */
     public static function setJsonEncodeFormat($format): void
     {
@@ -295,42 +328,39 @@ trait DateFormatTrait
      * ```
      *  $time = Time::parseDateTime('10/13/2013 12:54am');
      *  $time = Time::parseDateTime('13 Oct, 2013 13:54', 'dd MMM, y H:mm');
-     *  $time = Time::parseDateTime('10/10/2015', [IntlDateFormatter::SHORT, -1]);
+     *  $time = Time::parseDateTime('10/10/2015', [IntlDateFormatter::SHORT, IntlDateFormatter::NONE]);
      * ```
      *
      * @param string $time The time string to parse.
-     * @param string|int[]|null $format Any format accepted by IntlDateFormatter.
+     * @param array<int>|string|int|null $format Any format accepted by IntlDateFormatter.
      * @param \DateTimeZone|string|null $tz The timezone for the instance
      * @return static|null
-     * @throws \InvalidArgumentException If $format is a single int instead of array of constants
      */
     public static function parseDateTime(string $time, $format = null, $tz = null)
     {
-        $dateFormat = $format ?: static::$_toStringFormat;
-        $timeFormat = $pattern = null;
+        $format = $format ?? static::$_toStringFormat;
+        $pattern = '';
 
-        if (is_array($dateFormat)) {
-            [$newDateFormat, $timeFormat] = $dateFormat;
-            $dateFormat = $newDateFormat;
+        if (is_array($format)) {
+            [$dateFormat, $timeFormat] = $format;
+        } elseif (is_int($format)) {
+            $dateFormat = $timeFormat = $format;
         } else {
-            $pattern = $dateFormat;
-            $dateFormat = null;
-
-            if (is_int($pattern)) {
-                throw new InvalidArgumentException(
-                    'If $format is an IntlDateFormatter constant, must be an array.'
-                );
-            }
+            $dateFormat = $timeFormat = IntlDateFormatter::FULL;
+            $pattern = $format;
         }
 
+        $locale = static::$defaultLocale ?? I18n::getLocale();
         $formatter = datefmt_create(
-            (string)static::$defaultLocale,
-            $dateFormat ?? 0,
-            $timeFormat ?? 0,
+            $locale,
+            $dateFormat,
+            $timeFormat,
             $tz,
             null,
-            $pattern ?? ''
+            $pattern
         );
+        $formatter->setLenient(static::$lenientParsing);
+
         $time = $formatter->parse($time);
         if ($time !== false) {
             $dateTime = new DateTime('@' . $time);
@@ -365,13 +395,13 @@ trait DateFormatTrait
      * ```
      *
      * @param string $date The date string to parse.
-     * @param string|int|array|null $format Any format accepted by IntlDateFormatter.
+     * @param array|string|int|null $format Any format accepted by IntlDateFormatter.
      * @return static|null
      */
     public static function parseDate(string $date, $format = null)
     {
         if (is_int($format)) {
-            $format = [$format, -1];
+            $format = [$format, IntlDateFormatter::NONE];
         }
         $format = $format ?: static::$wordFormat;
 
@@ -401,20 +431,25 @@ trait DateFormatTrait
     public static function parseTime(string $time, $format = null)
     {
         if (is_int($format)) {
-            $format = [-1, $format];
+            $format = [IntlDateFormatter::NONE, $format];
         }
-        $format = $format ?: [-1, IntlDateFormatter::SHORT];
+        $format = $format ?: [IntlDateFormatter::NONE, IntlDateFormatter::SHORT];
 
         return static::parseDateTime($time, $format);
     }
 
     /**
-     * Returns a string that should be serialized when converting this object to json
+     * Returns a string that should be serialized when converting this object to JSON
      *
      * @return string|int
      */
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
+        if (static::$_jsonEncodeFormat instanceof Closure) {
+            return call_user_func(static::$_jsonEncodeFormat, $this);
+        }
+
         return $this->i18nFormat(static::$_jsonEncodeFormat);
     }
 
@@ -447,7 +482,7 @@ trait DateFormatTrait
     /**
      * Returns the data that should be displayed when debugging this object
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function __debugInfo(): array
     {

@@ -13,6 +13,9 @@ use const T_CONST;
 use const T_NAMESPACE;
 use const T_STRING;
 
+/**
+ * @internal
+ */
 class ConstantHelper
 {
 
@@ -27,7 +30,9 @@ class ConstantHelper
 		$name = self::getName($phpcsFile, $constantPointer);
 		$namespace = NamespaceHelper::findCurrentNamespaceName($phpcsFile, $constantPointer);
 
-		return $namespace !== null ? sprintf('%s%s%s%s', NamespaceHelper::NAMESPACE_SEPARATOR, $namespace, NamespaceHelper::NAMESPACE_SEPARATOR, $name) : $name;
+		return $namespace !== null
+			? sprintf('%s%s%s%s', NamespaceHelper::NAMESPACE_SEPARATOR, $namespace, NamespaceHelper::NAMESPACE_SEPARATOR, $name)
+			: $name;
 	}
 
 	/**

@@ -10,7 +10,7 @@
  * @link          http://cakephp.org CakePHP(tm) Project
  * @license       http://www.opensource.org/licenses/mit-license.php MIT License
  */
-namespace Debugkit\Test\Fixture;
+namespace DebugKit\Test\Fixture;
 
 use Cake\TestSuite\Fixture\TestFixture;
 
@@ -52,15 +52,7 @@ class RequestsFixture extends TestFixture
      *
      * @var array
      */
-    public $records = [
-        [
-            'id' => 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-            'url' => '/tasks/add',
-            'content_type' => 'text/html',
-            'status_code' => 200,
-            'requested_at' => '2014-08-21 7:41:12',
-        ],
-    ];
+    public $records = [];
 
     /**
      * Constructor

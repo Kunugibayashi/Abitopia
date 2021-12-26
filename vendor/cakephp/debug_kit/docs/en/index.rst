@@ -50,7 +50,19 @@ Configuration
     // Before loading DebugKit
     Configure::write('DebugKit.forceEnable', true);
 
+* ``DebugKit.ignorePathsPattern`` - Regex pattern (including delimiter) to ignore paths.
+  DebugKit won't save data for request URLs that match this regex. Defaults to ``null``::
+
+    // Ignore image paths
+    Configure::write('DebugKit.ignorePathsPattern', '/\.(jpg|png|gif)$/');
+
 * ``DebugKit.ignoreAuthorization`` - Set to true to ignore Cake Authorization plugin for DebugKit requests. Disabled by default.
+
+* ``DebugKit.variablesPanelMaxDepth`` - Defines how many levels of nested data should be shown in the variables tab. Default is 5.
+  WARNING: Increasing the max depth level can lead to an out of memory error.::
+
+    // Show more levels
+    Configure::write('DebugKit.variablesPanelMaxDepth', 8);
 
 Database Configuration
 ----------------------
@@ -159,7 +171,7 @@ In order to preview emails before sending them, you need to create a preview
 class that defines the receipient and required template variables for your
 mailer methods::
 
-    // in src/Mailer/MailPreview/WelcomePreview.php
+    // in src/Mailer/Preview/WelcomePreview.php
     namespace App\Mailer\Preview;
 
     use DebugKit\Mailer\MailPreview;

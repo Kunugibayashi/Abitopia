@@ -19,26 +19,28 @@ namespace Cake\Database\Expression;
 use Cake\Database\ExpressionInterface;
 use Cake\Database\ValueBinder;
 use Closure;
+use InvalidArgumentException;
 
 /**
  * This expression represents SQL fragments that are used for comparing one tuple
  * to another, one tuple to a set of other tuples or one tuple to an expression
  */
-class TupleComparison extends Comparison
+class TupleComparison extends ComparisonExpression
 {
     /**
      * The type to be used for casting the value to a database representation
      *
-     * @var array
+     * @var array<string|null>
+     * @psalm-suppress NonInvariantDocblockPropertyType
      */
     protected $_type;
 
     /**
      * Constructor
      *
-     * @param string|array|\Cake\Database\ExpressionInterface $fields the fields to use to form a tuple
-     * @param array|\Cake\Database\ExpressionInterface $values the values to use to form a tuple
-     * @param array $types the types names to use for casting each of the values, only
+     * @param \Cake\Database\ExpressionInterface|array|string $fields the fields to use to form a tuple
+     * @param \Cake\Database\ExpressionInterface|array $values the values to use to form a tuple
+     * @param array<string|null> $types the types names to use for casting each of the values, only
      * one type per position in the value array in needed
      * @param string $conjunction the operator used for comparing field and value
      */
@@ -46,8 +48,18 @@ class TupleComparison extends Comparison
     {
         $this->_type = $types;
         $this->setField($fields);
-        $this->setValue($values);
         $this->_operator = $conjunction;
+        $this->setValue($values);
+    }
+
+    /**
+     * Returns the type to be used for casting the value to a database representation
+     *
+     * @return array<string|null>
+     */
+    public function getType(): array
+    {
+        return $this->_type;
     }
 
     /**
@@ -58,16 +70,27 @@ class TupleComparison extends Comparison
      */
     public function setValue($value): void
     {
+        if ($this->isMulti()) {
+            if (is_array($value) && !is_array(current($value))) {
+                throw new InvalidArgumentException(
+                    'Multi-tuple comparisons require a multi-tuple value, single-tuple given.'
+                );
+            }
+        } else {
+            if (is_array($value) && is_array(current($value))) {
+                throw new InvalidArgumentException(
+                    'Single-tuple comparisons require a single-tuple value, multi-tuple given.'
+                );
+            }
+        }
+
         $this->_value = $value;
     }
 
     /**
-     * Convert the expression into a SQL fragment.
-     *
-     * @param \Cake\Database\ValueBinder $generator Placeholder generator object
-     * @return string
+     * @inheritDoc
      */
-    public function sql(ValueBinder $generator): string
+    public function sql(ValueBinder $binder): string
     {
         $template = '(%s) %s (%s)';
         $fields = [];
@@ -78,10 +101,10 @@ class TupleComparison extends Comparison
         }
 
         foreach ($originalFields as $field) {
-            $fields[] = $field instanceof ExpressionInterface ? $field->sql($generator) : $field;
+            $fields[] = $field instanceof ExpressionInterface ? $field->sql($binder) : $field;
         }
 
-        $values = $this->_stringifyValues($generator);
+        $values = $this->_stringifyValues($binder);
 
         $field = implode(', ', $fields);
 
@@ -92,21 +115,21 @@ class TupleComparison extends Comparison
      * Returns a string with the values as placeholders in a string to be used
      * for the SQL version of this expression
      *
-     * @param \Cake\Database\ValueBinder $generator The value binder to convert expressions with.
+     * @param \Cake\Database\ValueBinder $binder The value binder to convert expressions with.
      * @return string
      */
-    protected function _stringifyValues(ValueBinder $generator): string
+    protected function _stringifyValues(ValueBinder $binder): string
     {
         $values = [];
         $parts = $this->getValue();
 
         if ($parts instanceof ExpressionInterface) {
-            return $parts->sql($generator);
+            return $parts->sql($binder);
         }
 
         foreach ($parts as $i => $value) {
             if ($value instanceof ExpressionInterface) {
-                $values[] = $value->sql($generator);
+                $values[] = $value->sql($binder);
                 continue;
             }
 
@@ -121,7 +144,7 @@ class TupleComparison extends Comparison
                 foreach ($value as $k => $val) {
                     /** @var string $valType */
                     $valType = $type && isset($type[$k]) ? $type[$k] : $type;
-                    $bound[] = $this->_bindValue($val, $generator, $valType);
+                    $bound[] = $this->_bindValue($val, $binder, $valType);
                 }
 
                 $values[] = sprintf('(%s)', implode(',', $bound));
@@ -130,7 +153,7 @@ class TupleComparison extends Comparison
 
             /** @var string $valType */
             $valType = $type && isset($type[$i]) ? $type[$i] : $type;
-            $values[] = $this->_bindValue($value, $generator, $valType);
+            $values[] = $this->_bindValue($value, $binder, $valType);
         }
 
         return implode(', ', $values);
@@ -139,35 +162,29 @@ class TupleComparison extends Comparison
     /**
      * @inheritDoc
      */
-    protected function _bindValue($value, ValueBinder $generator, ?string $type = null): string
+    protected function _bindValue($value, ValueBinder $binder, ?string $type = null): string
     {
-        $placeholder = $generator->placeholder('tuple');
-        $generator->bind($placeholder, $value, $type);
+        $placeholder = $binder->placeholder('tuple');
+        $binder->bind($placeholder, $value, $type);
 
         return $placeholder;
     }
 
     /**
-     * Traverses the tree of expressions stored in this object, visiting first
-     * expressions in the left hand side and then the rest.
-     *
-     * Callback function receives as its only argument an instance of an ExpressionInterface
-     *
-     * @param \Closure $callable The callable to apply to sub-expressions
-     * @return $this
+     * @inheritDoc
      */
-    public function traverse(Closure $callable)
+    public function traverse(Closure $callback)
     {
-        /** @var string[] $fields */
+        /** @var array<string> $fields */
         $fields = $this->getField();
         foreach ($fields as $field) {
-            $this->_traverseValue($field, $callable);
+            $this->_traverseValue($field, $callback);
         }
 
         $value = $this->getValue();
         if ($value instanceof ExpressionInterface) {
-            $callable($value);
-            $value->traverse($callable);
+            $callback($value);
+            $value->traverse($callback);
 
             return $this;
         }
@@ -175,10 +192,10 @@ class TupleComparison extends Comparison
         foreach ($value as $val) {
             if ($this->isMulti()) {
                 foreach ($val as $v) {
-                    $this->_traverseValue($v, $callable);
+                    $this->_traverseValue($v, $callback);
                 }
             } else {
-                $this->_traverseValue($val, $callable);
+                $this->_traverseValue($val, $callback);
             }
         }
 
@@ -190,14 +207,14 @@ class TupleComparison extends Comparison
      * it is an ExpressionInterface
      *
      * @param mixed $value The value to traverse
-     * @param \Closure $callable The callable to use when traversing
+     * @param \Closure $callback The callable to use when traversing
      * @return void
      */
-    protected function _traverseValue($value, Closure $callable): void
+    protected function _traverseValue($value, Closure $callback): void
     {
         if ($value instanceof ExpressionInterface) {
-            $callable($value);
-            $value->traverse($callable);
+            $callback($value);
+            $value->traverse($callback);
         }
     }
 

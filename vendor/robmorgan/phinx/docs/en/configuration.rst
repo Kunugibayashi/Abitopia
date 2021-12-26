@@ -57,10 +57,10 @@ The first option specifies the path to your migration directory. Phinx uses
 .. note::
 
     ``%%PHINX_CONFIG_DIR%%`` is a special token and is automatically replaced
-    with the root directory where your ``phinx.yml`` file is stored.
+    with the root directory where your phinx configuration file is stored.
 
 In order to overwrite the default ``%%PHINX_CONFIG_DIR%%/db/migrations``, you
-need to add the following to the yaml configuration.
+need to add the following to the configuration.
 
 .. code-block:: yaml
 
@@ -112,7 +112,7 @@ The second option specifies the path to your seed directory. Phinx uses
 .. note::
 
     ``%%PHINX_CONFIG_DIR%%`` is a special token and is automatically replaced
-    with the root directory where your ``phinx.yml`` file is stored.
+    with the root directory where your configuration file is stored.
 
 In order to overwrite the default ``%%PHINX_CONFIG_DIR%%/db/seeds``, you
 need to add the following to the yaml configuration.
@@ -138,6 +138,17 @@ You can also use the ``%%PHINX_CONFIG_DIR%%`` token in your path.
 
     paths:
         seeds: '%%PHINX_CONFIG_DIR%%/your/relative/path'
+
+Custom Seeder Base
+---------------------
+
+By default all seeders will extend from Phinx's `AbstractSeed` class.
+This can be set to a custom class that extends from `AbstractSeed` by
+setting ``seeder_base_class`` in your config:
+
+.. code-block:: yaml
+
+    seeder_base_class: MyMagicalSeeder
 
 Environments
 ------------
@@ -175,6 +186,23 @@ file:
 
     export PHINX_ENVIRONMENT=dev-`whoami`-`hostname`
 
+Migration Table
+---------------
+
+To keep track of the migration statuses for an environment, phinx creates
+a table to store this information. You can customize where this table
+is created by configuring ``default_migration_table``:
+
+.. code-block:: yaml
+
+    environment:
+        default_migration_table: phinxlog
+
+If this field is omitted, then it will default to ``phinxlog``. For
+databases that support it, e.g. Postgres, the schema name can be prefixed
+with a period separator (``.``). For example, ``phinx.log`` will create
+the table ``log`` in the ``phinx`` schema instead of ``phinxlog`` in the
+``public`` (default) schema.
 
 Table Prefix and Suffix
 -----------------------
@@ -293,6 +321,41 @@ Phinx currently supports the following database adapters natively:
 * `SQLite <http://www.sqlite.org/>`_: specify the ``sqlite`` adapter.
 * `SQL Server <http://www.microsoft.com/sqlserver>`_: specify the ``sqlsrv`` adapter.
 
+For each adapter, you may configure the behavior of the underlying PDO object by setting in your
+config object the lowercase version of the constant name. This works for both PDO options
+(e.g. ``\PDO::ATTR_CASE`` would be ``attr_case``) and adapter specific options (e.g. for MySQL
+you may set ``\PDO::MYSQL_ATTR_IGNORE_SPACE`` as ``mysql_attr_ignore_space``). Please consult
+the `PDO documentation <https://www.php.net/manual/en/book.pdo.php>`_ for the allowed attributes
+and their values.
+
+For example, to set the above example options:
+
+.. code-block:: php
+
+    $config = [
+        "environments" => [
+            "development" => [
+                "adapter" => "mysql",
+                # other adapter settings
+                "attr_case" => \PDO::ATTR_CASE,
+                "mysql_attr_ignore_space" => 1,
+            ],
+        ],
+    ];
+
+By default, the only attribute that Phinx sets is ``\PDO::ATTR_ERRMODE`` to ``PDO::ERRMODE_EXCEPTION``. It is
+not recommended to override this.
+
+MySQL
+`````````````````
+
+The MySQL adapter has an unfortunate limitation in that it certain actions causes an
+`implicit commit <https://dev.mysql.com/doc/refman/8.0/en/implicit-commit.html>`_ regardless of transaction
+state. Notably this list includes ``CREATE TABLE``, ``ALTER TABLE``, and ``DROP TABLE``, which are the most
+common operations that Phinx will run. This means that unlike other adapters which will attempt to gracefully
+rollback a transaction on a failed migration, if a migration fails for MySQL, it may leave your DB in a partially
+migrated state.
+
 SQLite
 `````````````````
 
@@ -365,3 +428,15 @@ setting External Variables to modify the config will not work because the config
 
     paths:
         bootstrap: 'phinx-bootstrap.php'
+
+Within the bootstrap script, the following variables will be available:
+
+.. code-block:: php
+
+    /**
+     * @var string $filename The file name as provided by the configuration
+     * @var string $filePath The absolute, real path to the file
+     * @var \Symfony\Component\Console\Input\InputInterface $input The executing command's input object
+     * @var \Symfony\Component\Console\Output\OutputInterface $output The executing command's output object
+     * @var \Phinx\Console\Command\AbstractCommand $context the executing command object
+     */

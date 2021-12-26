@@ -60,6 +60,9 @@ use const T_UNSET_CAST;
 use const T_VARIABLE;
 use const T_WHITESPACE;
 
+/**
+ * @internal
+ */
 class YodaHelper
 {
 
@@ -67,7 +70,7 @@ class YodaHelper
 
 	private const DYNAMISM_CONSTANT = 1;
 
-	private const DYNAMISM_FUNCTION_CALL = self::DYNAMISM_VARIABLE;
+	private const DYNAMISM_FUNCTION_CALL = 998;
 
 	/**
 	 * @param File $phpcsFile
@@ -184,7 +187,11 @@ class YodaHelper
 	public static function getDynamismForTokens(array $tokens, array $sideTokens): ?int
 	{
 		$sideTokens = array_values(array_filter($sideTokens, static function (array $token): bool {
-			return !in_array($token['code'], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT, T_NS_SEPARATOR, T_PLUS, T_MINUS, T_INT_CAST, T_DOUBLE_CAST, T_STRING_CAST, T_ARRAY_CAST, T_OBJECT_CAST, T_BOOL_CAST, T_UNSET_CAST], true);
+			return !in_array(
+				$token['code'],
+				[T_WHITESPACE, T_COMMENT, T_DOC_COMMENT, T_NS_SEPARATOR, T_PLUS, T_MINUS, T_INT_CAST, T_DOUBLE_CAST, T_STRING_CAST, T_ARRAY_CAST, T_OBJECT_CAST, T_BOOL_CAST, T_UNSET_CAST],
+				true
+			);
 		}));
 
 		$sideTokensCount = count($sideTokens);
@@ -284,7 +291,9 @@ class YodaHelper
 		}
 
 		$phpcsFile->fixer->addContent($firstOldPointer, implode('', array_map(static function (array $token): string {
-			return $token['content'];
+			/** @var string $content */
+			$content = $token['content'];
+			return $content;
 		}, $newTokens)));
 	}
 
@@ -303,7 +312,8 @@ class YodaHelper
 				T_DNUMBER => 0,
 				T_LNUMBER => 0,
 				T_OPEN_SHORT_ARRAY => 0,
-				T_ARRAY => 0, // Do not stack error messages when the old-style array syntax is used
+				// Do not stack error messages when the old-style array syntax is used
+				T_ARRAY => 0,
 				T_CONSTANT_ENCAPSED_STRING => 0,
 				T_VARIABLE => self::DYNAMISM_VARIABLE,
 				T_STRING => self::DYNAMISM_FUNCTION_CALL,

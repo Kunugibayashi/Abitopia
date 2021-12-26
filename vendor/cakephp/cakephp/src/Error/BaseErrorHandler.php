@@ -18,9 +18,9 @@ namespace Cake\Error;
 
 use Cake\Core\Configure;
 use Cake\Core\InstanceConfigTrait;
-use Cake\Log\Log;
 use Cake\Routing\Router;
 use Psr\Http\Message\ServerRequestInterface;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -37,7 +37,7 @@ abstract class BaseErrorHandler
     /**
      * Options to use for the Error handling.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'log' => true,
@@ -54,7 +54,7 @@ abstract class BaseErrorHandler
     /**
      * Exception logger instance.
      *
-     * @var \Cake\Error\ErrorLogger|null
+     * @var \Cake\Error\ErrorLoggerInterface|null
      */
     protected $logger;
 
@@ -65,7 +65,7 @@ abstract class BaseErrorHandler
      * desired for the runtime they operate in.
      *
      * @param array $error An array of error data.
-     * @param bool $debug Whether or not the app is in debug mode.
+     * @param bool $debug Whether the app is in debug mode.
      * @return void
      */
     abstract protected function _displayError(array $error, bool $debug): void;
@@ -88,10 +88,7 @@ abstract class BaseErrorHandler
      */
     public function register(): void
     {
-        $level = -1;
-        if (isset($this->_config['errorLevel'])) {
-            $level = $this->_config['errorLevel'];
-        }
+        $level = $this->_config['errorLevel'] ?? -1;
         error_reporting($level);
         set_error_handler([$this, 'handleError'], $level);
         set_exception_handler([$this, 'handleException']);
@@ -138,7 +135,7 @@ abstract class BaseErrorHandler
      * @param string $description Error description
      * @param string|null $file File on which error occurred
      * @param int|null $line Line that triggered the error
-     * @param array|null $context Context
+     * @param array<string, mixed>|null $context Context
      * @return bool True if error was handled
      */
     public function handleError(
@@ -148,7 +145,7 @@ abstract class BaseErrorHandler
         ?int $line = null,
         ?array $context = null
     ): bool {
-        if (error_reporting() === 0) {
+        if (!(error_reporting() & $code)) {
             return false;
         }
         $this->_handled = true;
@@ -166,7 +163,7 @@ abstract class BaseErrorHandler
             'line' => $line,
         ];
 
-        $debug = Configure::read('debug');
+        $debug = (bool)Configure::read('debug');
         if ($debug) {
             // By default trim 3 frames off for the public and protected methods
             // used by ErrorHandler instances.
@@ -272,7 +269,7 @@ abstract class BaseErrorHandler
     public function increaseMemoryLimit(int $additionalKb): void
     {
         $limit = ini_get('memory_limit');
-        if (!strlen($limit) || $limit === '-1') {
+        if ($limit === false || $limit === '' || $limit === '-1') {
             return;
         }
         $limit = trim($limit);
@@ -295,7 +292,7 @@ abstract class BaseErrorHandler
     /**
      * Log an error.
      *
-     * @param int|string $level The level name of the log.
+     * @param string|int $level The level name of the log.
      * @param array $data Array of error data.
      * @return bool
      */
@@ -309,29 +306,23 @@ abstract class BaseErrorHandler
             $data['file'],
             $data['line']
         );
+        $context = [];
         if (!empty($this->_config['trace'])) {
-            /** @var string $trace */
-            $trace = Debugger::trace([
+            $context['trace'] = Debugger::trace([
                 'start' => 1,
                 'format' => 'log',
             ]);
-
-            $request = Router::getRequest();
-            if ($request) {
-                $message .= $this->getLogger()->getRequestContext($request);
-            }
-            $message .= "\nTrace:\n" . $trace . "\n";
+            $context['request'] = Router::getRequest();
         }
-        $message .= "\n\n";
 
-        return Log::write($level, $message);
+        return $this->getLogger()->logMessage($level, $message, $context);
     }
 
     /**
      * Log an error for the exception if applicable.
      *
      * @param \Throwable $exception The exception to log a message for.
-     * @param \Psr\Http\Message\ServerRequestInterface $request The current request.
+     * @param \Psr\Http\Message\ServerRequestInterface|null $request The current request.
      * @return bool
      */
     public function logException(Throwable $exception, ?ServerRequestInterface $request = null): bool
@@ -346,13 +337,22 @@ abstract class BaseErrorHandler
     /**
      * Get exception logger.
      *
-     * @return \Cake\Error\ErrorLogger
+     * @return \Cake\Error\ErrorLoggerInterface
      */
     public function getLogger()
     {
         if ($this->logger === null) {
-            /** @var \Cake\Error\ErrorLogger $logger */
+            /** @var \Cake\Error\ErrorLoggerInterface $logger */
             $logger = new $this->_config['errorLogger']($this->_config);
+
+            if (!$logger instanceof ErrorLoggerInterface) {
+                // Set the logger so that the next error can be logged.
+                $this->logger = new ErrorLogger($this->_config);
+
+                $interface = ErrorLoggerInterface::class;
+                $type = getTypeName($logger);
+                throw new RuntimeException("Cannot create logger. `{$type}` does not implement `{$interface}`.");
+            }
             $this->logger = $logger;
         }
 

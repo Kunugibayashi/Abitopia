@@ -3,7 +3,6 @@
 namespace SlevomatCodingStandard\Helpers;
 
 use PHP_CodeSniffer\Files\File;
-use function array_key_exists;
 use function array_merge;
 use function array_reverse;
 use function count;
@@ -19,11 +18,11 @@ use const T_SEMICOLON;
 use const T_STRING;
 use const T_USE;
 
+/**
+ * @internal
+ */
 class UseStatementHelper
 {
-
-	/** @var array<string, array<int, array<string, UseStatement>>> */
-	private static $fileUseStatements = [];
 
 	public static function isAnonymousFunctionUse(File $phpcsFile, int $usePointer): bool
 	{
@@ -82,7 +81,7 @@ class UseStatementHelper
 		if (in_array($tokens[$nameEndPointer]['code'], TokenHelper::$ineffectiveTokenCodes, true)) {
 			$nameEndPointer = TokenHelper::findPreviousEffective($phpcsFile, $nameEndPointer);
 		}
-		$nameStartPointer = TokenHelper::findPreviousExcluding($phpcsFile, TokenHelper::$nameTokenCodes, $nameEndPointer - 1) + 1;
+		$nameStartPointer = TokenHelper::findPreviousExcluding($phpcsFile, TokenHelper::getNameTokenCodes(), $nameEndPointer - 1) + 1;
 
 		$name = TokenHelper::getContent($phpcsFile, $nameStartPointer, $nameEndPointer);
 
@@ -117,17 +116,7 @@ class UseStatementHelper
 	 */
 	public static function getFileUseStatements(File $phpcsFile): array
 	{
-		$cacheKey = $phpcsFile->getFilename();
-
-		$fixerLoops = $phpcsFile->fixer !== null ? $phpcsFile->fixer->loops : null;
-		if ($fixerLoops !== null) {
-			$cacheKey .= '-loop' . $fixerLoops;
-			if ($fixerLoops > 0) {
-				unset(self::$fileUseStatements[$cacheKey . '-loop' . ($fixerLoops - 1)]);
-			}
-		}
-
-		if (!array_key_exists($cacheKey, self::$fileUseStatements)) {
+		$lazyValue = static function () use ($phpcsFile): array {
 			$useStatements = [];
 			$tokens = $phpcsFile->getTokens();
 
@@ -146,7 +135,7 @@ class UseStatementHelper
 				}
 
 				$nextTokenFromUsePointer = TokenHelper::findNextEffective($phpcsFile, $usePointer + 1);
-				$type = UseStatement::TYPE_DEFAULT;
+				$type = UseStatement::TYPE_CLASS;
 				if ($tokens[$nextTokenFromUsePointer]['code'] === T_STRING) {
 					if ($tokens[$nextTokenFromUsePointer]['content'] === 'const') {
 						$type = UseStatement::TYPE_CONSTANT;
@@ -165,10 +154,23 @@ class UseStatementHelper
 				$useStatements[$pointerBeforeUseStatements][UseStatement::getUniqueId($type, $name)] = $useStatement;
 			}
 
-			self::$fileUseStatements[$cacheKey] = $useStatements;
+			return $useStatements;
+		};
+
+		return SniffLocalCache::getAndSetIfNotCached($phpcsFile, 'useStatements', $lazyValue);
+	}
+
+	public static function getUseStatementPointer(File $phpcsFile, int $pointer): ?int
+	{
+		$pointers = self::getUseStatementPointers($phpcsFile, 0);
+
+		foreach (array_reverse($pointers) as $pointerBeforeUseStatements) {
+			if ($pointerBeforeUseStatements < $pointer) {
+				return $pointerBeforeUseStatements;
+			}
 		}
 
-		return self::$fileUseStatements[$cacheKey];
+		return null;
 	}
 
 	/**
@@ -180,29 +182,34 @@ class UseStatementHelper
 	 */
 	private static function getUseStatementPointers(File $phpcsFile, int $openTagPointer): array
 	{
-		$tokens = $phpcsFile->getTokens();
-		$pointer = $openTagPointer + 1;
-		$pointers = [];
-		while (true) {
-			$typesToFind = array_merge([T_USE], TokenHelper::$typeKeywordTokenCodes);
-			$pointer = TokenHelper::findNext($phpcsFile, $typesToFind, $pointer);
-			if ($pointer === null) {
-				break;
+		$lazy = static function () use ($phpcsFile, $openTagPointer): array {
+			$tokens = $phpcsFile->getTokens();
+			$pointer = $openTagPointer + 1;
+			$pointers = [];
+			while (true) {
+				$typesToFind = array_merge([T_USE], TokenHelper::$typeKeywordTokenCodes);
+				$pointer = TokenHelper::findNext($phpcsFile, $typesToFind, $pointer);
+				if ($pointer === null) {
+					break;
+				}
+
+				$token = $tokens[$pointer];
+				if (in_array($token['code'], TokenHelper::$typeKeywordTokenCodes, true)) {
+					$pointer = $token['scope_closer'] + 1;
+					continue;
+				}
+				if (self::isAnonymousFunctionUse($phpcsFile, $pointer)) {
+					$pointer++;
+					continue;
+				}
+				$pointers[] = $pointer;
+				$pointer++;
 			}
 
-			$token = $tokens[$pointer];
-			if (in_array($token['code'], TokenHelper::$typeKeywordTokenCodes, true)) {
-				$pointer = $token['scope_closer'] + 1;
-				continue;
-			}
-			if (self::isAnonymousFunctionUse($phpcsFile, $pointer)) {
-				$pointer++;
-				continue;
-			}
-			$pointers[] = $pointer;
-			$pointer++;
-		}
-		return $pointers;
+			return $pointers;
+		};
+
+		return SniffLocalCache::getAndSetIfNotCached($phpcsFile, 'useStatementPointers', $lazy);
 	}
 
 }

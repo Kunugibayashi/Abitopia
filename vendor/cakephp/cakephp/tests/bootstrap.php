@@ -17,7 +17,9 @@ use Cake\Cache\Cache;
 use Cake\Chronos\Chronos;
 use Cake\Core\Configure;
 use Cake\Datasource\ConnectionManager;
+use Cake\Error\Debug\TextFormatter;
 use Cake\Log\Log;
+use Cake\TestSuite\Fixture\SchemaLoader;
 use Cake\Utility\Security;
 
 if (is_file('vendor/autoload.php')) {
@@ -96,23 +98,22 @@ Cache::setConfig([
 ]);
 
 // Ensure default test connection is defined
-if (!getenv('DB_DSN')) {
-    putenv('DB_DSN=sqlite:///:memory:');
+if (!getenv('DB_URL')) {
+    putenv('DB_URL=sqlite:///:memory:');
 }
 
-ConnectionManager::setConfig('test', ['url' => getenv('DB_DSN')]);
-ConnectionManager::setConfig('test_custom_i18n_datasource', ['url' => getenv('DB_DSN')]);
+ConnectionManager::setConfig('test', ['url' => getenv('DB_URL')]);
+
+if (env('CAKE_TEST_AUTOQUOTE')) {
+    ConnectionManager::get('test')->getDriver()->enableAutoQuoting(true);
+}
 
 Configure::write('Session', [
     'defaults' => 'php',
 ]);
+Configure::write('Debugger.exportFormatter', TextFormatter::class);
 
 Log::setConfig([
-    // 'queries' => [
-    //     'className' => 'Console',
-    //     'stream' => 'php://stderr',
-    //     'scopes' => ['queriesLog']
-    // ],
     'debug' => [
         'engine' => 'Cake\Log\Engine\FileLog',
         'levels' => ['notice', 'info', 'debug'],
@@ -137,3 +138,9 @@ ini_set('session.gc_divisor', '1');
 // does not allow the sessionid to be set after stdout
 // has been written to.
 session_id('cli');
+
+// Create test database schema
+if (env('FIXTURE_SCHEMA_METADATA')) {
+    $loader = new SchemaLoader();
+    $loader->loadInternalFile(env('FIXTURE_SCHEMA_METADATA'));
+}

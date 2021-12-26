@@ -62,7 +62,7 @@ class FunctionExpression extends QueryExpression implements TypedResultInterface
      * @param string $name the name of the function to be constructed
      * @param array $params list of arguments to be passed to the function
      * If associative the key would be used as argument when value is 'literal'
-     * @param array $types associative array of types to be associated with the
+     * @param array<string, string>|array<string|null> $types Associative array of types to be associated with the
      * passed arguments
      * @param string $returnType The return type of this expression
      */
@@ -99,20 +99,20 @@ class FunctionExpression extends QueryExpression implements TypedResultInterface
     /**
      * Adds one or more arguments for the function call.
      *
-     * @param array $params list of arguments to be passed to the function
+     * @param array $conditions list of arguments to be passed to the function
      * If associative the key would be used as argument when value is 'literal'
-     * @param array $types associative array of types to be associated with the
+     * @param array<string, string> $types Associative array of types to be associated with the
      * passed arguments
      * @param bool $prepend Whether to prepend or append to the list of arguments
      * @see \Cake\Database\Expression\FunctionExpression::__construct() for more details.
      * @return $this
      * @psalm-suppress MoreSpecificImplementedParamType
      */
-    public function add($params, array $types = [], bool $prepend = false)
+    public function add($conditions, array $types = [], bool $prepend = false)
     {
         $put = $prepend ? 'array_unshift' : 'array_push';
         $typeMap = $this->getTypeMap()->setTypes($types);
-        foreach ($params as $k => $p) {
+        foreach ($conditions as $k => $p) {
             if ($p === 'literal') {
                 $put($this->_conditions, $k);
                 continue;
@@ -141,25 +141,19 @@ class FunctionExpression extends QueryExpression implements TypedResultInterface
     }
 
     /**
-     * Returns the string representation of this object so that it can be used in a
-     * SQL query. Note that values condition values are not included in the string,
-     * in their place placeholders are put and can be replaced by the quoted values
-     * accordingly.
-     *
-     * @param \Cake\Database\ValueBinder $generator Placeholder generator object
-     * @return string
+     * @inheritDoc
      */
-    public function sql(ValueBinder $generator): string
+    public function sql(ValueBinder $binder): string
     {
         $parts = [];
         foreach ($this->_conditions as $condition) {
             if ($condition instanceof Query) {
-                $condition = sprintf('(%s)', $condition->sql($generator));
+                $condition = sprintf('(%s)', $condition->sql($binder));
             } elseif ($condition instanceof ExpressionInterface) {
-                $condition = $condition->sql($generator);
+                $condition = $condition->sql($binder);
             } elseif (is_array($condition)) {
-                $p = $generator->placeholder('param');
-                $generator->bind($p, $condition['value'], $condition['type']);
+                $p = $binder->placeholder('param');
+                $binder->bind($p, $condition['value'], $condition['type']);
                 $condition = $p;
             }
             $parts[] = $condition;

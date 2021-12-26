@@ -106,12 +106,12 @@ trait TranslateStrategyTrait
      */
     protected function unsetEmptyFields($entity)
     {
-        /** @var \Cake\ORM\Entity[] $translations */
+        /** @var array<\Cake\ORM\Entity> $translations */
         $translations = (array)$entity->get('_translations');
         foreach ($translations as $locale => $translation) {
             $fields = $translation->extract($this->_config['fields'], false);
             foreach ($fields as $field => $value) {
-                if (strlen($value) === 0) {
+                if ($value === null || $value === '') {
                     $translation->unset($field);
                 }
             }
@@ -141,7 +141,7 @@ trait TranslateStrategyTrait
      *
      * @param \Cake\ORM\Marshaller $marshaller The marhshaller of the table the behavior is attached to.
      * @param array $map The property map being built.
-     * @param array $options The options array used in the marshalling call.
+     * @param array<string, mixed> $options The options array used in the marshalling call.
      * @return array A map of `[property => callable]` of additional properties to marshal.
      */
     public function buildMarshalMap(Marshaller $marshaller, array $map, array $options): array
@@ -152,28 +152,33 @@ trait TranslateStrategyTrait
 
         return [
             '_translations' => function ($value, $entity) use ($marshaller, $options) {
-                /** @var \Cake\Datasource\EntityInterface $entity */
+                if (!is_array($value)) {
+                    return null;
+                }
+
+                /** @var array<string, \Cake\Datasource\EntityInterface>|null $translations */
                 $translations = $entity->get('_translations');
-                foreach ($this->_config['fields'] as $field) {
-                    $options['validate'] = $this->_config['validator'];
-                    $errors = [];
-                    if (!is_array($value)) {
-                        return null;
+                if ($translations === null) {
+                    $translations = [];
+                }
+
+                $options['validate'] = $this->_config['validator'];
+                $errors = [];
+                foreach ($value as $language => $fields) {
+                    if (!isset($translations[$language])) {
+                        $translations[$language] = $this->table->newEmptyEntity();
                     }
-                    foreach ($value as $language => $fields) {
-                        if (!isset($translations[$language])) {
-                            $translations[$language] = $this->table->newEmptyEntity();
-                        }
-                        $marshaller->merge($translations[$language], $fields, $options);
-                        /** @var \Cake\Datasource\EntityInterface $translation */
-                        $translation = $translations[$language];
-                        if ((bool)$translation->getErrors()) {
-                            $errors[$language] = $translation->getErrors();
-                        }
+                    $marshaller->merge($translations[$language], $fields, $options);
+
+                    $translationErrors = $translations[$language]->getErrors();
+                    if ($translationErrors) {
+                        $errors[$language] = $translationErrors;
                     }
-                    // Set errors into the root entity, so validation errors
-                    // match the original form data position.
-                    $entity->setErrors($errors);
+                }
+
+                // Set errors into the root entity, so validation errors match the original form data position.
+                if ($errors) {
+                    $entity->setErrors(['_translations' => $errors]);
                 }
 
                 return $translations;

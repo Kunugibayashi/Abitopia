@@ -209,7 +209,7 @@ class ResponseEmitter implements EmitterInterface
     /**
      * Emit cookies using setcookie()
      *
-     * @param (string|\Cake\Http\Cookie\CookieInterface)[] $cookies An array of cookies.
+     * @param array<\Cake\Http\Cookie\CookieInterface|string> $cookies An array of cookies.
      * @return void
      */
     protected function emitCookies(array $cookies): void
@@ -222,7 +222,7 @@ class ResponseEmitter implements EmitterInterface
     /**
      * Helper methods to set cookie.
      *
-     * @param string|\Cake\Http\Cookie\CookieInterface $cookie Cookie.
+     * @param \Cake\Http\Cookie\CookieInterface|string $cookie Cookie.
      * @return bool
      */
     protected function setCookie($cookie): bool
@@ -232,6 +232,7 @@ class ResponseEmitter implements EmitterInterface
         }
 
         if (PHP_VERSION_ID >= 70300) {
+            /** @psalm-suppress InvalidArgument */
             return setcookie($cookie->getName(), $cookie->getScalarValue(), $cookie->getOptions());
         }
 

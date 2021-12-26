@@ -1,6 +1,6 @@
 # CakePHP Authentication
 
-[![Build Status](https://img.shields.io/travis/com/cakephp/authentication?style=flat-square)](https://travis-ci.com/cakephp/authentication)
+![Build Status](https://github.com/cakephp/authentication/actions/workflows/ci.yml/badge.svg?branch=master)
 [![Latest Stable Version](https://img.shields.io/github/v/release/cakephp/authentication?sort=semver&style=flat-square)](https://packagist.org/packages/cakephp/authentication)
 [![Total Downloads](https://img.shields.io/packagist/dt/cakephp/authentication?style=flat-square)](https://packagist.org/packages/cakephp/authentication/stats)
 [![Code Coverage](https://img.shields.io/coveralls/cakephp/authentication/master.svg?style=flat-square)](https://coveralls.io/r/cakephp/authentication?branch=master)
@@ -8,7 +8,7 @@
 
 [PSR7](https://www.php-fig.org/psr/psr-7/) Middleware authentication stack for the CakePHP framework.
 
-Don't know what middleware is? [Check the CakePHP documentation](https://book.cakephp.org/3.0/en/controllers/middleware.html) and additionally [read this.](https://philsturgeon.uk/php/2016/05/31/why-care-about-php-middleware/)
+Don't know what middleware is? [Check the CakePHP documentation](https://book.cakephp.org/4/en/controllers/middleware.html) and additionally [read this.](https://philsturgeon.uk/php/2016/05/31/why-care-about-php-middleware/)
 
 ## Authentication, not Authorization
 

@@ -16,7 +16,7 @@ declare(strict_types=1);
  */
 namespace Cake\Event;
 
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 
 /**
  * Class Event
@@ -76,7 +76,7 @@ class Event implements EventInterface
      * @param string $name Name of the event
      * @param object|null $subject the object that this event applies to
      *   (usually the object that is generating the event).
-     * @param array|\ArrayAccess|null $data any value you wish to be transported
+     * @param \ArrayAccess|array|null $data any value you wish to be transported
      *   with this event to it can be read by listeners.
      * @psalm-param TSubject|null $subject
      */
@@ -103,14 +103,14 @@ class Event implements EventInterface
      * If the event has no subject an exception will be raised.
      *
      * @return object
-     * @throws \Cake\Core\Exception\Exception
+     * @throws \Cake\Core\Exception\CakeException
      * @psalm-return TSubject
      * @psalm-suppress LessSpecificImplementedReturnType
      */
     public function getSubject()
     {
         if ($this->_subject === null) {
-            throw new Exception('No subject set for this event');
+            throw new CakeException('No subject set for this event');
         }
 
         return $this->_subject;
@@ -163,7 +163,7 @@ class Event implements EventInterface
      * Access the event data/payload.
      *
      * @param string|null $key The data payload element to return, or null to return all data.
-     * @return array|mixed|null The data payload if $key is null, or the data value for the given $key.
+     * @return mixed|array|null The data payload if $key is null, or the data value for the given $key.
      *   If the $key does not exist a null value is returned.
      */
     public function getData(?string $key = null)
@@ -172,6 +172,7 @@ class Event implements EventInterface
             return $this->_data[$key] ?? null;
         }
 
+        /** @psalm-suppress RedundantCastGivenDocblockType */
         return (array)$this->_data;
     }
 

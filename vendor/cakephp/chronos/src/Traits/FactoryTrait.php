@@ -18,6 +18,7 @@ use Cake\Chronos\ChronosInterface;
 use DateTimeInterface;
 use DateTimeZone;
 use InvalidArgumentException;
+use ReturnTypeWillChange;
 
 /**
  * Provides a number of datetime related factory methods.
@@ -230,6 +231,7 @@ trait FactoryTrait
      * @return static
      * @throws \InvalidArgumentException
      */
+    #[ReturnTypeWillChange]
     public static function createFromFormat($format, $time, $tz = null): ChronosInterface
     {
         if ($tz !== null) {
@@ -239,11 +241,11 @@ trait FactoryTrait
         }
 
         $errors = parent::getLastErrors();
-        if ($dt == false) {
+        if (!$dt) {
             throw new InvalidArgumentException(implode(PHP_EOL, $errors['errors']));
         }
 
-        $dt = static::instance($dt);
+        $dt = new static($dt->format('Y-m-d H:i:s.u'), $dt->getTimezone());
         static::$_lastErrors = $errors;
 
         return $dt;
@@ -324,7 +326,7 @@ trait FactoryTrait
      */
     public static function createFromTimestampUTC(int $timestamp): ChronosInterface
     {
-        return new static('@' . $timestamp);
+        return new static($timestamp);
     }
 
     /**

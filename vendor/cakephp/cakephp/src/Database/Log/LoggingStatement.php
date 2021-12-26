@@ -37,9 +37,23 @@ class LoggingStatement extends StatementDecorator
     /**
      * Holds bound params
      *
-     * @var array
+     * @var array<array>
      */
     protected $_compiledParams = [];
+
+    /**
+     * Query execution start time.
+     *
+     * @var float
+     */
+    protected $startTime = 0.0;
+
+    /**
+     * Logged query
+     *
+     * @var \Cake\Database\Log\LoggedQuery|null
+     */
+    protected $loggedQuery;
 
     /**
      * Wrapper for the execute function to calculate time spent
@@ -51,21 +65,69 @@ class LoggingStatement extends StatementDecorator
      */
     public function execute(?array $params = null): bool
     {
-        $t = microtime(true);
-        $query = new LoggedQuery();
+        $this->startTime = microtime(true);
+
+        $this->loggedQuery = new LoggedQuery();
+        $this->loggedQuery->driver = $this->_driver;
+        $this->loggedQuery->params = $params ?: $this->_compiledParams;
 
         try {
             $result = parent::execute($params);
+            $this->loggedQuery->took = (int)round((microtime(true) - $this->startTime) * 1000, 0);
         } catch (Exception $e) {
             /** @psalm-suppress UndefinedPropertyAssignment */
             $e->queryString = $this->queryString;
-            $query->error = $e;
-            $this->_log($query, $params, $t);
+            $this->loggedQuery->error = $e;
+            $this->_log();
             throw $e;
         }
 
-        $query->numRows = $this->rowCount();
-        $this->_log($query, $params, $t);
+        if (preg_match('/^(?!SELECT)/i', $this->queryString)) {
+            $this->rowCount();
+        }
+
+        return $result;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function fetch($type = self::FETCH_TYPE_NUM)
+    {
+        $record = parent::fetch($type);
+
+        if ($this->loggedQuery) {
+            $this->rowCount();
+        }
+
+        return $record;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function fetchAll($type = self::FETCH_TYPE_NUM)
+    {
+        $results = parent::fetchAll($type);
+
+        if ($this->loggedQuery) {
+            $this->rowCount();
+        }
+
+        return $results;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function rowCount(): int
+    {
+        $result = parent::rowCount();
+
+        if ($this->loggedQuery) {
+            $this->loggedQuery->numRows = $result;
+            $this->_log();
+        }
 
         return $result;
     }
@@ -74,17 +136,18 @@ class LoggingStatement extends StatementDecorator
      * Copies the logging data to the passed LoggedQuery and sends it
      * to the logging system.
      *
-     * @param \Cake\Database\Log\LoggedQuery $query The query to log.
-     * @param array|null $params List of values to be bound to query.
-     * @param float $startTime The microtime when the query was executed.
      * @return void
      */
-    protected function _log(LoggedQuery $query, ?array $params, float $startTime): void
+    protected function _log(): void
     {
-        $query->took = (int)round((microtime(true) - $startTime) * 1000, 0);
-        $query->params = $params ?: $this->_compiledParams;
-        $query->query = $this->queryString;
-        $this->getLogger()->debug((string)$query, ['query' => $query]);
+        if ($this->loggedQuery === null) {
+            return;
+        }
+
+        $this->loggedQuery->query = $this->queryString;
+        $this->getLogger()->debug((string)$this->loggedQuery, ['query' => $this->loggedQuery]);
+
+        $this->loggedQuery = null;
     }
 
     /**

@@ -44,7 +44,7 @@ class ProcessForker extends AbstractListener
      *
      * @return bool
      */
-    public static function isSupported()
+    public static function isSupported(): bool
     {
         return self::isPcntlSupported() && !self::disabledPcntlFunctions() && self::isPosixSupported() && !self::disabledPosixFunctions();
     }
@@ -52,7 +52,7 @@ class ProcessForker extends AbstractListener
     /**
      * Verify that all required pcntl functions are, in fact, available.
      */
-    public static function isPcntlSupported()
+    public static function isPcntlSupported(): bool
     {
         foreach (self::$pcntlFunctions as $func) {
             if (!\function_exists($func)) {
@@ -74,7 +74,7 @@ class ProcessForker extends AbstractListener
     /**
      * Verify that all required posix functions are, in fact, available.
      */
-    public static function isPosixSupported()
+    public static function isPosixSupported(): bool
     {
         foreach (self::$posixFunctions as $func) {
             if (!\function_exists($func)) {
@@ -93,7 +93,7 @@ class ProcessForker extends AbstractListener
         return self::checkDisabledFunctions(self::$posixFunctions);
     }
 
-    private static function checkDisabledFunctions(array $functions)
+    private static function checkDisabledFunctions(array $functions): array
     {
         return \array_values(\array_intersect($functions, \array_map('strtolower', \array_map('trim', \explode(',', \ini_get('disable_functions'))))));
     }
@@ -108,7 +108,7 @@ class ProcessForker extends AbstractListener
      */
     public function beforeRun(Shell $shell)
     {
-        list($up, $down) = \stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        list($up, $down) = \stream_socket_pair(\STREAM_PF_UNIX, \STREAM_SOCK_STREAM, \STREAM_IPPROTO_IP);
 
         if (!$up) {
             throw new \RuntimeException('Unable to create socket pair');
@@ -124,8 +124,8 @@ class ProcessForker extends AbstractListener
             \fclose($up);
 
             // Wait for a return value from the loop process.
-            $read   = [$down];
-            $write  = null;
+            $read = [$down];
+            $write = null;
             $except = null;
 
             do {
@@ -190,7 +190,7 @@ class ProcessForker extends AbstractListener
     {
         // if there's an old savegame hanging around, let's kill it.
         if (isset($this->savegame)) {
-            \posix_kill($this->savegame, SIGKILL);
+            \posix_kill($this->savegame, \SIGKILL);
             \pcntl_signal_dispatch();
         }
     }
@@ -208,7 +208,7 @@ class ProcessForker extends AbstractListener
             \fwrite($this->up, $this->serializeReturn($shell->getScopeVariables(false)));
             \fclose($this->up);
 
-            \posix_kill(\posix_getpid(), SIGKILL);
+            \posix_kill(\posix_getpid(), \SIGKILL);
         }
     }
 
@@ -233,7 +233,7 @@ class ProcessForker extends AbstractListener
 
             // worker exited cleanly, let's bail
             if (!\pcntl_wexitstatus($status)) {
-                \posix_kill(\posix_getpid(), SIGKILL);
+                \posix_kill(\posix_getpid(), \SIGKILL);
             }
 
             // worker didn't exit cleanly, we'll need to have another go
@@ -253,7 +253,7 @@ class ProcessForker extends AbstractListener
      *
      * @return string
      */
-    private function serializeReturn(array $return)
+    private function serializeReturn(array $return): string
     {
         $serializable = [];
 
@@ -273,9 +273,6 @@ class ProcessForker extends AbstractListener
                 $serializable[$key] = $value;
             } catch (\Throwable $e) {
                 // we'll just ignore this one...
-            } catch (\Exception $e) {
-                // and this one too...
-                // @todo remove this once we don't support PHP 5.x anymore :)
             }
         }
 

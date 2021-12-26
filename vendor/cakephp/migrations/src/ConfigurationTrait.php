@@ -13,6 +13,7 @@ declare(strict_types=1);
  */
 namespace Migrations;
 
+use Cake\Core\Configure;
 use Cake\Datasource\ConnectionManager;
 use Migrations\Util\UtilTrait;
 use Phinx\Config\Config;
@@ -78,11 +79,11 @@ trait ConfigurationTrait
         $seedsPath = $this->getOperationsPath($this->input(), 'Seeds');
         $plugin = $this->getPlugin($this->input());
 
-        if (!is_dir($migrationsPath)) {
+        if (Configure::read('debug') && !is_dir($migrationsPath)) {
             mkdir($migrationsPath, 0777, true);
         }
 
-        if (!is_dir($seedsPath)) {
+        if (Configure::read('debug') && !is_dir($seedsPath)) {
             mkdir($seedsPath, 0777, true);
         }
 
@@ -110,7 +111,7 @@ trait ConfigurationTrait
             'migration_base_class' => 'Migrations\AbstractMigration',
             'environments' => [
                 'default_migration_table' => $phinxTable,
-                'default_database' => 'default',
+                'default_environment' => 'default',
                 'default' => [
                     'adapter' => $adapterName,
                     'host' => $connectionConfig['host'] ?? null,
@@ -146,6 +147,15 @@ trait ConfigurationTrait
                  */
                 $config['environments']['default']['mysql_attr_ssl_ca'] = $connectionConfig['ssl_ca'];
             }
+        }
+
+        if (!empty($connectionConfig['flags'])) {
+            /**
+             * @psalm-suppress PossiblyNullArrayAccess
+             * @psalm-suppress PossiblyNullArgument
+             */
+            $config['environments']['default'] +=
+                $this->translateConnectionFlags($connectionConfig['flags'], $adapterName);
         }
 
         return $this->configuration = new Config($config);
@@ -190,5 +200,63 @@ trait ConfigurationTrait
     protected function getConnectionName(InputInterface $input)
     {
         return $input->getOption('connection') ?: 'default';
+    }
+
+    /**
+     * Translates driver specific connection flags (PDO attributes) to
+     * Phinx compatible adapter options.
+     *
+     * Currently Phinx supports of the following flags:
+     *
+     * - *Most* of `PDO::ATTR_*`
+     * - `PDO::MYSQL_ATTR_*`
+     * - `PDO::PGSQL_ATTR_*`
+     * - `PDO::SQLSRV_ATTR_*`
+     *
+     * ### Example:
+     *
+     * ```
+     * [
+     *     \PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
+     *     \PDO::SQLSRV_ATTR_DIRECT_QUERY => true,
+     *     // ...
+     * ]
+     * ```
+     *
+     * will be translated to:
+     *
+     * ```
+     * [
+     *     'mysql_attr_ssl_verify_server_cert' => false,
+     *     'sqlsrv_attr_direct_query' => true,
+     *     // ...
+     * ]
+     * ```
+     *
+     * @param array $flags An array of connection flags.
+     * @param string $adapterName The adapter name, eg `mysql` or `sqlsrv`.
+     * @return array An array of Phinx compatible connection attribute options.
+     */
+    protected function translateConnectionFlags(array $flags, $adapterName)
+    {
+        $pdo = new \ReflectionClass(\PDO::class);
+        $constants = $pdo->getConstants();
+
+        $attributes = [];
+        foreach ($constants as $name => $value) {
+            $name = strtolower($name);
+            if (strpos($name, "{$adapterName}_attr_") === 0 || strpos($name, 'attr_') === 0) {
+                $attributes[$value] = $name;
+            }
+        }
+
+        $options = [];
+        foreach ($flags as $flag => $value) {
+            if (isset($attributes[$flag])) {
+                $options[$attributes[$flag]] = $value;
+            }
+        }
+
+        return $options;
     }
 }

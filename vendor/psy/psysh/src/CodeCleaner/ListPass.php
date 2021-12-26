@@ -33,7 +33,7 @@ class ListPass extends CodeCleanerPass
 
     public function __construct()
     {
-        $this->atLeastPhp71 = \version_compare(PHP_VERSION, '7.1', '>=');
+        $this->atLeastPhp71 = \version_compare(\PHP_VERSION, '7.1', '>=');
     }
 
     /**
@@ -97,7 +97,7 @@ class ListPass extends CodeCleanerPass
      *
      * @return bool
      */
-    private static function isValidArrayItem(Expr $item)
+    private static function isValidArrayItem(Expr $item): bool
     {
         $value = ($item instanceof ArrayItem) ? $item->value : $item;
 

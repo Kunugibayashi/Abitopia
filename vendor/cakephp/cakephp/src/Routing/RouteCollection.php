@@ -35,28 +35,21 @@ class RouteCollection
     /**
      * The routes connected to this collection.
      *
-     * @var array
+     * @var array<string, array<\Cake\Routing\Route\Route>>
      */
     protected $_routeTable = [];
 
     /**
-     * The routes connected to this collection.
-     *
-     * @var \Cake\Routing\Route\Route[]
-     */
-    protected $_routes = [];
-
-    /**
      * The hash map of named routes that are in this collection.
      *
-     * @var \Cake\Routing\Route\Route[]
+     * @var array<\Cake\Routing\Route\Route>
      */
     protected $_named = [];
 
     /**
      * Routes indexed by path prefix.
      *
-     * @var array
+     * @var array<string, array<\Cake\Routing\Route\Route>>
      */
     protected $_paths = [];
 
@@ -77,7 +70,7 @@ class RouteCollection
     /**
      * Route extensions
      *
-     * @var string[]
+     * @var array<string>
      */
     protected $_extensions = [];
 
@@ -85,14 +78,12 @@ class RouteCollection
      * Add a route to the collection.
      *
      * @param \Cake\Routing\Route\Route $route The route object to add.
-     * @param array $options Additional options for the route. Primarily for the
+     * @param array<string, mixed> $options Additional options for the route. Primarily for the
      *   `_name` option, which enables named routes.
      * @return void
      */
     public function add(Route $route, array $options = []): void
     {
-        $this->_routes[] = $route;
-
         // Explicit names
         if (isset($options['_name'])) {
             if (isset($this->_named[$options['_name']])) {
@@ -108,9 +99,7 @@ class RouteCollection
 
         // Generated names.
         $name = $route->getName();
-        if (!isset($this->_routeTable[$name])) {
-            $this->_routeTable[$name] = [];
-        }
+        $this->_routeTable[$name] = $this->_routeTable[$name] ?? [];
         $this->_routeTable[$name][] = $route;
 
         // Index path prefixes (for parsing)
@@ -136,10 +125,9 @@ class RouteCollection
         $decoded = urldecode($url);
 
         // Sort path segments matching longest paths first.
-        $paths = array_keys($this->_paths);
-        rsort($paths);
+        krsort($this->_paths);
 
-        foreach ($paths as $path) {
+        foreach ($this->_paths as $path => $routes) {
             if (strpos($decoded, $path) !== 0) {
                 continue;
             }
@@ -149,8 +137,8 @@ class RouteCollection
                 [$url, $qs] = explode('?', $url, 2);
                 parse_str($qs, $queryParameters);
             }
-            /** @var \Cake\Routing\Route\Route $route */
-            foreach ($this->_paths[$path] as $route) {
+
+            foreach ($routes as $route) {
                 $r = $route->parse($url, $method);
                 if ($r === null) {
                     continue;
@@ -186,16 +174,14 @@ class RouteCollection
         $urlPath = urldecode($uri->getPath());
 
         // Sort path segments matching longest paths first.
-        $paths = array_keys($this->_paths);
-        rsort($paths);
+        krsort($this->_paths);
 
-        foreach ($paths as $path) {
+        foreach ($this->_paths as $path => $routes) {
             if (strpos($urlPath, $path) !== 0) {
                 continue;
             }
 
-            /** @var \Cake\Routing\Route\Route $route */
-            foreach ($this->_paths[$path] as $route) {
+            foreach ($routes as $route) {
                 $r = $route->parseRequest($request);
                 if ($r === null) {
                     continue;
@@ -216,7 +202,7 @@ class RouteCollection
      * and newer style urls containing '_name'
      *
      * @param array $url The url to match.
-     * @return string[] The set of names of the url
+     * @return array<string> The set of names of the url
      */
     protected function _getNames(array $url): array
     {
@@ -320,7 +306,7 @@ class RouteCollection
                 throw new MissingRouteException([
                     'url' => $name,
                     'context' => $context,
-                    'message' => 'A named route was found for "%s", but matching failed.',
+                    'message' => "A named route was found for `{$name}`, but matching failed.",
                 ]);
             }
             throw new MissingRouteException(['url' => $name, 'context' => $context]);
@@ -330,11 +316,10 @@ class RouteCollection
             if (empty($this->_routeTable[$name])) {
                 continue;
             }
-            /** @var \Cake\Routing\Route\Route $route */
             foreach ($this->_routeTable[$name] as $route) {
                 $match = $route->match($url, $context);
                 if ($match) {
-                    return strlen($match) > 1 ? trim($match, '/') : $match;
+                    return $match === '/' ? $match : trim($match, '/');
                 }
             }
         }
@@ -344,17 +329,23 @@ class RouteCollection
     /**
      * Get all the connected routes as a flat list.
      *
-     * @return \Cake\Routing\Route\Route[]
+     * @return array<\Cake\Routing\Route\Route>
      */
     public function routes(): array
     {
-        return $this->_routes;
+        krsort($this->_paths);
+
+        return array_reduce(
+            $this->_paths,
+            'array_merge',
+            []
+        );
     }
 
     /**
      * Get the connected named routes.
      *
-     * @return \Cake\Routing\Route\Route[]
+     * @return array<\Cake\Routing\Route\Route>
      */
     public function named(): array
     {
@@ -364,7 +355,7 @@ class RouteCollection
     /**
      * Get the extensions that can be handled.
      *
-     * @return string[] The valid extensions.
+     * @return array<string> The valid extensions.
      */
     public function getExtensions(): array
     {
@@ -374,7 +365,7 @@ class RouteCollection
     /**
      * Set the extensions that the route collection can handle.
      *
-     * @param string[] $extensions The list of extensions to set.
+     * @param array<string> $extensions The list of extensions to set.
      * @param bool $merge Whether to merge with or override existing extensions.
      *   Defaults to `true`.
      * @return $this
@@ -399,7 +390,7 @@ class RouteCollection
      * scope or any child scopes that share the same RouteCollection.
      *
      * @param string $name The name of the middleware. Used when applying middleware to a scope.
-     * @param string|\Closure|\Psr\Http\Server\MiddlewareInterface $middleware The middleware to register.
+     * @param \Psr\Http\Server\MiddlewareInterface|\Closure|string $middleware The middleware to register.
      * @return $this
      * @throws \RuntimeException
      */
@@ -414,7 +405,7 @@ class RouteCollection
      * Add middleware to a middleware group
      *
      * @param string $name Name of the middleware group
-     * @param string[] $middlewareNames Names of the middleware
+     * @param array<string> $middlewareNames Names of the middleware
      * @return $this
      * @throws \RuntimeException
      */
@@ -473,7 +464,7 @@ class RouteCollection
     /**
      * Get an array of middleware given a list of names
      *
-     * @param string[] $names The names of the middleware or groups to fetch
+     * @param array<string> $names The names of the middleware or groups to fetch
      * @return array An array of middleware. If any of the passed names are groups,
      *   the groups middleware will be flattened into the returned list.
      * @throws \RuntimeException when a requested middleware does not exist.

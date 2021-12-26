@@ -69,19 +69,20 @@ class Environment
      * @param \Phinx\Migration\MigrationInterface $migration Migration
      * @param string $direction Direction
      * @param bool $fake flag that if true, we just record running the migration, but not actually do the migration
-     *
      * @return void
      */
     public function executeMigration(MigrationInterface $migration, $direction = MigrationInterface::UP, $fake = false)
     {
-        $direction = ($direction === MigrationInterface::UP) ? MigrationInterface::UP : MigrationInterface::DOWN;
+        $direction = $direction === MigrationInterface::UP ? MigrationInterface::UP : MigrationInterface::DOWN;
         $migration->setMigratingUp($direction === MigrationInterface::UP);
 
         $startTime = time();
         $migration->setAdapter($this->getAdapter());
+
+        $migration->preFlightCheck($direction);
+
         if (method_exists($migration, MigrationInterface::INIT)) {
-            /** @noinspection PhpUndefinedMethodInspection */
-            $migration->init();
+            $migration->{MigrationInterface::INIT}();
         }
 
         if (!$fake) {
@@ -100,13 +101,11 @@ class Environment
                     $proxyAdapter = AdapterFactory::instance()
                         ->getWrapper('proxy', $this->getAdapter());
                     $migration->setAdapter($proxyAdapter);
-                    /** @noinspection PhpUndefinedMethodInspection */
-                    $migration->change();
+                    $migration->{MigrationInterface::CHANGE}();
                     $proxyAdapter->executeInvertedCommands();
                     $migration->setAdapter($this->getAdapter());
                 } else {
-                    /** @noinspection PhpUndefinedMethodInspection */
-                    $migration->change();
+                    $migration->{MigrationInterface::CHANGE}();
                 }
             } else {
                 $migration->{$direction}();
@@ -118,6 +117,8 @@ class Environment
             }
         }
 
+        $migration->postFlightCheck($direction);
+
         // Record it in the database
         $this->getAdapter()->migrated($migration, $direction, date('Y-m-d H:i:s', $startTime), date('Y-m-d H:i:s', time()));
     }
@@ -126,15 +127,13 @@ class Environment
      * Executes the specified seeder on this environment.
      *
      * @param \Phinx\Seed\SeedInterface $seed Seed
-     *
      * @return void
      */
     public function executeSeed(SeedInterface $seed)
     {
         $seed->setAdapter($this->getAdapter());
         if (method_exists($seed, SeedInterface::INIT)) {
-            /** @noinspection PhpUndefinedMethodInspection */
-            $seed->init();
+            $seed->{SeedInterface::INIT}();
         }
 
         // begin the transaction if the adapter supports it
@@ -144,7 +143,7 @@ class Environment
 
         // Run the seeder
         if (method_exists($seed, SeedInterface::RUN)) {
-            $seed->run();
+            $seed->{SeedInterface::RUN}();
         }
 
         // commit the transaction if the adapter supports it
@@ -157,7 +156,6 @@ class Environment
      * Sets the environment's name.
      *
      * @param string $name Environment Name
-     *
      * @return $this
      */
     public function setName($name)
@@ -181,7 +179,6 @@ class Environment
      * Sets the environment's options.
      *
      * @param array $options Environment Options
-     *
      * @return $this
      */
     public function setOptions($options)
@@ -205,7 +202,6 @@ class Environment
      * Sets the console input.
      *
      * @param \Symfony\Component\Console\Input\InputInterface $input Input
-     *
      * @return $this
      */
     public function setInput(InputInterface $input)
@@ -229,7 +225,6 @@ class Environment
      * Sets the console output.
      *
      * @param \Symfony\Component\Console\Output\OutputInterface $output Output
-     *
      * @return $this
      */
     public function setOutput(OutputInterface $output)
@@ -274,7 +269,6 @@ class Environment
      * Sets the current version of the environment.
      *
      * @param int $version Environment Version
-     *
      * @return $this
      */
     public function setCurrentVersion($version)
@@ -310,7 +304,6 @@ class Environment
      * Sets the database adapter.
      *
      * @param \Phinx\Db\Adapter\AdapterInterface $adapter Database Adapter
-     *
      * @return $this
      */
     public function setAdapter(AdapterInterface $adapter)
@@ -324,7 +317,6 @@ class Environment
      * Gets the database adapter.
      *
      * @throws \RuntimeException
-     *
      * @return \Phinx\Db\Adapter\AdapterInterface
      */
     public function getAdapter()
@@ -385,7 +377,6 @@ class Environment
      * Sets the schema table name.
      *
      * @param string $schemaTableName Schema Table Name
-     *
      * @return $this
      */
     public function setSchemaTableName($schemaTableName)

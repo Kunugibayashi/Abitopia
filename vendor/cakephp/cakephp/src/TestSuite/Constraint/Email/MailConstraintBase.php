@@ -45,13 +45,13 @@ abstract class MailConstraintBase extends Constraint
     /**
      * Gets the email or emails to check
      *
-     * @return \Cake\Mailer\Message[]
+     * @return array<\Cake\Mailer\Message>
      */
     public function getMessages()
     {
         $messages = TestEmailTransport::getMessages();
 
-        if ($this->at) {
+        if ($this->at !== null) {
             if (!isset($messages[$this->at])) {
                 return [];
             }

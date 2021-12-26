@@ -31,6 +31,8 @@ use SeekableIterator;
 /**
  * Provides methods for creating and manipulating a "queue" of middlewares.
  * This queue is used to process a request and generate response via \Cake\Http\Runner.
+ *
+ * @template-implements \SeekableIterator<int, \Psr\Http\Server\MiddlewareInterface>
  */
 class MiddlewareQueue implements Countable, SeekableIterator
 {
@@ -44,8 +46,7 @@ class MiddlewareQueue implements Countable, SeekableIterator
     /**
      * The queue of middlewares.
      *
-     * @var array
-     * @psalm-var array<int, mixed>
+     * @var array<int, mixed>
      */
     protected $queue = [];
 
@@ -62,7 +63,7 @@ class MiddlewareQueue implements Countable, SeekableIterator
     /**
      * Resolve middleware name to a PSR 15 compliant middleware instance.
      *
-     * @param string|\Closure|\Psr\Http\Server\MiddlewareInterface $middleware The middleware to resolve.
+     * @param \Psr\Http\Server\MiddlewareInterface|\Closure|string $middleware The middleware to resolve.
      * @return \Psr\Http\Server\MiddlewareInterface
      * @throws \RuntimeException If Middleware not found.
      */
@@ -98,7 +99,7 @@ class MiddlewareQueue implements Countable, SeekableIterator
     /**
      * Append a middleware to the end of the queue.
      *
-     * @param string|array|\Closure|\Psr\Http\Server\MiddlewareInterface $middleware The middleware(s) to append.
+     * @param \Psr\Http\Server\MiddlewareInterface|\Closure|array|string $middleware The middleware(s) to append.
      * @return $this
      */
     public function add($middleware)
@@ -116,7 +117,7 @@ class MiddlewareQueue implements Countable, SeekableIterator
     /**
      * Alias for MiddlewareQueue::add().
      *
-     * @param string|array|\Closure|\Psr\Http\Server\MiddlewareInterface $middleware The middleware(s) to append.
+     * @param \Psr\Http\Server\MiddlewareInterface|\Closure|array|string $middleware The middleware(s) to append.
      * @return $this
      * @see MiddlewareQueue::add()
      */
@@ -128,7 +129,7 @@ class MiddlewareQueue implements Countable, SeekableIterator
     /**
      * Prepend a middleware to the start of the queue.
      *
-     * @param string|array|\Closure|\Psr\Http\Server\MiddlewareInterface $middleware The middleware(s) to prepend.
+     * @param \Psr\Http\Server\MiddlewareInterface|\Closure|array|string $middleware The middleware(s) to prepend.
      * @return $this
      */
     public function prepend($middleware)
@@ -150,7 +151,7 @@ class MiddlewareQueue implements Countable, SeekableIterator
      * and the existing element will be shifted one index greater.
      *
      * @param int $index The index to insert at.
-     * @param string|\Closure|\Psr\Http\Server\MiddlewareInterface $middleware The middleware to insert.
+     * @param \Psr\Http\Server\MiddlewareInterface|\Closure|string $middleware The middleware to insert.
      * @return $this
      */
     public function insertAt(int $index, $middleware)
@@ -167,7 +168,7 @@ class MiddlewareQueue implements Countable, SeekableIterator
      * and inserts the supplied middleware before it.
      *
      * @param string $class The classname to insert the middleware before.
-     * @param string|\Closure|\Psr\Http\Server\MiddlewareInterface $middleware The middleware to insert.
+     * @param \Psr\Http\Server\MiddlewareInterface|\Closure|string $middleware The middleware to insert.
      * @return $this
      * @throws \LogicException If middleware to insert before is not found.
      */
@@ -176,6 +177,7 @@ class MiddlewareQueue implements Countable, SeekableIterator
         $found = false;
         $i = 0;
         foreach ($this->queue as $i => $object) {
+            /** @psalm-suppress ArgumentTypeCoercion */
             if (
                 (
                     is_string($object)
@@ -201,7 +203,7 @@ class MiddlewareQueue implements Countable, SeekableIterator
      * this method will behave like add().
      *
      * @param string $class The classname to insert the middleware before.
-     * @param string|\Closure|\Psr\Http\Server\MiddlewareInterface $middleware The middleware to insert.
+     * @param \Psr\Http\Server\MiddlewareInterface|\Closure|string $middleware The middleware to insert.
      * @return $this
      */
     public function insertAfter(string $class, $middleware)
@@ -209,6 +211,7 @@ class MiddlewareQueue implements Countable, SeekableIterator
         $found = false;
         $i = 0;
         foreach ($this->queue as $i => $object) {
+            /** @psalm-suppress ArgumentTypeCoercion */
             if (
                 (
                     is_string($object)

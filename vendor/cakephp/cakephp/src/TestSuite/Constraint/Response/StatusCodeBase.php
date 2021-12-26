@@ -23,14 +23,14 @@ namespace Cake\TestSuite\Constraint\Response;
 abstract class StatusCodeBase extends ResponseBase
 {
     /**
-     * @var int|array
+     * @var array<int, int>|int
      */
     protected $code;
 
     /**
      * Check assertion
      *
-     * @param int|array $other Array of min/max status codes, or a single code
+     * @param array<int, int>|int $other Array of min/max status codes, or a single code
      * @return bool
      * @psalm-suppress MoreSpecificImplementedParamType
      */
@@ -67,6 +67,7 @@ abstract class StatusCodeBase extends ResponseBase
      */
     protected function failureDescription($other): string
     {
+        /** @psalm-suppress InternalMethod */
         return $this->toString();
     }
 }

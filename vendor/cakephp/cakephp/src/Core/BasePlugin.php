@@ -18,14 +18,15 @@ namespace Cake\Core;
 use Cake\Console\CommandCollection;
 use Cake\Http\MiddlewareQueue;
 use Cake\Routing\RouteBuilder;
+use Closure;
 use InvalidArgumentException;
 use ReflectionClass;
 
 /**
  * Base Plugin Class
  *
- * Every plugin should extends from this class or implement the interfaces and
- * include a plugin class in it's src root folder.
+ * Every plugin should extend from this class or implement the interfaces and
+ * include a plugin class in its src root folder.
  */
 class BasePlugin implements PluginInterface
 {
@@ -37,11 +38,11 @@ class BasePlugin implements PluginInterface
     protected $bootstrapEnabled = true;
 
     /**
-     * Load routes or not
+     * Console middleware
      *
      * @var bool
      */
-    protected $routesEnabled = true;
+    protected $consoleEnabled = true;
 
     /**
      * Enable middleware
@@ -51,11 +52,18 @@ class BasePlugin implements PluginInterface
     protected $middlewareEnabled = true;
 
     /**
-     * Console middleware
+     * Register container services
      *
      * @var bool
      */
-    protected $consoleEnabled = true;
+    protected $servicesEnabled = true;
+
+    /**
+     * Load routes or not
+     *
+     * @var bool
+     */
+    protected $routesEnabled = true;
 
     /**
      * The path to this plugin.
@@ -95,7 +103,7 @@ class BasePlugin implements PluginInterface
     /**
      * Constructor
      *
-     * @param array $options Options
+     * @param array<string, mixed> $options Options
      */
     public function __construct(array $options = [])
     {
@@ -250,8 +258,11 @@ class BasePlugin implements PluginInterface
     public function routes(RouteBuilder $routes): void
     {
         $path = $this->getConfigPath() . 'routes.php';
-        if (file_exists($path)) {
-            require $path;
+        if (is_file($path)) {
+            $return = require $path;
+            if ($return instanceof Closure) {
+                $return($routes);
+            }
         }
     }
 
@@ -261,7 +272,7 @@ class BasePlugin implements PluginInterface
     public function bootstrap(PluginApplicationInterface $app): void
     {
         $bootstrap = $this->getConfigPath() . 'bootstrap.php';
-        if (file_exists($bootstrap)) {
+        if (is_file($bootstrap)) {
             require $bootstrap;
         }
     }
@@ -280,5 +291,15 @@ class BasePlugin implements PluginInterface
     public function middleware(MiddlewareQueue $middlewareQueue): MiddlewareQueue
     {
         return $middlewareQueue;
+    }
+
+    /**
+     * Register container services for this plugin.
+     *
+     * @param \Cake\Core\ContainerInterface $container The container to add services to.
+     * @return void
+     */
+    public function services(ContainerInterface $container): void
+    {
     }
 }

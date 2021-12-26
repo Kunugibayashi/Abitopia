@@ -27,7 +27,7 @@ Additionally, this package provides a few traits and classes you can use in your
 
 * `EntityTrait` - Contains the default implementation for the `EntityInterface`.
 * `QueryTrait` - Exposes the methods for creating a query object capable of returning decoratable collections.
-* `ResultSetDecorator` - Decorates any traversable object so it complies with `ResultSetInterface`.
+* `ResultSetDecorator` - Decorates any traversable object, so it complies with `ResultSetInterface`.
 
 
 ## Connections
@@ -79,4 +79,4 @@ $conn = ConnectionManager::config('other', $connectionInstance);
 
 ## Documentation
 
-Please make sure you check the [official API documentation](https://api.cakephp.org/3.x/namespace-Cake.Datasource.html)
+Please make sure you check the [official API documentation](https://api.cakephp.org/4.x/namespace-Cake.Datasource.html)

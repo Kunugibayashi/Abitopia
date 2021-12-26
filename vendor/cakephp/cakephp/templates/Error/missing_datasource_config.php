@@ -1,6 +1,5 @@
 <?php
 /**
- *
  * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
@@ -12,6 +11,7 @@
  * @link          https://cakephp.org CakePHP(tm) Project
  * @since         2.0.0
  * @license       https://opensource.org/licenses/mit-license.php MIT License
+ * @var string $message
  */
 $this->layout = 'dev_error';
 

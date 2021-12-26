@@ -41,14 +41,14 @@ class I18nExtractCommand extends Command
     /**
      * Paths to use when looking for strings
      *
-     * @var string[]
+     * @var array<string>
      */
     protected $_paths = [];
 
     /**
      * Files from where to extract
      *
-     * @var string[]
+     * @var array<string>
      */
     protected $_files = [];
 
@@ -60,13 +60,6 @@ class I18nExtractCommand extends Command
     protected $_merge = false;
 
     /**
-     * Use relative paths in the pot files rather than full path
-     *
-     * @var bool
-     */
-    protected $_relativePaths = false;
-
-    /**
      * Current file being processed
      *
      * @var string
@@ -74,9 +67,9 @@ class I18nExtractCommand extends Command
     protected $_file = '';
 
     /**
-     * Contains all content waiting to be write
+     * Contains all content waiting to be written
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_storage = [];
 
@@ -90,7 +83,7 @@ class I18nExtractCommand extends Command
     /**
      * Extracted strings indexed by domain.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_translations = [];
 
@@ -104,7 +97,7 @@ class I18nExtractCommand extends Command
     /**
      * An array of directories to exclude.
      *
-     * @var string[]
+     * @var array<string>
      */
     protected $_exclude = [];
 
@@ -207,7 +200,7 @@ class I18nExtractCommand extends Command
                 ['y', 'n'],
                 'n'
             );
-            $this->_extractCore = strtolower((string)$response) === 'y';
+            $this->_extractCore = strtolower($response) === 'y';
         }
 
         if ($args->hasOption('exclude-plugins') && $this->_isExtractingApp()) {
@@ -263,11 +256,10 @@ class I18nExtractCommand extends Command
                 ['y', 'n'],
                 'n'
             );
-            $this->_merge = strtolower((string)$response) === 'y';
+            $this->_merge = strtolower($response) === 'y';
         }
 
         $this->_markerError = (bool)$args->getOption('marker-error');
-        $this->_relativePaths = (bool)$args->getOption('relative-paths');
 
         if (empty($this->_files)) {
             $this->_searchFiles();
@@ -342,7 +334,7 @@ class I18nExtractCommand extends Command
         $io->out();
         if ($this->_countMarkerError) {
             $io->err("{$this->_countMarkerError} marker error(s) detected.");
-            $io->err(" => Use the --marker-error option to display errors.");
+            $io->err(' => Use the --marker-error option to display errors.');
         }
 
         $io->out('Done.');
@@ -368,10 +360,6 @@ class I18nExtractCommand extends Command
             'help' => 'Merge all domain strings into a single default.po file.',
             'default' => 'no',
             'choices' => ['yes', 'no'],
-        ])->addOption('relative-paths', [
-            'help' => 'Use application relative paths in the .pot file.',
-            'boolean' => true,
-            'default' => false,
         ])->addOption('output', [
             'help' => 'Full path to output directory.',
         ])->addOption('files', [
@@ -382,7 +370,8 @@ class I18nExtractCommand extends Command
             'help' => 'Ignores all files in plugins if this command is run inside from the same app directory.',
         ])->addOption('plugin', [
             'help' => 'Extracts tokens only from the plugin specified and '
-                . 'puts the result in the plugin\'s Locale directory.',
+                . 'puts the result in the plugin\'s `locales` directory.',
+            'short' => 'p',
         ])->addOption('exclude', [
             'help' => 'Comma separated list of directories to exclude.' .
                 ' Any path containing a path segment with the provided values will be skipped. E.g. test,vendors',
@@ -504,15 +493,14 @@ class I18nExtractCommand extends Command
                 if ($mapCount === count($strings)) {
                     $singular = '';
                     $plural = $context = null;
-                    extract(array_combine($map, $strings));
+                    $vars = array_combine($map, $strings);
+                    extract($vars);
                     $domain = $domain ?? 'default';
                     $details = [
                         'file' => $this->_file,
                         'line' => $line,
                     ];
-                    if ($this->_relativePaths) {
-                        $details['file'] = '.' . str_replace(ROOT, '', $details['file']);
-                    }
+                    $details['file'] = '.' . str_replace(ROOT, '', $details['file']);
                     if ($plural !== null) {
                         $details['msgid_plural'] = $plural;
                     }
@@ -562,7 +550,7 @@ class I18nExtractCommand extends Command
                         $occurrences = implode("\n#: ", $occurrences);
 
                         $header = '#: '
-                            . str_replace(DIRECTORY_SEPARATOR, '/', str_replace($paths, '', $occurrences))
+                            . str_replace(DIRECTORY_SEPARATOR, '/', $occurrences)
                             . "\n";
                     }
 
@@ -600,9 +588,8 @@ class I18nExtractCommand extends Command
      */
     protected function _store(string $domain, string $header, string $sentence): void
     {
-        if (!isset($this->_storage[$domain])) {
-            $this->_storage[$domain] = [];
-        }
+        $this->_storage[$domain] = $this->_storage[$domain] ?? [];
+
         if (!isset($this->_storage[$domain][$sentence])) {
             $this->_storage[$domain][$sentence] = $header;
         } else {
@@ -684,7 +671,7 @@ class I18nExtractCommand extends Command
         $output .= "#, fuzzy\n";
         $output .= "msgid \"\"\n";
         $output .= "msgstr \"\"\n";
-        $output .= "\"Project-Id-Version: " . $projectIdVersion . "\\n\"\n";
+        $output .= '"Project-Id-Version: ' . $projectIdVersion . "\\n\"\n";
         $output .= '"POT-Creation-Date: ' . date('Y-m-d H:iO') . "\\n\"\n";
         $output .= "\"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\\n\"\n";
         $output .= "\"Last-Translator: NAME <EMAIL@ADDRESS>\\n\"\n";
@@ -705,7 +692,7 @@ class I18nExtractCommand extends Command
      * @param string $oldFile The existing file.
      * @param int $headerLength The length of the file header in bytes.
      * @param string $newFileContent The content of the new file.
-     * @return bool Whether or not the old and new file are unchanged.
+     * @return bool Whether the old and new file are unchanged.
      */
     protected function checkUnchanged(string $oldFile, int $headerLength, string $newFileContent): bool
     {
@@ -730,7 +717,7 @@ class I18nExtractCommand extends Command
     protected function _getStrings(int &$position, int $target): array
     {
         $strings = [];
-        $count = count($strings);
+        $count = 0;
         while (
             $count < $target
             && ($this->_tokens[$position] === ','
@@ -872,7 +859,7 @@ class I18nExtractCommand extends Command
     }
 
     /**
-     * Checks whether or not a given path is usable for writing.
+     * Checks whether a given path is usable for writing.
      *
      * @param string $path Path to folder
      * @return bool true if it exists and is writable, false otherwise

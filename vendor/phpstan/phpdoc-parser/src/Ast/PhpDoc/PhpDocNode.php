@@ -3,9 +3,12 @@
 namespace PHPStan\PhpDocParser\Ast\PhpDoc;
 
 use PHPStan\PhpDocParser\Ast\Node;
+use PHPStan\PhpDocParser\Ast\NodeAttributes;
 
 class PhpDocNode implements Node
 {
+
+	use NodeAttributes;
 
 	/** @var PhpDocChildNode[] */
 	public $children;
@@ -155,6 +158,20 @@ class PhpDocNode implements Node
 
 
 	/**
+	 * @return MixinTagValueNode[]
+	 */
+	public function getMixinTagValues(string $tagName = '@mixin'): array
+	{
+		return array_column(
+			array_filter($this->getTagsByName($tagName), static function (PhpDocTagNode $tag): bool {
+				return $tag->value instanceof MixinTagValueNode;
+			}),
+			'value'
+		);
+	}
+
+
+	/**
 	 * @return \PHPStan\PhpDocParser\Ast\PhpDoc\DeprecatedTagValueNode[]
 	 */
 	public function getDeprecatedTagValues(): array
@@ -224,9 +241,44 @@ class PhpDocNode implements Node
 	}
 
 
+	/**
+	 * @return TypeAliasTagValueNode[]
+	 */
+	public function getTypeAliasTagValues(string $tagName = '@phpstan-type'): array
+	{
+		return array_column(
+			array_filter($this->getTagsByName($tagName), static function (PhpDocTagNode $tag): bool {
+				return $tag->value instanceof TypeAliasTagValueNode;
+			}),
+			'value'
+		);
+	}
+
+
+	/**
+	 * @return TypeAliasImportTagValueNode[]
+	 */
+	public function getTypeAliasImportTagValues(string $tagName = '@phpstan-import-type'): array
+	{
+		return array_column(
+			array_filter($this->getTagsByName($tagName), static function (PhpDocTagNode $tag): bool {
+				return $tag->value instanceof TypeAliasImportTagValueNode;
+			}),
+			'value'
+		);
+	}
+
+
 	public function __toString(): string
 	{
-		return "/**\n * " . implode("\n * ", $this->children) . '*/';
+		$children = array_map(
+			static function (PhpDocChildNode $child): string {
+				$s = (string) $child;
+				return $s === '' ? '' : ' ' . $s;
+			},
+			$this->children
+		);
+		return "/**\n *" . implode("\n *", $children) . "\n */";
 	}
 
 }

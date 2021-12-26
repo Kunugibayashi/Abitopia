@@ -49,7 +49,7 @@ use RuntimeException;
  * You can also set `'serialize'` to a string or array to serialize only the
  * specified view variables.
  *
- * If you don't set the `serialize` opton, you will need a view template.
+ * If you don't set the `serialize` option, you will need a view template.
  * You can use extended views to provide layout-like functionality.
  *
  * You can also enable JSONP support by setting `jsonp` option to true or a
@@ -59,14 +59,14 @@ use RuntimeException;
 class JsonView extends SerializedView
 {
     /**
-     * JSON layouts are located in the json sub directory of `Layouts/`
+     * JSON layouts are located in the JSON subdirectory of `Layouts/`
      *
      * @var string
      */
     protected $layoutPath = 'json';
 
     /**
-     * JSON views are located in the 'json' sub directory for controllers' views.
+     * JSON views are located in the 'json' subdirectory for controllers' views.
      *
      * @var string
      */
@@ -94,8 +94,7 @@ class JsonView extends SerializedView
      *   - Setting it to a string value, uses the provided query string parameter
      *     for finding the JSONP callback name.
      *
-     * @var array
-     * @pslam-var array{serialize:string|bool|null, jsonOptions: int|null, jsonp: bool|string|null}
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'serialize' => null,

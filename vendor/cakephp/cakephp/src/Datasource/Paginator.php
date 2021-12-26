@@ -16,7 +16,7 @@ declare(strict_types=1);
  */
 namespace Cake\Datasource;
 
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 use Cake\Core\InstanceConfigTrait;
 use Cake\Datasource\Exception\PageOutOfBoundsException;
 
@@ -36,17 +36,17 @@ class Paginator implements PaginatorInterface
      * - `maxLimit` - The maximum limit users can choose to view. Defaults to 100
      * - `limit` - The initial number of items per page. Defaults to 20.
      * - `page` - The starting page, defaults to 1.
-     * - `whitelist` - A list of parameters users are allowed to set using request
+     * - `allowedParameters` - A list of parameters users are allowed to set using request
      *   parameters. Modifying this list will allow users to have more influence
      *   over pagination, be careful with what you permit.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'page' => 1,
         'limit' => 20,
         'maxLimit' => 100,
-        'whitelist' => ['limit', 'sort', 'page', 'direction'],
+        'allowedParameters' => ['limit', 'sort', 'page', 'direction'],
     ];
 
     /**
@@ -99,19 +99,19 @@ class Paginator implements PaginatorInterface
      * By default CakePHP will automatically allow sorting on any column on the
      * repository object being paginated. Often times you will want to allow
      * sorting on either associated columns or calculated fields. In these cases
-     * you will need to define a whitelist of all the columns you wish to allow
-     * sorting on. You can define the whitelist in the `$settings` parameter:
+     * you will need to define an allowed list of all the columns you wish to allow
+     * sorting on. You can define the allowed sort fields in the `$settings` parameter:
      *
      * ```
      * $settings = [
      *   'Articles' => [
      *     'finder' => 'custom',
-     *     'sortWhitelist' => ['title', 'author_id', 'comment_count'],
+     *     'sortableFields' => ['title', 'author_id', 'comment_count'],
      *   ]
      * ];
      * ```
      *
-     * Passing an empty array as whitelist disallows sorting altogether.
+     * Passing an empty array as sortableFields disallows sorting altogether.
      *
      * ### Paginating with custom finders
      *
@@ -169,7 +169,7 @@ class Paginator implements PaginatorInterface
             $query = $object;
             $object = $query->getRepository();
             if ($object === null) {
-                throw new Exception('No repository set for query.');
+                throw new CakeException('No repository set for query.');
             }
         }
 
@@ -199,10 +199,10 @@ class Paginator implements PaginatorInterface
      *
      * @param \Cake\Datasource\RepositoryInterface $object Repository instance.
      * @param \Cake\Datasource\QueryInterface|null $query Query Instance.
-     * @param array $data Pagination data.
+     * @param array<string, mixed> $data Pagination data.
      * @return \Cake\Datasource\QueryInterface
      */
-    protected function getQuery(RepositoryInterface $object, ?QueryInterface $query = null, array $data): QueryInterface
+    protected function getQuery(RepositoryInterface $object, ?QueryInterface $query, array $data): QueryInterface
     {
         if ($query === null) {
             $query = $object->find($data['finder'], $data['options']);
@@ -229,8 +229,8 @@ class Paginator implements PaginatorInterface
      * Extract pagination data needed
      *
      * @param \Cake\Datasource\RepositoryInterface $object The repository object.
-     * @param array $params Request params
-     * @param array $settings The settings/configuration used for pagination.
+     * @param array<string, mixed> $params Request params
+     * @param array<string, mixed> $settings The settings/configuration used for pagination.
      * @return array Array with keys 'defaults', 'options' and 'finder'
      */
     protected function extractData(RepositoryInterface $object, array $params, array $settings): array
@@ -251,9 +251,9 @@ class Paginator implements PaginatorInterface
     /**
      * Build pagination params.
      *
-     * @param array $data Paginator data containing keys 'options',
+     * @param array<string, mixed> $data Paginator data containing keys 'options',
      *   'count', 'defaults', 'finder', 'numResults'.
-     * @return array Paging params.
+     * @return array<string, mixed> Paging params.
      */
     protected function buildParams(array $data): array
     {
@@ -284,9 +284,9 @@ class Paginator implements PaginatorInterface
     /**
      * Add "page" and "pageCount" params.
      *
-     * @param array $params Paging params.
+     * @param array<string, mixed> $params Paging params.
      * @param array $data Paginator data.
-     * @return array Updated params.
+     * @return array<string, mixed> Updated params.
      */
     protected function addPageCountParams(array $params, array $data): array
     {
@@ -309,9 +309,9 @@ class Paginator implements PaginatorInterface
     /**
      * Add "start" and "end" params.
      *
-     * @param array $params Paging params.
+     * @param array<string, mixed> $params Paging params.
      * @param array $data Paginator data.
-     * @return array Updated params.
+     * @return array<string, mixed> Updated params.
      */
     protected function addStartEndParams(array $params, array $data): array
     {
@@ -331,9 +331,9 @@ class Paginator implements PaginatorInterface
     /**
      * Add "prevPage" and "nextPage" params.
      *
-     * @param array $params Paginator params.
+     * @param array<string, mixed> $params Paginator params.
      * @param array $data Paging data.
-     * @return array Updated params.
+     * @return array<string, mixed> Updated params.
      */
     protected function addPrevNextParams(array $params, array $data): array
     {
@@ -350,9 +350,9 @@ class Paginator implements PaginatorInterface
     /**
      * Add sorting / ordering params.
      *
-     * @param array $params Paginator params.
+     * @param array<string, mixed> $params Paginator params.
      * @param array $data Paging data.
-     * @return array Updated params.
+     * @return array<string, mixed> Updated params.
      */
     protected function addSortingParams(array $params, array $data): array
     {
@@ -367,7 +367,7 @@ class Paginator implements PaginatorInterface
 
         $params += [
             'sort' => $data['options']['sort'],
-            'direction' => isset($data['options']['sort']) ? current($order) : null,
+            'direction' => isset($data['options']['sort']) && count($order) ? current($order) : null,
             'sortDefault' => $sortDefault,
             'directionDefault' => $directionDefault,
             'completeSort' => $order,
@@ -379,7 +379,7 @@ class Paginator implements PaginatorInterface
     /**
      * Extracts the finder name and options out of the provided pagination options.
      *
-     * @param array $options the pagination options.
+     * @param array<string, mixed> $options the pagination options.
      * @return array An array containing in the first position the finder name
      *   and in the second the options to be passed to it.
      */
@@ -407,6 +407,47 @@ class Paginator implements PaginatorInterface
     }
 
     /**
+     * Shim method for reading the deprecated whitelist or allowedParameters options
+     *
+     * @return array<string>
+     */
+    protected function getAllowedParameters(): array
+    {
+        $allowed = $this->getConfig('allowedParameters');
+        if (!$allowed) {
+            $allowed = [];
+        }
+        $whitelist = $this->getConfig('whitelist');
+        if ($whitelist) {
+            deprecationWarning('The `whitelist` option is deprecated. Use the `allowedParameters` option instead.');
+
+            return array_merge($allowed, $whitelist);
+        }
+
+        return $allowed;
+    }
+
+    /**
+     * Shim method for reading the deprecated sortWhitelist or sortableFields options.
+     *
+     * @param array<string, mixed> $config The configuration data to coalesce and emit warnings on.
+     * @return array<string>|null
+     */
+    protected function getSortableFields(array $config): ?array
+    {
+        $allowed = $config['sortableFields'] ?? null;
+        if ($allowed !== null) {
+            return $allowed;
+        }
+        $deprecated = $config['sortWhitelist'] ?? null;
+        if ($deprecated !== null) {
+            deprecationWarning('The `sortWhitelist` option is deprecated. Use `sortableFields` instead.');
+        }
+
+        return $deprecated;
+    }
+
+    /**
      * Merges the various options that Paginator uses.
      * Pulls settings together from the following places:
      *
@@ -415,12 +456,12 @@ class Paginator implements PaginatorInterface
      * - Request parameters
      *
      * The result of this method is the aggregate of all the option sets
-     * combined together. You can change config value `whitelist` to modify
+     * combined together. You can change config value `allowedParameters` to modify
      * which options/values can be set using request parameters.
      *
-     * @param array $params Request params.
+     * @param array<string, mixed> $params Request params.
      * @param array $settings The settings to merge with the request data.
-     * @return array Array of merged options.
+     * @return array<string, mixed> Array of merged options.
      */
     public function mergeOptions(array $params, array $settings): array
     {
@@ -428,7 +469,9 @@ class Paginator implements PaginatorInterface
             $scope = $settings['scope'];
             $params = !empty($params[$scope]) ? (array)$params[$scope] : [];
         }
-        $params = array_intersect_key($params, array_flip($this->getConfig('whitelist')));
+
+        $allowed = $this->getAllowedParameters();
+        $params = array_intersect_key($params, array_flip($allowed));
 
         return array_merge($settings, $params);
     }
@@ -438,8 +481,8 @@ class Paginator implements PaginatorInterface
      * repository, the general settings will be used.
      *
      * @param string $alias Model name to get settings for.
-     * @param array $settings The settings which is used for combining.
-     * @return array An array of pagination settings for a model,
+     * @param array<string, mixed> $settings The settings which is used for combining.
+     * @return array<string, mixed> An array of pagination settings for a model,
      *   or the general settings.
      */
     public function getDefaults(string $alias, array $settings): array
@@ -449,6 +492,8 @@ class Paginator implements PaginatorInterface
         }
 
         $defaults = $this->getConfig();
+        $defaults['whitelist'] = $defaults['allowedParameters'] = $this->getAllowedParameters();
+
         $maxLimit = $settings['maxLimit'] ?? $defaults['maxLimit'];
         $limit = $settings['limit'] ?? $defaults['limit'];
 
@@ -469,14 +514,14 @@ class Paginator implements PaginatorInterface
      * also be sanitized. Lastly sort + direction keys will be converted into
      * the model friendly order key.
      *
-     * You can use the whitelist parameter to control which columns/fields are
+     * You can use the allowedParameters option to control which columns/fields are
      * available for sorting via URL parameters. This helps prevent users from ordering large
      * result sets on un-indexed values.
      *
      * If you need to sort on associated columns or synthetic properties you
-     * will need to use a whitelist.
+     * will need to use the `sortableFields` option.
      *
-     * Any columns listed in the sort whitelist will be implicitly trusted.
+     * Any columns listed in the allowed sort fields will be implicitly trusted.
      * You can use this to sort on synthetic columns, or columns added in custom
      * find operations that may not exist in the schema.
      *
@@ -484,8 +529,8 @@ class Paginator implements PaginatorInterface
      * requested sorting field/direction.
      *
      * @param \Cake\Datasource\RepositoryInterface $object Repository object.
-     * @param array $options The pagination options being used for this request.
-     * @return array An array of options with sort + direction removed and
+     * @param array<string, mixed> $options The pagination options being used for this request.
+     * @return array<string, mixed> An array of options with sort + direction removed and
      *   replaced with order if possible.
      */
     public function validateSort(RepositoryInterface $object, array $options): array
@@ -517,11 +562,14 @@ class Paginator implements PaginatorInterface
             return $options;
         }
 
-        $inWhitelist = false;
-        if (isset($options['sortWhitelist'])) {
+        $sortAllowed = false;
+        $allowed = $this->getSortableFields($options);
+        if ($allowed !== null) {
+            $options['sortableFields'] = $options['sortWhitelist'] = $allowed;
+
             $field = key($options['order']);
-            $inWhitelist = in_array($field, $options['sortWhitelist'], true);
-            if (!$inWhitelist) {
+            $sortAllowed = in_array($field, $allowed, true);
+            if (!$sortAllowed) {
                 $options['order'] = [];
                 $options['sort'] = null;
 
@@ -537,7 +585,7 @@ class Paginator implements PaginatorInterface
             $options['sort'] = key($options['order']);
         }
 
-        $options['order'] = $this->_prefix($object, $options['order'], $inWhitelist);
+        $options['order'] = $this->_prefix($object, $options['order'], $sortAllowed);
 
         return $options;
     }
@@ -545,9 +593,9 @@ class Paginator implements PaginatorInterface
     /**
      * Remove alias if needed.
      *
-     * @param array $fields Current fields
+     * @param array<string, mixed> $fields Current fields
      * @param string $model Current model alias
-     * @return array $fields Unaliased fields where applicable
+     * @return array<string, mixed> $fields Unaliased fields where applicable
      */
     protected function _removeAliases(array $fields, string $model): array
     {
@@ -576,10 +624,10 @@ class Paginator implements PaginatorInterface
      *
      * @param \Cake\Datasource\RepositoryInterface $object Repository object.
      * @param array $order Order array.
-     * @param bool $whitelisted Whether or not the field was whitelisted.
+     * @param bool $allowed Whether the field was allowed.
      * @return array Final order array.
      */
-    protected function _prefix(RepositoryInterface $object, array $order, bool $whitelisted = false): array
+    protected function _prefix(RepositoryInterface $object, array $order, bool $allowed = false): array
     {
         $tableAlias = $object->getAlias();
         $tableOrder = [];
@@ -596,7 +644,7 @@ class Paginator implements PaginatorInterface
             }
             $correctAlias = ($tableAlias === $alias);
 
-            if ($correctAlias && $whitelisted) {
+            if ($correctAlias && $allowed) {
                 // Disambiguate fields in schema. As id is quite common.
                 if ($object->hasField($field)) {
                     $field = $alias . '.' . $field;
@@ -604,7 +652,7 @@ class Paginator implements PaginatorInterface
                 $tableOrder[$field] = $value;
             } elseif ($correctAlias && $object->hasField($field)) {
                 $tableOrder[$tableAlias . '.' . $field] = $value;
-            } elseif (!$correctAlias && $whitelisted) {
+            } elseif (!$correctAlias && $allowed) {
                 $tableOrder[$alias . '.' . $field] = $value;
             }
         }
@@ -615,13 +663,13 @@ class Paginator implements PaginatorInterface
     /**
      * Check the limit parameter and ensure it's within the maxLimit bounds.
      *
-     * @param array $options An array of options with a limit key to be checked.
-     * @return array An array of options for pagination.
+     * @param array<string, mixed> $options An array of options with a limit key to be checked.
+     * @return array<string, mixed> An array of options for pagination.
      */
     public function checkLimit(array $options): array
     {
         $options['limit'] = (int)$options['limit'];
-        if (empty($options['limit']) || $options['limit'] < 1) {
+        if ($options['limit'] < 1) {
             $options['limit'] = 1;
         }
         $options['limit'] = max(min($options['limit'], $options['maxLimit']), 1);

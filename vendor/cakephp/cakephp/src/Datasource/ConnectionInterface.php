@@ -24,14 +24,21 @@ use Psr\SimpleCache\CacheInterface;
  * This interface defines the methods you can depend on in
  * a connection.
  *
- * @method object getDriver() Gets the driver instance.
- * @method $this setLogger($logger) Set the current logger.
- * @method bool supportsDynamicConstraints()
- * @method \Cake\Database\Schema\Collection getSchemaCollection()
- * @method \Cake\Database\Query newQuery()
- * @method \Cake\Database\StatementInterface prepare($sql)
- * @method \Cake\Database\StatementInterface execute($query, $params = [], array $types = [])
- * @method \Cake\Database\StatementInterface query(string $sql)
+ * @method object getDriver() Gets the driver instance. {@see \Cake\Database\Connnection::getDriver()}
+ * @method $this setLogger($logger) Set the current logger. {@see \Cake\Database\Connnection::setLogger()}
+ * @method bool supportsDynamicConstraints() Returns whether the driver supports adding or dropping constraints to
+ *   already created tables. {@see \Cake\Database\Connnection::supportsDynamicConstraints()}
+ * @method \Cake\Database\Schema\Collection getSchemaCollection() Gets a Schema\Collection object for this connection.
+ *    {@see \Cake\Database\Connnection::getSchemaCollection()}
+ * @method \Cake\Database\Query newQuery() Create a new Query instance for this connection.
+ *    {@see \Cake\Database\Connnection::newQuery()}
+ * @method \Cake\Database\StatementInterface prepare($sql) Prepares a SQL statement to be executed.
+ *    {@see \Cake\Database\Connnection::prepare()}
+ * @method \Cake\Database\StatementInterface execute($query, $params = [], array $types = []) Executes a query using
+ *   `$params` for interpolating values and $types as a hint for each those params.
+ *   {@see \Cake\Database\Connnection::execute()}
+ * @method \Cake\Database\StatementInterface query(string $sql) Executes a SQL statement and returns the Statement
+ *   object as result. {@see \Cake\Database\Connnection::query()}
  */
 interface ConnectionInterface extends LoggerAwareInterface
 {
@@ -88,12 +95,12 @@ interface ConnectionInterface extends LoggerAwareInterface
      * });
      * ```
      *
-     * @param callable $transaction The callback to execute within a transaction.
+     * @param callable $callback The callback to execute within a transaction.
      * @return mixed The return value of the callback.
      * @throws \Exception Will re-throw any exception raised in $callback after
      *   rolling back the transaction.
      */
-    public function transactional(callable $transaction);
+    public function transactional(callable $callback);
 
     /**
      * Run an operation with constraints disabled.
@@ -108,20 +115,20 @@ interface ConnectionInterface extends LoggerAwareInterface
      * });
      * ```
      *
-     * @param callable $operation The callback to execute within a transaction.
+     * @param callable $callback The callback to execute within a transaction.
      * @return mixed The return value of the callback.
      * @throws \Exception Will re-throw any exception raised in $callback after
      *   rolling back the transaction.
      */
-    public function disableConstraints(callable $operation);
+    public function disableConstraints(callable $callback);
 
     /**
      * Enable/disable query logging
      *
-     * @param bool $value Enable/disable query logging
+     * @param bool $enable Enable/disable query logging
      * @return $this
      */
-    public function enableQueryLogging(bool $value = true);
+    public function enableQueryLogging(bool $enable = true);
 
     /**
      * Disable query logging

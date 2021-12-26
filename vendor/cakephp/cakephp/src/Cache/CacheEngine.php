@@ -27,8 +27,14 @@ abstract class CacheEngine implements CacheInterface, CacheEngineInterface
 {
     use InstanceConfigTrait;
 
+    /**
+     * @var string
+     */
     protected const CHECK_KEY = 'key';
 
+    /**
+     * @var string
+     */
     protected const CHECK_VALUE = 'value';
 
     /**
@@ -43,7 +49,7 @@ abstract class CacheEngine implements CacheInterface, CacheEngineInterface
      * - `warnOnWriteFailures` Some engines, such as ApcuEngine, may raise warnings on
      *    write failures.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'duration' => 3600,
@@ -66,7 +72,7 @@ abstract class CacheEngine implements CacheInterface, CacheEngineInterface
      * Called automatically by the cache frontend. Merge the runtime config with the defaults
      * before use.
      *
-     * @param array $config Associative array of parameters for the engine
+     * @param array<string, mixed> $config Associative array of parameters for the engine
      * @return bool True if the engine has been successfully initialized, false if not
      */
     public function init(array $config = []): bool
@@ -311,7 +317,7 @@ abstract class CacheEngine implements CacheInterface, CacheEngineInterface
      * and returns the `group value` for each of them, this is
      * the token representing each group in the cache key
      *
-     * @return string[]
+     * @return array<string>
      */
     public function groups(): array
     {
@@ -336,7 +342,7 @@ abstract class CacheEngine implements CacheInterface, CacheEngineInterface
         if ($this->_groupPrefix) {
             $prefix = md5(implode('_', $this->groups()));
         }
-        $key = preg_replace('/[\s]+/', '_', (string)$key);
+        $key = preg_replace('/[\s]+/', '_', $key);
 
         return $this->_config['prefix'] . $prefix . $key;
     }

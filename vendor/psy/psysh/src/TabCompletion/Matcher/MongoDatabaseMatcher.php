@@ -23,7 +23,7 @@ class MongoDatabaseMatcher extends AbstractContextAwareMatcher
     /**
      * {@inheritdoc}
      */
-    public function getMatches(array $tokens, array $info = [])
+    public function getMatches(array $tokens, array $info = []): array
     {
         $input = $this->getInput($tokens);
 
@@ -33,8 +33,8 @@ class MongoDatabaseMatcher extends AbstractContextAwareMatcher
             \array_pop($tokens);
         }
         $objectToken = \array_pop($tokens);
-        $objectName  = \str_replace('$', '', $objectToken[1]);
-        $object      = $this->getVariable($objectName);
+        $objectName = \str_replace('$', '', $objectToken[1]);
+        $object = $this->getVariable($objectName);
 
         if (!$object instanceof \MongoDB) {
             return [];
@@ -51,9 +51,9 @@ class MongoDatabaseMatcher extends AbstractContextAwareMatcher
     /**
      * {@inheritdoc}
      */
-    public function hasMatched(array $tokens)
+    public function hasMatched(array $tokens): bool
     {
-        $token     = \array_pop($tokens);
+        $token = \array_pop($tokens);
         $prevToken = \array_pop($tokens);
 
         switch (true) {

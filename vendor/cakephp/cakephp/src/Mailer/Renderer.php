@@ -48,9 +48,9 @@ class Renderer
      * of the specified content types for the email.
      *
      * @param string $content The content.
-     * @param string[] $types Content types to render. Valid array values are Message::MESSAGE_HTML, Message::MESSAGE_TEXT.
-     * @return array The rendered content with "html" and/or "text" keys.
-     * @psalm-param (\Cake\Mailer\Message::MESSAGE_HTML|\Cake\Mailer\Message::MESSAGE_TEXT)[] $types
+     * @param array<string> $types Content types to render. Valid array values are Message::MESSAGE_HTML, Message::MESSAGE_TEXT.
+     * @return array<string, string> The rendered content with "html" and/or "text" keys.
+     * @psalm-param array<\Cake\Mailer\Message::MESSAGE_HTML|\Cake\Mailer\Message::MESSAGE_TEXT> $types
      * @psalm-return array{html?: string, text?: string}
      */
     public function render(string $content, array $types = []): array
@@ -68,7 +68,7 @@ class Renderer
         $view = $this->createView();
 
         [$templatePlugin] = pluginSplit($view->getTemplate());
-        [$layoutPlugin] = pluginSplit((string)$view->getLayout());
+        [$layoutPlugin] = pluginSplit($view->getLayout());
         if ($templatePlugin) {
             $view->setPlugin($templatePlugin);
         } elseif ($layoutPlugin) {

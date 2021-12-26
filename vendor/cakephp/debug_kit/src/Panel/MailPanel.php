@@ -29,7 +29,7 @@ class MailPanel extends DebugPanel
     /**
      * The list of emails produced during the request
      *
-     * @var \ArrayObject
+     * @var \ArrayObject|null
      */
     protected $emailLog;
 
@@ -43,6 +43,7 @@ class MailPanel extends DebugPanel
         $reflection = new ReflectionClass(TransportFactory::class);
         $property = $reflection->getProperty('_config');
         $property->setAccessible(true);
+        /** @var array<\Cake\Mailer\AbstractTransport|array> $configs */
         $configs = $property->getValue();
 
         $log = $this->emailLog = new ArrayObject();

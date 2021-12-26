@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace Migrations;
 
 use Cake\Collection\Collection;
-use Cake\ORM\TableRegistry;
+use Cake\ORM\Locator\LocatorAwareTrait;
 use Phinx\Db\Table as BaseTable;
 use Phinx\Db\Table\Column;
 
@@ -23,6 +23,8 @@ use Phinx\Db\Table\Column;
  */
 class Table extends BaseTable
 {
+    use LocatorAwareTrait;
+
     /**
      * Primary key for this table.
      * Can either be a string or an array in case of composite
@@ -119,14 +121,12 @@ class Table extends BaseTable
 
         if ($this->getAdapter()->getAdapterType() === 'mysql' && empty($options['collation'])) {
             $encodingRequest = 'SELECT DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME
-                FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = "%s"';
+                FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = :dbname';
 
             $cakeConnection = $this->getAdapter()->getCakeConnection();
             $connectionConfig = $cakeConnection->config();
-            $encodingRequest = sprintf($encodingRequest, $connectionConfig['database']);
 
-            /** @var \Cake\Database\StatementInterface $statement */
-            $statement = $cakeConnection->execute($encodingRequest);
+            $statement = $cakeConnection->execute($encodingRequest, ['dbname' => $connectionConfig['database']]);
             $defaultEncoding = $statement->fetch('assoc');
             if (!empty($defaultEncoding['DEFAULT_COLLATION_NAME'])) {
                 $options['collation'] = $defaultEncoding['DEFAULT_COLLATION_NAME'];
@@ -150,7 +150,7 @@ class Table extends BaseTable
     public function update()
     {
         parent::update();
-        TableRegistry::getTableLocator()->clear();
+        $this->getTableLocator()->clear();
     }
 
     /**

@@ -41,7 +41,7 @@ class Create extends AbstractCommand
         parent::configure();
 
         $this->setDescription('Create a new migration')
-            ->addArgument('name', InputArgument::REQUIRED, 'What is the name of the migration (in CamelCase)?')
+            ->addArgument('name', InputArgument::OPTIONAL, 'Class name of the migration (in CamelCase)')
             ->setHelp(sprintf(
                 '%sCreates a new database migration%s',
                 PHP_EOL,
@@ -74,7 +74,6 @@ class Create extends AbstractCommand
      * Get the question that allows the user to select which migration path to use.
      *
      * @param string[] $paths Paths
-     *
      * @return \Symfony\Component\Console\Question\ChoiceQuestion
      */
     protected function getSelectMigrationPathQuestion(array $paths)
@@ -87,9 +86,7 @@ class Create extends AbstractCommand
      *
      * @param \Symfony\Component\Console\Input\InputInterface $input Input
      * @param \Symfony\Component\Console\Output\OutputInterface $output Output
-     *
      * @throws \Exception
-     *
      * @return string
      */
     protected function getMigrationPath(InputInterface $input, OutputInterface $output)
@@ -135,10 +132,8 @@ class Create extends AbstractCommand
      *
      * @param \Symfony\Component\Console\Input\InputInterface $input Input
      * @param \Symfony\Component\Console\Output\OutputInterface $output Output
-     *
      * @throws \RuntimeException
      * @throws \InvalidArgumentException
-     *
      * @return int 0 on success
      */
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -165,24 +160,30 @@ class Create extends AbstractCommand
 
         $path = realpath($path);
         $className = $input->getArgument('name');
+        if ($className === null) {
+            $currentTimestamp = Util::getCurrentTimestamp();
+            $className = 'V' . $currentTimestamp;
+            $fileName = $currentTimestamp . '.php';
+        } else {
+            if (!Util::isValidPhinxClassName($className)) {
+                throw new InvalidArgumentException(sprintf(
+                    'The migration class name "%s" is invalid. Please use CamelCase format.',
+                    $className
+                ));
+            }
 
-        if (!Util::isValidPhinxClassName($className)) {
-            throw new InvalidArgumentException(sprintf(
-                'The migration class name "%s" is invalid. Please use CamelCase format.',
-                $className
-            ));
+            // Compute the file path
+            $fileName = Util::mapClassNameToFileName($className);
         }
 
         if (!Util::isUniqueMigrationClassName($className, $path)) {
             throw new InvalidArgumentException(sprintf(
                 'The migration class name "%s%s" already exists',
-                $namespace ? ($namespace . '\\') : '',
+                $namespace ? $namespace . '\\' : '',
                 $className
             ));
         }
 
-        // Compute the file path
-        $fileName = Util::mapClassNameToFileName($className);
         $filePath = $path . DIRECTORY_SEPARATOR . $fileName;
 
         if (is_file($filePath)) {
@@ -200,7 +201,9 @@ class Create extends AbstractCommand
         }
 
         // Get the alternative template and static class options from the command line, but only allow one of them.
+        /** @phpstan-var class-string|null $altTemplate */
         $altTemplate = $input->getOption('template');
+        /** @phpstan-var class-string|null $creationClassName */
         $creationClassName = $input->getOption('class');
         if ($altTemplate && $creationClassName) {
             throw new InvalidArgumentException('Cannot use --template and --class at the same time');
@@ -304,7 +307,7 @@ class Create extends AbstractCommand
             $output->writeln('<info>using default template</info>');
         }
 
-        $output->writeln('<info>created</info> ' . str_replace(getcwd() . DIRECTORY_SEPARATOR, '', $filePath));
+        $output->writeln('<info>created</info> ' . Util::relativePath($filePath));
 
         return self::CODE_SUCCESS;
     }

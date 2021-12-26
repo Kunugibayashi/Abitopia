@@ -22,7 +22,7 @@ use Cake\Auth\Storage\StorageInterface;
 use Cake\Controller\Component;
 use Cake\Controller\Controller;
 use Cake\Core\App;
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 use Cake\Event\EventDispatcherInterface;
 use Cake\Event\EventDispatcherTrait;
 use Cake\Event\EventInterface;
@@ -49,8 +49,10 @@ class AuthComponent extends Component implements EventDispatcherInterface
     use EventDispatcherTrait;
 
     /**
-     * The query string key used for remembering the referrered page when getting
+     * The query string key used for remembering the referred page when getting
      * redirected to login.
+     *
+     * @var string
      */
     public const QUERY_STRING_REDIRECT = 'redirect';
 
@@ -77,7 +79,7 @@ class AuthComponent extends Component implements EventDispatcherInterface
      *   ```
      *
      *   Using the class name without 'Authenticate' as the key, you can pass in an
-     *   array of config for each authentication object. Additionally you can define
+     *   array of config for each authentication object. Additionally, you can define
      *   config that should be set to all authentications objects using the 'all' key:
      *
      *   ```
@@ -154,7 +156,7 @@ class AuthComponent extends Component implements EventDispatcherInterface
      *   Defaults to 'Controller.startup'. You can set it to 'Controller.initialize'
      *   if you want the check to be done before controller's beforeFilter() is run.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'authenticate' => null,
@@ -174,19 +176,19 @@ class AuthComponent extends Component implements EventDispatcherInterface
      *
      * @var array
      */
-    public $components = ['RequestHandler', 'Flash'];
+    protected $components = ['RequestHandler', 'Flash'];
 
     /**
      * Objects that will be used for authentication checks.
      *
-     * @var \Cake\Auth\BaseAuthenticate[]
+     * @var array<\Cake\Auth\BaseAuthenticate>
      */
     protected $_authenticateObjects = [];
 
     /**
      * Objects that will be used for authorization checks.
      *
-     * @var \Cake\Auth\BaseAuthorize[]
+     * @var array<\Cake\Auth\BaseAuthorize>
      */
     protected $_authorizeObjects = [];
 
@@ -200,7 +202,7 @@ class AuthComponent extends Component implements EventDispatcherInterface
     /**
      * Controller actions for which user validation is not required.
      *
-     * @var string[]
+     * @var array<string>
      * @see \Cake\Controller\Component\AuthComponent::allow()
      */
     public $allowedActions = [];
@@ -225,7 +227,7 @@ class AuthComponent extends Component implements EventDispatcherInterface
     /**
      * Initialize properties.
      *
-     * @param array $config The config data.
+     * @param array<string, mixed> $config The config data.
      * @return void
      */
     public function initialize(array $config): void
@@ -266,7 +268,7 @@ class AuthComponent extends Component implements EventDispatcherInterface
         $controller = $event->getSubject();
 
         $action = $controller->getRequest()->getParam('action');
-        if (!$controller->isAction($action)) {
+        if ($action === null || !$controller->isAction($action)) {
             return null;
         }
 
@@ -306,7 +308,7 @@ class AuthComponent extends Component implements EventDispatcherInterface
     /**
      * Events supported by this component.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function implementedEvents(): array
     {
@@ -325,7 +327,7 @@ class AuthComponent extends Component implements EventDispatcherInterface
      */
     protected function _isAllowed(Controller $controller): bool
     {
-        $action = strtolower($controller->getRequest()->getParam('action'));
+        $action = strtolower($controller->getRequest()->getParam('action', ''));
 
         return in_array($action, array_map('strtolower', $this->allowedActions), true);
     }
@@ -340,7 +342,7 @@ class AuthComponent extends Component implements EventDispatcherInterface
      * @param \Cake\Controller\Controller $controller A reference to the controller object.
      * @return \Cake\Http\Response|null Null if current action is login action
      *   else response object returned by authenticate object or Controller::redirect().
-     * @throws \Cake\Core\Exception\Exception
+     * @throws \Cake\Core\Exception\CakeException
      */
     protected function _unauthenticated(Controller $controller): ?Response
     {
@@ -350,7 +352,7 @@ class AuthComponent extends Component implements EventDispatcherInterface
         $response = $controller->getResponse();
         $auth = end($this->_authenticateObjects);
         if ($auth === false) {
-            throw new Exception('At least one authenticate object must be available.');
+            throw new CakeException('At least one authenticate object must be available.');
         }
         $result = $auth->unauthenticated($controller->getRequest(), $response);
         if ($result !== null) {
@@ -472,11 +474,11 @@ class AuthComponent extends Component implements EventDispatcherInterface
     /**
      * Check if the provided user is authorized for the request.
      *
-     * Uses the configured Authorization adapters to check whether or not a user is authorized.
+     * Uses the configured Authorization adapters to check whether a user is authorized.
      * Each adapter will be checked in sequence, if any of them return true, then the user will
      * be authorized for the request.
      *
-     * @param array|\ArrayAccess|null $user The user to check the authorization of.
+     * @param \ArrayAccess|array|null $user The user to check the authorization of.
      *   If empty the user fetched from storage will be used.
      * @param \Cake\Http\ServerRequest|null $request The request to authenticate for.
      *   If empty, the current request will be used.
@@ -511,7 +513,7 @@ class AuthComponent extends Component implements EventDispatcherInterface
      * Loads the authorization objects configured.
      *
      * @return array|null The loaded authorization objects, or null when authorize is empty.
-     * @throws \Cake\Core\Exception\Exception
+     * @throws \Cake\Core\Exception\CakeException
      */
     public function constructAuthorize(): ?array
     {
@@ -534,10 +536,10 @@ class AuthComponent extends Component implements EventDispatcherInterface
             }
             $className = App::className($class, 'Auth', 'Authorize');
             if ($className === null) {
-                throw new Exception(sprintf('Authorization adapter "%s" was not found.', $class));
+                throw new CakeException(sprintf('Authorization adapter "%s" was not found.', $class));
             }
             if (!method_exists($className, 'authorize')) {
-                throw new Exception('Authorization objects must implement an authorize() method.');
+                throw new CakeException('Authorization objects must implement an authorize() method.');
             }
             $config = (array)$config + $global;
             $this->_authorizeObjects[$alias] = new $className($this->_registry, $config);
@@ -576,7 +578,7 @@ class AuthComponent extends Component implements EventDispatcherInterface
      * $this->Auth->allow();
      * ```
      *
-     * @param string|string[]|null $actions Controller action name or array of actions
+     * @param array<string>|string|null $actions Controller action name or array of actions
      * @return void
      * @link https://book.cakephp.org/4/en/controllers/components/authentication.html#making-actions-public
      */
@@ -606,7 +608,7 @@ class AuthComponent extends Component implements EventDispatcherInterface
      * ```
      * to remove all items from the allowed list
      *
-     * @param string|string[]|null $actions Controller action name or array of actions
+     * @param array<string>|string|null $actions Controller action name or array of actions
      * @return void
      * @see \Cake\Controller\Component\AuthComponent::allow()
      * @link https://book.cakephp.org/4/en/controllers/components/authentication.html#making-actions-require-authorization
@@ -633,7 +635,7 @@ class AuthComponent extends Component implements EventDispatcherInterface
      * The storage class is configured using `storage` config key or passing
      * instance to AuthComponent::storage().
      *
-     * @param array|\ArrayAccess $user User data.
+     * @param \ArrayAccess|array $user User data.
      * @return void
      * @link https://book.cakephp.org/4/en/controllers/components/authentication.html#identifying-users-and-logging-them-in
      */
@@ -736,7 +738,7 @@ class AuthComponent extends Component implements EventDispatcherInterface
      *    `loginRedirect`, the `loginRedirect` value is returned.
      *  - If there is no session and no `loginRedirect`, / is returned.
      *
-     * @param string|array|null $url Optional URL to write as the login redirect URL.
+     * @param array|string|null $url Optional URL to write as the login redirect URL.
      * @return string Redirect URL
      */
     public function redirectUrl($url = null): string
@@ -805,8 +807,8 @@ class AuthComponent extends Component implements EventDispatcherInterface
     /**
      * Loads the configured authentication objects.
      *
-     * @return array|null The loaded authorization objects, or null on empty authenticate value.
-     * @throws \Cake\Core\Exception\Exception
+     * @return array<string, object>|null The loaded authorization objects, or null on empty authenticate value.
+     * @throws \Cake\Core\Exception\CakeException
      */
     public function constructAuthenticate(): ?array
     {
@@ -829,10 +831,10 @@ class AuthComponent extends Component implements EventDispatcherInterface
             }
             $className = App::className($class, 'Auth', 'Authenticate');
             if ($className === null) {
-                throw new Exception(sprintf('Authentication adapter "%s" was not found.', $class));
+                throw new CakeException(sprintf('Authentication adapter "%s" was not found.', $class));
             }
             if (!method_exists($className, 'authenticate')) {
-                throw new Exception('Authentication objects must implement an authenticate() method.');
+                throw new CakeException('Authentication objects must implement an authenticate() method.');
             }
             $config = array_merge($global, (array)$config);
             $this->_authenticateObjects[$alias] = new $className($this->_registry, $config);
@@ -871,7 +873,7 @@ class AuthComponent extends Component implements EventDispatcherInterface
         }
         $className = App::className($class, 'Auth/Storage', 'Storage');
         if ($className === null) {
-            throw new Exception(sprintf('Auth storage adapter "%s" was not found.', $class));
+            throw new CakeException(sprintf('Auth storage adapter "%s" was not found.', $class));
         }
         $request = $this->getController()->getRequest();
         $response = $this->getController()->getResponse();

@@ -42,7 +42,7 @@ class DateTimeWidget extends BasicWidget
     /**
      * Data defaults.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $defaults = [
         'name' => '',
@@ -56,7 +56,7 @@ class DateTimeWidget extends BasicWidget
     /**
      * Formats for various input types.
      *
-     * @var string[]
+     * @var array<string>
      */
     protected $formatMap = [
         'datetime-local' => 'Y-m-d\TH:i:s',
@@ -71,7 +71,7 @@ class DateTimeWidget extends BasicWidget
      *
      * If not set, defaults to browser default.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $defaultStep = [
         'datetime-local' => '1',
@@ -91,10 +91,17 @@ class DateTimeWidget extends BasicWidget
      * - `escape` Set to false to disable escaping on all attributes.
      * - `type` A valid HTML date/time input type. Defaults to "datetime-local".
      * - `timezone` The timezone the input value should be converted to.
+     * - `step` The "step" attribute. Defaults to `1` for "time" and "datetime-local" type inputs.
+     *   You can set it to `null` or `false` to prevent explicit step attribute being added in HTML.
+     * - `format` A `date()` function compatible datetime format string.
+     *   By default, the widget will use a suitable format based on the input type and
+     *   database type for the context. If an explicit format is provided, then no
+     *   default value will be set for the `step` attribute, and it needs to be
+     *   explicitly set if required.
      *
      * All other keys will be converted into HTML attributes.
      *
-     * @param array $data The data to build a file input with.
+     * @param array<string, mixed> $data The data to build a file input with.
      * @param \Cake\View\Form\ContextInterface $context The current form context.
      * @return string HTML elements.
      */
@@ -109,16 +116,10 @@ class DateTimeWidget extends BasicWidget
             ));
         }
 
-        if (!isset($data['step'])) {
-            $data['step'] = $this->defaultStep[$data['type']];
-
-            if (isset($data['fieldName'])) {
-                $data = $this->setStep($data, $context, $data['fieldName']);
-            }
-        }
+        $data = $this->setStep($data, $context, $data['fieldName'] ?? '');
 
         $data['value'] = $this->formatDateTime($data['val'], $data);
-        unset($data['val'], $data['timezone']);
+        unset($data['val'], $data['timezone'], $data['format']);
 
         return $this->_templates->format('input', [
             'name' => $data['name'],
@@ -134,13 +135,27 @@ class DateTimeWidget extends BasicWidget
     /**
      * Set value for "step" attribute if applicable.
      *
-     * @param array $data Data array
+     * @param array<string, mixed> $data Data array
      * @param \Cake\View\Form\ContextInterface $context Context instance.
      * @param string $fieldName Field name.
-     * @return array Updated data array.
+     * @return array<string, mixed> Updated data array.
      */
     protected function setStep(array $data, ContextInterface $context, string $fieldName): array
     {
+        if (array_key_exists('step', $data)) {
+            return $data;
+        }
+
+        if (isset($data['format'])) {
+            $data['step'] = null;
+        } else {
+            $data['step'] = $this->defaultStep[$data['type']];
+        }
+
+        if (empty($data['fieldName'])) {
+            return $data;
+        }
+
         $dbType = $context->type($fieldName);
         $fractionalTypes = [
             TableSchema::TYPE_DATETIME_FRACTIONAL,
@@ -158,8 +173,8 @@ class DateTimeWidget extends BasicWidget
     /**
      * Formats the passed date/time value into required string format.
      *
-     * @param string|int|\DateTime|null $value Value to deconstruct.
-     * @param array $options Options for conversion.
+     * @param \DateTime|string|int|null $value Value to deconstruct.
+     * @param array<string, mixed> $options Options for conversion.
      * @return string
      * @throws \InvalidArgumentException If invalid input type is passed.
      */
@@ -192,9 +207,18 @@ class DateTimeWidget extends BasicWidget
             $dateTime = $dateTime->setTimezone($timezone);
         }
 
-        $format = $this->formatMap[$options['type']];
-        if ($options['type'] === 'datetime-local' && $options['step'] < 1) {
-            $format = 'Y-m-d\TH:i:s.v';
+        if (isset($options['format'])) {
+            $format = $options['format'];
+        } else {
+            $format = $this->formatMap[$options['type']];
+
+            if (
+                $options['type'] === 'datetime-local'
+                && is_numeric($options['step'])
+                && $options['step'] < 1
+            ) {
+                $format = 'Y-m-d\TH:i:s.v';
+            }
         }
 
         return $dateTime->format($format);

@@ -16,7 +16,7 @@ declare(strict_types=1);
  */
 namespace Cake\Database;
 
-use Cake\Database\Schema\BaseSchema;
+use Cake\Database\Schema\SchemaDialect;
 use Cake\Database\Schema\TableSchema;
 use Closure;
 
@@ -24,9 +24,61 @@ use Closure;
  * Interface for database driver.
  *
  * @method int|null getMaxAliasLength() Returns the maximum alias length allowed.
+ * @method int getConnectRetries() Returns the number of connection retry attempts made.
+ * @method bool supports(string $feature) Checks whether a feature is supported by the driver.
+ * @method bool inTransaction() Returns whether a transaction is active.
  */
 interface DriverInterface
 {
+    /**
+     * Common Table Expressions (with clause) support.
+     *
+     * @var string
+     */
+    public const FEATURE_CTE = 'cte';
+
+    /**
+     * Disabling constraints without being in transaction support.
+     *
+     * @var string
+     */
+    public const FEATURE_DISABLE_CONSTRAINT_WITHOUT_TRANSACTION = 'disable-constraint-without-transaction';
+
+    /**
+     * Native JSON data type support.
+     *
+     * @var string
+     */
+    public const FEATURE_JSON = 'json';
+
+    /**
+     * PDO::quote() support.
+     *
+     * @var string
+     */
+    public const FEATURE_QUOTE = 'quote';
+
+    /**
+     * Transaction savepoint support.
+     *
+     * @var string
+     */
+    public const FEATURE_SAVEPOINT = 'savepoint';
+
+    /**
+     * Truncate with foreign keys attached support.
+     *
+     * @var string
+     */
+    public const FEATURE_TRUNCATE_WITH_CONSTRAINTS = 'truncate-with-constraints';
+
+    /**
+     * Window function support (all or partial clauses).
+     *
+     * @var string
+     */
+    public const FEATURE_WINDOW = 'window';
+
     /**
      * Establishes a connection to the database server.
      *
@@ -67,7 +119,7 @@ interface DriverInterface
     /**
      * Prepares a sql statement to be executed.
      *
-     * @param string|\Cake\Database\Query $query The query to turn into a prepared statement.
+     * @param \Cake\Database\Query|string $query The query to turn into a prepared statement.
      * @return \Cake\Database\StatementInterface
      */
     public function prepare($query): StatementInterface;
@@ -96,7 +148,7 @@ interface DriverInterface
     /**
      * Get the SQL for releasing a save point.
      *
-     * @param string|int $name The table name.
+     * @param string|int $name Save point name or id
      * @return string
      */
     public function releaseSavePointSQL($name): string;
@@ -104,7 +156,7 @@ interface DriverInterface
     /**
      * Get the SQL for creating a save point.
      *
-     * @param string|int $name The table name.
+     * @param string|int $name Save point name or id
      * @return string
      */
     public function savePointSQL($name): string;
@@ -112,7 +164,7 @@ interface DriverInterface
     /**
      * Get the SQL for rollingback a save point.
      *
-     * @param string|int $name The table name.
+     * @param string|int $name Save point name or id
      * @return string
      */
     public function rollbackSavePointSQL($name): string;
@@ -136,6 +188,7 @@ interface DriverInterface
      * to already created tables.
      *
      * @return bool True if driver supports dynamic constraints.
+     * @deprecated 4.3.0 Fixtures no longer dynamically drop and create constraints.
      */
     public function supportsDynamicConstraints(): bool;
 
@@ -143,6 +196,7 @@ interface DriverInterface
      * Returns whether this driver supports save points for nested transactions.
      *
      * @return bool True if save points are supported, false otherwise.
+     * @deprecated 4.3.0 Use `supports(DriverInterface::FEATURE_SAVEPOINT)` instead
      */
     public function supportsSavePoints(): bool;
 
@@ -150,7 +204,7 @@ interface DriverInterface
      * Returns a value in a safe representation to be used in a query string
      *
      * @param mixed $value The value to quote.
-     * @param int $type Type to be used for determining kind of quoting to perform.
+     * @param int $type Must be one of the \PDO::PARAM_* constants
      * @return string
      */
     public function quote($value, $type): string;
@@ -159,6 +213,7 @@ interface DriverInterface
      * Checks if the driver supports quoting.
      *
      * @return bool
+     * @deprecated 4.3.0 Use `supports(DriverInterface::FEATURE_QUOTE)` instead
      */
     public function supportsQuoting(): bool;
 
@@ -176,15 +231,15 @@ interface DriverInterface
     /**
      * Get the schema dialect.
      *
-     * Used by Cake\Database\Schema package to reflect schema and
+     * Used by {@link \Cake\Database\Schema} package to reflect schema and
      * generate schema.
      *
      * If all the tables that use this Driver specify their
      * own schemas, then this may return null.
      *
-     * @return \Cake\Database\Schema\BaseSchema
+     * @return \Cake\Database\Schema\SchemaDialect
      */
-    public function schemaDialect(): BaseSchema;
+    public function schemaDialect(): SchemaDialect;
 
     /**
      * Quotes a database identifier (a column name, table name, etc..) to
@@ -220,14 +275,14 @@ interface DriverInterface
     public function lastInsertId(?string $table = null, ?string $column = null);
 
     /**
-     * Checks whether or not the driver is connected.
+     * Checks whether the driver is connected.
      *
      * @return bool
      */
     public function isConnected(): bool;
 
     /**
-     * Sets whether or not this driver should automatically quote identifiers
+     * Sets whether this driver should automatically quote identifiers
      * in queries.
      *
      * @param bool $enable Whether to enable auto quoting
@@ -243,7 +298,7 @@ interface DriverInterface
     public function disableAutoQuoting();
 
     /**
-     * Returns whether or not this driver should automatically quote identifiers
+     * Returns whether this driver should automatically quote identifiers
      * in queries.
      *
      * @return bool
@@ -255,11 +310,11 @@ interface DriverInterface
      * of the transformed query and the full compiled SQL string.
      *
      * @param \Cake\Database\Query $query The query to compile.
-     * @param \Cake\Database\ValueBinder $generator The value binder to use.
+     * @param \Cake\Database\ValueBinder $binder The value binder to use.
      * @return array containing 2 entries. The first entity is the transformed query
      * and the second one the compiled SQL.
      */
-    public function compileQuery(Query $query, ValueBinder $generator): array;
+    public function compileQuery(Query $query, ValueBinder $binder): array;
 
     /**
      * Returns an instance of a QueryCompiler.

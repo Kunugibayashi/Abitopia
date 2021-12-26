@@ -43,17 +43,10 @@ Phinx automatically creates a skeleton migration file with a single method:
              * Write your reversible migrations using this method.
              *
              * More information on writing migrations is available here:
-             * http://docs.phinx.org/en/latest/migrations.html#the-abstractmigration-class
+             * https://book.cakephp.org/phinx/0/en/migrations.html#the-change-method
              *
-             * The following commands can be used in this method and Phinx will
-             * automatically reverse them when rolling back:
-             *
-             *    createTable
-             *    renameTable
-             *    addColumn
-             *    renameColumn
-             *    addIndex
-             *    addForeignKey
+             * Remember to call "create()" or "update()" and NOT "save()" when working
+             * with the Table class.
              *
              */
             public function change()
@@ -83,14 +76,6 @@ down automatically for you. For example:
 
         class CreateUserLoginsTable extends AbstractMigration
         {
-            /**
-             * Change Method.
-             *
-             * More information on this method is available here:
-             * http://docs.phinx.org/en/latest/migrations.html#the-change-method
-             *
-             * Uncomment this method if you would like to use it.
-             */
             public function change()
             {
                 // create the table
@@ -98,22 +83,6 @@ down automatically for you. For example:
                 $table->addColumn('user_id', 'integer')
                       ->addColumn('created', 'datetime')
                       ->create();
-            }
-
-            /**
-             * Migrate Up.
-             */
-            public function up()
-            {
-
-            }
-
-            /**
-             * Migrate Down.
-             */
-            public function down()
-            {
-
             }
         }
 
@@ -123,23 +92,50 @@ Please be aware that when a ``change`` method exists, Phinx will automatically
 ignore the ``up`` and ``down`` methods. If you need to use these methods it is
 recommended to create a separate migration file.
 
-..note
+.. note::
+
     When creating or updating tables inside a ``change()`` method you must use
     the Table ``create()`` and ``update()`` methods. Phinx cannot automatically
     determine whether a ``save()`` call is creating a new table or modifying an
     existing one.
 
-Phinx can only reverse the following commands:
+The following actions are reversible when done through the Table API in Phinx,
+and will be automatically reversed:
 
--  createTable
--  renameTable
--  addColumn
--  renameColumn
--  addIndex
--  addForeignKey
+- Creating a table
+- Renaming a table
+- Adding a column
+- Renaming a column
+- Adding an index
+- Adding a foreign key
 
 If a command cannot be reversed then Phinx will throw an
-``IrreversibleMigrationException`` when it's migrating down.
+``IrreversibleMigrationException`` when it's migrating down. If you wish to
+use a command that cannot be reversed in the change function, you can use an
+if statement with  ``$this->isMigratingUp()`` to only run things in the
+up or down direction. For example:
+
+.. code-block:: php
+
+        <?php
+
+        use Phinx\Migration\AbstractMigration;
+
+        class CreateUserLoginsTable extends AbstractMigration
+        {
+            public function change()
+            {
+                // create the table
+                $table = $this->table('user_logins');
+                $table->addColumn('user_id', 'integer')
+                      ->addColumn('created', 'datetime')
+                      ->create();
+                if ($this->isMigratingUp()) {
+                    $table->insert([['user_id' => 1, 'created' => '2020-01-19 03:14:07']])
+                          ->save();
+                }
+            }
+        }
 
 The Up Method
 ~~~~~~~~~~~~~
@@ -484,6 +480,7 @@ row_format set the table row format
 engine     define table engine *(defaults to ``InnoDB``)*
 collation  define table collation *(defaults to ``utf8_general_ci``)*
 signed     whether the primary key is ``signed``  *(defaults to ``true``)*
+limit      set the maximum length for the primary key
 ========== ===========
 
 By default the primary key is ``signed``.
@@ -515,73 +512,7 @@ Option    Description
 comment   set a text comment on the table
 ========= ===========
 
-.. _valid-column-types:
-
-Valid Column Types
-~~~~~~~~~~~~~~~~~~
-
-Column types are specified as strings and can be one of:
-
--  biginteger
--  binary
--  boolean
--  date
--  datetime
--  decimal
--  float
--  double
--  integer
--  smallinteger
--  string
--  text
--  time
--  timestamp
--  uuid
-
-In addition, the MySQL adapter supports ``enum``, ``set``, ``blob``, ``bit`` and ``json`` column types
-(``json`` in MySQL 5.7 and above).
-
-In addition, the Postgres adapter supports ``interval``, ``json``, ``jsonb``, ``uuid``, ``cidr``, ``inet`` and ``macaddr`` column types
-(PostgreSQL 9.3 and above).
-
-For valid options, see the `Valid Column Options`_ below.
-
-Custom Column Types & Default Values
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Some DBMS systems provide additional column types and default values that are specific to them.
-If you don't want to keep your migrations DBMS-agnostic you can use those custom types in your migrations
-through the ``\Phinx\Util\Literal::from`` method, which takes a string as its only argument, and returns an
-instance of ``\Phinx\Util\Literal``. When Phinx encounters this value as a column's type it knows not to
-run any validation on it and to use it exactly as supplied without escaping. This also works for ``default``
-values.
-
-You can see an example below showing how to add a ``citext`` column as well as a column whose default value
-is a function, in PostgreSQL. This method of preventing the built-in escaping is supported in all adapters.
-
-.. code-block:: php
-
-        <?php
-
-        use Phinx\Migration\AbstractMigration;
-        use Phinx\Util\Literal;
-
-        class AddSomeColumns extends AbstractMigration
-        {
-            public function change()
-            {
-                $this->table('users')
-                      ->addColumn('username', Literal::from('citext'))
-                      ->addColumn('uniqid', 'uuid', [
-                          'default' => Literal::from('uuid_generate_v4()')
-                      ])
-                      ->addColumn('creation', 'timestamp', [
-                          'timezone' => true,
-                          'default' => Literal::from('now()')
-                      ])
-                      ->create();
-            }
-        }
+To view available column types and options, see `Valid Column Types`_ for details.
 
 Determining Whether a Table Exists
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -782,12 +713,13 @@ Pass in a string to set as the new table comment, or ``null`` to drop the existi
 Working With Columns
 --------------------
 
+.. _valid-column-types:
+
 Valid Column Types
 ~~~~~~~~~~~~~~~~~~
 
 Column types are specified as strings and can be one of:
 
--  biginteger
 -  binary
 -  boolean
 -  char
@@ -795,16 +727,19 @@ Column types are specified as strings and can be one of:
 -  datetime
 -  decimal
 -  float
--  integer
+-  double
 -  smallinteger
+-  integer
+-  biginteger
 -  string
 -  text
 -  time
 -  timestamp
 -  uuid
 
-In addition, the MySQL adapter supports ``enum``, ``set``, ``blob``, ``bit`` and ``json`` column types
-(``json`` in MySQL 5.7 and above).
+In addition, the MySQL adapter supports ``enum``, ``set``, ``blob``, ``tinyblob``, ``mediumblob``, ``longblob``, ``bit`` and ``json`` column types
+(``json`` in MySQL 5.7 and above). When providing a limit value and using ``binary``, ``varbinary`` or ``blob`` and its subtypes, the retained column
+type will be based on required length (see `Limit Option and MySQL`_ for details);
 
 In addition, the Postgres adapter supports ``interval``, ``json``, ``jsonb``, ``uuid``, ``cidr``, ``inet`` and ``macaddr`` column types
 (PostgreSQL 9.3 and above).
@@ -823,7 +758,7 @@ limit   set maximum length for strings, also hints column types in adapters (see
 length  alias for ``limit``
 default set default value or action
 null    allow ``NULL`` values, defaults to false (should not be used with primary keys!) (see note below)
-after   specify the column that a new column should be placed after *(only applies to MySQL)*
+after   specify the column that a new column should be placed after, or use ``\Phinx\Db\Adapter\MysqlAdapter::FIRST`` to place the column at the start of the table *(only applies to MySQL)*
 comment set a text comment on the column
 ======= ===========
 
@@ -860,14 +795,19 @@ For ``timestamp`` columns:
 Option   Description
 ======== ===========
 default  set default value (use with ``CURRENT_TIMESTAMP``)
-update   set an action to be triggered when the row is updated (use with ``CURRENT_TIMESTAMP``)
+update   set an action to be triggered when the row is updated (use with ``CURRENT_TIMESTAMP``) *(only applies to MySQL)*
 timezone enable or disable the ``with time zone`` option for ``time`` and ``timestamp`` columns *(only applies to Postgres)*
 ======== ===========
 
-You can add ``created_at`` and ``updated_at`` timestamps to a table using the ``addTimestamps()`` method. This method also
-allows you to supply alternative names. The optional third argument allows you to change the ``timezone`` option for the
-columns being added. Additionally, you can use the ``addTimestampsWithTimezone()`` method, which is an alias to
-``addTimestamps()`` that will always set the third argument to ``true`` (see examples below).
+You can add ``created_at`` and ``updated_at`` timestamps to a table using the ``addTimestamps()`` method. This method accepts
+three arguments, where the first two allow setting alternative names for the columns while the third argument allows you to
+enable the ``timezone`` option for the columns. The defaults for these arguments are ``created_at``, ``updated_at``, and ``true``
+respectively. For the first and second argument, if you provide ``null``, then the default name will be used, and if you provide
+``false``, then that column will not be created. Please note that attempting to set both to ``false`` will throw a
+``\RuntimeException``. Additionally, you can use the ``addTimestampsWithTimezone()`` method, which is an alias to
+``addTimestamps()`` that will always set the third argument to ``true`` (see examples below). The ``created_at`` column will
+have a default set to ``CURRENT_TIMESTAMP``. For MySQL only, ``update_at`` column will have update set to
+``CURRENT_TIMESTAMP``.
 
 .. code-block:: php
 
@@ -894,6 +834,12 @@ columns being added. Additionally, you can use the ``addTimestampsWithTimezone()
                 // The two lines below do the same, the second one is simply cleaner.
                 $table = $this->table('books')->addTimestamps(null, 'amended_at', true)->create();
                 $table = $this->table('users')->addTimestampsWithTimezone(null, 'amended_at')->create();
+
+                // Only add the created_at column to the table
+                $table = $this->table('books')->addTimestamps(null, false);
+                // Only add the updated_at column to the table
+                $table = $this->table('users')->addTimestamps(false);
+                // Note, setting both false will throw a \RuntimeError
             }
         }
 
@@ -930,7 +876,7 @@ Limit Option and MySQL
 ~~~~~~~~~~~~~~~~~~~~~~
 
 When using the MySQL adapter, additional hinting of database column type can be
-made for ``integer``, ``text`` and ``blob`` columns. Using ``limit`` with
+made for ``integer``, ``text``, ``blob``, ``tinyblob``, ``mediumblob``, ``longblob`` columns. Using ``limit`` with
 one the following options will modify the column type accordingly:
 
 ============ ==============
@@ -951,6 +897,8 @@ INT_REGULAR  INT
 INT_BIG      BIGINT
 ============ ==============
 
+For ``binary`` or ``varbinary`` types, if limit is set greater than allowed 255 bytes, the type will be changed to the best matching blob type given the length.
+
 .. code-block:: php
 
         <?php
@@ -965,6 +913,43 @@ INT_BIG      BIGINT
               ->addColumn('subtype_id', 'integer', ['limit' => MysqlAdapter::INT_SMALL])
               ->addColumn('quantity', 'integer', ['limit' => MysqlAdapter::INT_TINY])
               ->create();
+
+Custom Column Types & Default Values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Some DBMS systems provide additional column types and default values that are specific to them.
+If you don't want to keep your migrations DBMS-agnostic you can use those custom types in your migrations
+through the ``\Phinx\Util\Literal::from`` method, which takes a string as its only argument, and returns an
+instance of ``\Phinx\Util\Literal``. When Phinx encounters this value as a column's type it knows not to
+run any validation on it and to use it exactly as supplied without escaping. This also works for ``default``
+values.
+
+You can see an example below showing how to add a ``citext`` column as well as a column whose default value
+is a function, in PostgreSQL. This method of preventing the built-in escaping is supported in all adapters.
+
+.. code-block:: php
+
+        <?php
+
+        use Phinx\Migration\AbstractMigration;
+        use Phinx\Util\Literal;
+
+        class AddSomeColumns extends AbstractMigration
+        {
+            public function change()
+            {
+                $this->table('users')
+                      ->addColumn('username', Literal::from('citext'))
+                      ->addColumn('uniqid', 'uuid', [
+                          'default' => Literal::from('uuid_generate_v4()')
+                      ])
+                      ->addColumn('creation', 'timestamp', [
+                          'timezone' => true,
+                          'default' => Literal::from('now()')
+                      ])
+                      ->create();
+            }
+        }
 
 User Defined Types (Custom Data Domain)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1297,7 +1282,8 @@ table object.
 By default Phinx instructs the database adapter to create a normal index. We
 can pass an additional parameter ``unique`` to the ``addIndex()`` method to
 specify a unique index. We can also explicitly specify a name for the index
-using the ``name`` parameter.
+using the ``name`` parameter, the index columns sort order can also be specified using
+the ``order`` parameter. The order parameter takes an array of column names and sort order key/value pairs.
 
 .. code-block:: php
 
@@ -1314,9 +1300,12 @@ using the ``name`` parameter.
             {
                 $table = $this->table('users');
                 $table->addColumn('email', 'string')
-                      ->addIndex(['email'], [
+                      ->addColumn('username','string')
+                      ->addIndex(['email', 'username'], [
                             'unique' => true,
-                            'name' => 'idx_users_email'])
+                            'name' => 'idx_users_email',
+                            'order' => ['email' => 'DESC', 'username' => 'ASC']]
+                            )
                       ->save();
             }
 
@@ -1372,6 +1361,28 @@ The single column index can define its index length with or without defining col
                       ->create();
             }
         }
+
+The SQL Server and PostgreSQL adapters also supports ``include`` (non-key) columns on indexes.
+
+.. code-block:: php
+
+        <?php
+
+        use Phinx\Migration\AbstractMigration;
+
+        class MyNewMigration extends AbstractMigration
+        {
+            public function change()
+            {
+                $table = $this->table('users');
+                $table->addColumn('email', 'string')
+                      ->addColumn('firstname','string')
+                      ->addColumn('lastname','string')
+                      ->addIndex(['email'], ['include' => ['firstname', 'lastname']])
+                      ->create();
+            }
+        }
+
 
 Removing indexes is as easy as calling the ``removeIndex()`` method. You must
 call this method for each index.

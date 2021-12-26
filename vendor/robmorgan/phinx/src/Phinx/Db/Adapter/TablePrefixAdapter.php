@@ -54,9 +54,7 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @return void
+     * @inheritDoc
      */
     public function createTable(Table $table, array $columns = [], array $indexes = [])
     {
@@ -71,7 +69,6 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
      * {@inheritDoc}
      *
      * @throws \BadMethodCallException
-     *
      * @return void
      */
     public function changePrimaryKey(Table $table, $newColumns)
@@ -92,7 +89,6 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
      * {@inheritDoc}
      *
      * @throws \BadMethodCallException
-     *
      * @return void
      */
     public function changeComment(Table $table, $newComment)
@@ -113,7 +109,6 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
      * {@inheritDoc}
      *
      * @throws \BadMethodCallException
-     *
      * @return void
      */
     public function renameTable($tableName, $newTableName)
@@ -132,7 +127,6 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
      * {@inheritDoc}
      *
      * @throws \BadMethodCallException
-     *
      * @return void
      */
     public function dropTable($tableName)
@@ -146,9 +140,7 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @return void
+     * @inheritDoc
      */
     public function truncateTable($tableName)
     {
@@ -180,7 +172,6 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
      * {@inheritDoc}
      *
      * @throws \BadMethodCallException
-     *
      * @return void
      */
     public function addColumn(Table $table, Column $column)
@@ -198,7 +189,6 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
      * {@inheritDoc}
      *
      * @throws \BadMethodCallException
-     *
      * @return void
      */
     public function renameColumn($tableName, $columnName, $newColumnName)
@@ -215,7 +205,6 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
      * {@inheritDoc}
      *
      * @throws \BadMethodCallException
-     *
      * @return void
      */
     public function changeColumn($tableName, $columnName, Column $newColumn)
@@ -232,7 +221,6 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
      * {@inheritDoc}
      *
      * @throws \BadMethodCallException
-     *
      * @return void
      */
     public function dropColumn($tableName, $columnName)
@@ -269,7 +257,6 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
      * {@inheritDoc}
      *
      * @throws \BadMethodCallException
-     *
      * @return void
      */
     public function addIndex(Table $table, Index $index)
@@ -286,7 +273,6 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
      * {@inheritDoc}
      *
      * @throws \BadMethodCallException
-     *
      * @return void
      */
     public function dropIndex($tableName, $columns)
@@ -303,7 +289,6 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
      * {@inheritDoc}
      *
      * @throws \BadMethodCallException
-     *
      * @return void
      */
     public function dropIndexByName($tableName, $indexName)
@@ -340,7 +325,6 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
      * {@inheritDoc}
      *
      * @throws \BadMethodCallException
-     *
      * @return void
      */
     public function addForeignKey(Table $table, ForeignKey $foreignKey)
@@ -358,7 +342,6 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
      * {@inheritDoc}
      *
      * @throws \BadMethodCallException
-     *
      * @return void
      */
     public function dropForeignKey($tableName, $columns, $constraint = null)
@@ -372,9 +355,7 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @return void
+     * @inheritDoc
      */
     public function insert(Table $table, $row)
     {
@@ -384,9 +365,7 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @return void
+     * @inheritDoc
      */
     public function bulkinsert(Table $table, $rows)
     {
@@ -419,7 +398,6 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
      * Applies the prefix and suffix to the table name.
      *
      * @param string $tableName Table name
-     *
      * @return string
      */
     public function getAdapterTableName($tableName)
@@ -431,7 +409,6 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
      * {@inheritDoc}
      *
      * @throws \InvalidArgumentException
-     *
      * @return void
      */
     public function executeActions(Table $table, array $actions)
@@ -441,15 +418,15 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
 
         foreach ($actions as $k => $action) {
             switch (true) {
-                case ($action instanceof AddColumn):
+                case $action instanceof AddColumn:
                     $actions[$k] = new AddColumn($adapterTable, $action->getColumn());
                     break;
 
-                case ($action instanceof AddIndex):
+                case $action instanceof AddIndex:
                     $actions[$k] = new AddIndex($adapterTable, $action->getIndex());
                     break;
 
-                case ($action instanceof AddForeignKey):
+                case $action instanceof AddForeignKey:
                     $foreignKey = clone $action->getForeignKey();
                     $refTable = $foreignKey->getReferencedTable();
                     $refTableName = $this->getAdapterTableName($refTable->getName());
@@ -457,39 +434,39 @@ class TablePrefixAdapter extends AdapterWrapper implements DirectActionInterface
                     $actions[$k] = new AddForeignKey($adapterTable, $foreignKey);
                     break;
 
-                case ($action instanceof ChangeColumn):
+                case $action instanceof ChangeColumn:
                     $actions[$k] = new ChangeColumn($adapterTable, $action->getColumnName(), $action->getColumn());
                     break;
 
-                case ($action instanceof DropForeignKey):
+                case $action instanceof DropForeignKey:
                     $actions[$k] = new DropForeignKey($adapterTable, $action->getForeignKey());
                     break;
 
-                case ($action instanceof DropIndex):
+                case $action instanceof DropIndex:
                     $actions[$k] = new DropIndex($adapterTable, $action->getIndex());
                     break;
 
-                case ($action instanceof DropTable):
+                case $action instanceof DropTable:
                     $actions[$k] = new DropTable($adapterTable);
                     break;
 
-                case ($action instanceof RemoveColumn):
+                case $action instanceof RemoveColumn:
                     $actions[$k] = new RemoveColumn($adapterTable, $action->getColumn());
                     break;
 
-                case ($action instanceof RenameColumn):
+                case $action instanceof RenameColumn:
                     $actions[$k] = new RenameColumn($adapterTable, $action->getColumn(), $action->getNewName());
                     break;
 
-                case ($action instanceof RenameTable):
-                    $actions[$k] = new RenameTable($adapterTable, $action->getNewName());
+                case $action instanceof RenameTable:
+                    $actions[$k] = new RenameTable($adapterTable, $this->getAdapterTableName($action->getNewName()));
                     break;
 
-                case ($action instanceof ChangePrimaryKey):
+                case $action instanceof ChangePrimaryKey:
                     $actions[$k] = new ChangePrimaryKey($adapterTable, $action->getNewColumns());
                     break;
 
-                case ($action instanceof ChangeComment):
+                case $action instanceof ChangeComment:
                     $actions[$k] = new ChangeComment($adapterTable, $action->getNewComment());
                     break;
 

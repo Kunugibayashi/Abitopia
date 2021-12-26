@@ -16,10 +16,15 @@ declare(strict_types=1);
  */
 namespace Cake\Database\Driver;
 
-use Cake\Database\Dialect\PostgresDialectTrait;
 use Cake\Database\Driver;
+use Cake\Database\Expression\FunctionExpression;
+use Cake\Database\Expression\IdentifierExpression;
+use Cake\Database\Expression\StringExpression;
 use Cake\Database\PostgresCompiler;
+use Cake\Database\Query;
 use Cake\Database\QueryCompiler;
+use Cake\Database\Schema\PostgresSchemaDialect;
+use Cake\Database\Schema\SchemaDialect;
 use PDO;
 
 /**
@@ -27,17 +32,17 @@ use PDO;
  */
 class Postgres extends Driver
 {
-    use PostgresDialectTrait;
+    use SqlDialectTrait;
 
     /**
-     * @var int|null Maximum alias length or null if no limit
+     * @inheritDoc
      */
     protected const MAX_ALIAS_LENGTH = 63;
 
     /**
      * Base configuration settings for Postgres driver
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_baseConfig = [
         'persistent' => true,
@@ -52,6 +57,27 @@ class Postgres extends Driver
         'flags' => [],
         'init' => [],
     ];
+
+    /**
+     * The schema dialect class for this driver
+     *
+     * @var \Cake\Database\Schema\PostgresSchemaDialect|null
+     */
+    protected $_schemaDialect;
+
+    /**
+     * String used to start a database identifier quoting to make it safe
+     *
+     * @var string
+     */
+    protected $_startQuote = '"';
+
+    /**
+     * String used to end a database identifier quoting to make it safe
+     *
+     * @var string
+     */
+    protected $_endQuote = '"';
 
     /**
      * Establishes a connection to the database server
@@ -107,6 +133,18 @@ class Postgres extends Driver
     }
 
     /**
+     * @inheritDoc
+     */
+    public function schemaDialect(): SchemaDialect
+    {
+        if ($this->_schemaDialect === null) {
+            $this->_schemaDialect = new PostgresSchemaDialect($this);
+        }
+
+        return $this->_schemaDialect;
+    }
+
+    /**
      * Sets connection encoding
      *
      * @param string $encoding The encoding to use.
@@ -134,9 +172,168 @@ class Postgres extends Driver
     /**
      * @inheritDoc
      */
+    public function disableForeignKeySQL(): string
+    {
+        return 'SET CONSTRAINTS ALL DEFERRED';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function enableForeignKeySQL(): string
+    {
+        return 'SET CONSTRAINTS ALL IMMEDIATE';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function supports(string $feature): bool
+    {
+        switch ($feature) {
+            case static::FEATURE_CTE:
+            case static::FEATURE_JSON:
+            case static::FEATURE_TRUNCATE_WITH_CONSTRAINTS:
+            case static::FEATURE_WINDOW:
+                return true;
+
+            case static::FEATURE_DISABLE_CONSTRAINT_WITHOUT_TRANSACTION:
+                return false;
+        }
+
+        return parent::supports($feature);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function supportsDynamicConstraints(): bool
     {
         return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function _transformDistinct(Query $query): Query
+    {
+        return $query;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function _insertQueryTranslator(Query $query): Query
+    {
+        if (!$query->clause('epilog')) {
+            $query->epilog('RETURNING *');
+        }
+
+        return $query;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function _expressionTranslators(): array
+    {
+        return [
+            IdentifierExpression::class => '_transformIdentifierExpression',
+            FunctionExpression::class => '_transformFunctionExpression',
+            StringExpression::class => '_transformStringExpression',
+        ];
+    }
+
+    /**
+     * Changes identifer expression into postgresql format.
+     *
+     * @param \Cake\Database\Expression\IdentifierExpression $expression The expression to tranform.
+     * @return void
+     */
+    protected function _transformIdentifierExpression(IdentifierExpression $expression): void
+    {
+        $collation = $expression->getCollation();
+        if ($collation) {
+            // use trim() to work around expression being transformed multiple times
+            $expression->setCollation('"' . trim($collation, '"') . '"');
+        }
+    }
+
+    /**
+     * Receives a FunctionExpression and changes it so that it conforms to this
+     * SQL dialect.
+     *
+     * @param \Cake\Database\Expression\FunctionExpression $expression The function expression to convert
+     *   to postgres SQL.
+     * @return void
+     */
+    protected function _transformFunctionExpression(FunctionExpression $expression): void
+    {
+        switch ($expression->getName()) {
+            case 'CONCAT':
+                // CONCAT function is expressed as exp1 || exp2
+                $expression->setName('')->setConjunction(' ||');
+                break;
+            case 'DATEDIFF':
+                $expression
+                    ->setName('')
+                    ->setConjunction('-')
+                    ->iterateParts(function ($p) {
+                        if (is_string($p)) {
+                            $p = ['value' => [$p => 'literal'], 'type' => null];
+                        } else {
+                            $p['value'] = [$p['value']];
+                        }
+
+                        return new FunctionExpression('DATE', $p['value'], [$p['type']]);
+                    });
+                break;
+            case 'CURRENT_DATE':
+                $time = new FunctionExpression('LOCALTIMESTAMP', [' 0 ' => 'literal']);
+                $expression->setName('CAST')->setConjunction(' AS ')->add([$time, 'date' => 'literal']);
+                break;
+            case 'CURRENT_TIME':
+                $time = new FunctionExpression('LOCALTIMESTAMP', [' 0 ' => 'literal']);
+                $expression->setName('CAST')->setConjunction(' AS ')->add([$time, 'time' => 'literal']);
+                break;
+            case 'NOW':
+                $expression->setName('LOCALTIMESTAMP')->add([' 0 ' => 'literal']);
+                break;
+            case 'RAND':
+                $expression->setName('RANDOM');
+                break;
+            case 'DATE_ADD':
+                $expression
+                    ->setName('')
+                    ->setConjunction(' + INTERVAL')
+                    ->iterateParts(function ($p, $key) {
+                        if ($key === 1) {
+                            $p = sprintf("'%s'", $p);
+                        }
+
+                        return $p;
+                    });
+                break;
+            case 'DAYOFWEEK':
+                $expression
+                    ->setName('EXTRACT')
+                    ->setConjunction(' ')
+                    ->add(['DOW FROM' => 'literal'], [], true)
+                    ->add([') + (1' => 'literal']); // Postgres starts on index 0 but Sunday should be 1
+                break;
+        }
+    }
+
+    /**
+     * Changes string expression into postgresql format.
+     *
+     * @param \Cake\Database\Expression\StringExpression $expression The string expression to tranform.
+     * @return void
+     */
+    protected function _transformStringExpression(StringExpression $expression): void
+    {
+        // use trim() to work around expression being transformed multiple times
+        $expression->setCollation('"' . trim($expression->getCollation(), '"') . '"');
     }
 
     /**

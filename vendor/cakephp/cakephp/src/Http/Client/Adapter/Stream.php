@@ -90,7 +90,7 @@ class Stream implements AdapterInterface
      *
      * @param array $headers The list of headers from the request(s)
      * @param string $content The response content.
-     * @return \Cake\Http\Client\Response[] The list of responses from the request(s)
+     * @return array<\Cake\Http\Client\Response> The list of responses from the request(s)
      */
     public function createResponses(array $headers, string $content): array
     {
@@ -104,6 +104,7 @@ class Stream implements AdapterInterface
         foreach ($indexes as $i => $start) {
             /** @psalm-suppress InvalidOperand */
             $end = isset($indexes[$i + 1]) ? $indexes[$i + 1] - $start : null;
+            /** @psalm-suppress PossiblyInvalidArgument */
             $headerSlice = array_slice($headers, $start, $end);
             $body = $i === $last ? $content : '';
             $responses[] = $this->_buildResponse($headerSlice, $body);
@@ -116,7 +117,7 @@ class Stream implements AdapterInterface
      * Build the stream context out of the request object.
      *
      * @param \Psr\Http\Message\RequestInterface $request The request to build context from.
-     * @param array $options Additional request options.
+     * @param array<string, mixed> $options Additional request options.
      * @return void
      */
     protected function _buildContext(RequestInterface $request, array $options): void
@@ -142,7 +143,7 @@ class Stream implements AdapterInterface
      * Creates cookies & headers.
      *
      * @param \Psr\Http\Message\RequestInterface $request The request being sent.
-     * @param array $options Array of options to use.
+     * @param array<string, mixed> $options Array of options to use.
      * @return void
      */
     protected function _buildHeaders(RequestInterface $request, array $options): void
@@ -158,20 +159,15 @@ class Stream implements AdapterInterface
      * Builds the request content based on the request object.
      *
      * If the $request->body() is a string, it will be used as is.
-     * Array data will be processed with Cake\Http\Client\FormData
+     * Array data will be processed with {@link \Cake\Http\Client\FormData}
      *
      * @param \Psr\Http\Message\RequestInterface $request The request being sent.
-     * @param array $options Array of options to use.
+     * @param array<string, mixed> $options Array of options to use.
      * @return void
      */
     protected function _buildContent(RequestInterface $request, array $options): void
     {
         $body = $request->getBody();
-        if (empty($body)) {
-            $this->_contextOptions['content'] = '';
-
-            return;
-        }
         $body->rewind();
         $this->_contextOptions['content'] = $body->getContents();
     }
@@ -180,7 +176,7 @@ class Stream implements AdapterInterface
      * Build miscellaneous options for the request.
      *
      * @param \Psr\Http\Message\RequestInterface $request The request being sent.
-     * @param array $options Array of options to use.
+     * @param array<string, mixed> $options Array of options to use.
      * @return void
      */
     protected function _buildOptions(RequestInterface $request, array $options): void
@@ -205,7 +201,7 @@ class Stream implements AdapterInterface
      * Build SSL options for the request.
      *
      * @param \Psr\Http\Message\RequestInterface $request The request being sent.
-     * @param array $options Array of options to use.
+     * @param array<string, mixed> $options Array of options to use.
      * @return void
      */
     protected function _buildSslContext(RequestInterface $request, array $options): void
@@ -217,6 +213,7 @@ class Stream implements AdapterInterface
             'ssl_allow_self_signed',
             'ssl_cafile',
             'ssl_local_cert',
+            'ssl_local_pk',
             'ssl_passphrase',
         ];
         if (empty($options['ssl_cafile'])) {
@@ -254,6 +251,7 @@ class Stream implements AdapterInterface
         $content = '';
         $timedOut = false;
 
+        /** @psalm-suppress PossiblyNullArgument  */
         while (!feof($this->_stream)) {
             if ($deadline !== false) {
                 stream_set_timeout($this->_stream, max($deadline - time(), 1));

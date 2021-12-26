@@ -74,10 +74,10 @@ class ReflectionLanguageConstruct extends \ReflectionFunctionAbstract
      *
      * @param string $keyword
      */
-    public function __construct($keyword)
+    public function __construct(string $keyword)
     {
         if (!self::isLanguageConstruct($keyword)) {
-            throw new \InvalidArgumentException('Unknown language construct: ' . $keyword);
+            throw new \InvalidArgumentException('Unknown language construct: '.$keyword);
         }
 
         $this->keyword = $keyword;
@@ -98,7 +98,7 @@ class ReflectionLanguageConstruct extends \ReflectionFunctionAbstract
      *
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->keyword;
     }
@@ -108,7 +108,7 @@ class ReflectionLanguageConstruct extends \ReflectionFunctionAbstract
      *
      * @return bool
      */
-    public function returnsReference()
+    public function returnsReference(): bool
     {
         return false;
     }
@@ -118,11 +118,11 @@ class ReflectionLanguageConstruct extends \ReflectionFunctionAbstract
      *
      * @return array
      */
-    public function getParameters()
+    public function getParameters(): array
     {
         $params = [];
         foreach (self::$languageConstructs[$this->keyword] as $parameter => $opts) {
-            \array_push($params, new ReflectionLanguageConstructParameter($this->keyword, $parameter, $opts));
+            $params[] = new ReflectionLanguageConstructParameter($this->keyword, $parameter, $opts);
         }
 
         return $params;
@@ -135,7 +135,7 @@ class ReflectionLanguageConstruct extends \ReflectionFunctionAbstract
      *
      * @return bool false
      */
-    public function getFileName()
+    public function getFileName(): bool
     {
         return false;
     }
@@ -145,7 +145,7 @@ class ReflectionLanguageConstruct extends \ReflectionFunctionAbstract
      *
      * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->getName();
     }
@@ -157,7 +157,7 @@ class ReflectionLanguageConstruct extends \ReflectionFunctionAbstract
      *
      * @return bool
      */
-    public static function isLanguageConstruct($keyword)
+    public static function isLanguageConstruct(string $keyword): bool
     {
         return \array_key_exists($keyword, self::$languageConstructs);
     }

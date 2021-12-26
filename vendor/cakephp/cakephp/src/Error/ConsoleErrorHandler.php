@@ -16,7 +16,9 @@ declare(strict_types=1);
  */
 namespace Cake\Error;
 
+use Cake\Command\Command;
 use Cake\Console\ConsoleOutput;
+use Cake\Console\Exception\ConsoleException;
 use Throwable;
 
 /**
@@ -35,7 +37,7 @@ class ConsoleErrorHandler extends BaseErrorHandler
     /**
      * Constructor
      *
-     * @param array $config Config options for the error handler.
+     * @param array<string, mixed> $config Config options for the error handler.
      */
     public function __construct(array $config = [])
     {
@@ -61,9 +63,12 @@ class ConsoleErrorHandler extends BaseErrorHandler
     {
         $this->_displayException($exception);
         $this->logException($exception);
-        $code = $exception->getCode();
-        $code = $code && is_int($code) ? $code : 1;
-        $this->_stop($code);
+
+        $exitCode = Command::CODE_ERROR;
+        if ($exception instanceof ConsoleException) {
+            $exitCode = $exception->getCode();
+        }
+        $this->_stop($exitCode);
     }
 
     /**
@@ -95,7 +100,7 @@ class ConsoleErrorHandler extends BaseErrorHandler
      * Template method of BaseErrorHandler.
      *
      * @param array $error An array of error data.
-     * @param bool $debug Whether or not the app is in debug mode.
+     * @param bool $debug Whether the app is in debug mode.
      * @return void
      */
     protected function _displayError(array $error, bool $debug): void

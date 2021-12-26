@@ -79,11 +79,11 @@ class CompletionCommand extends Command implements CommandCollectionAwareInterfa
             'help' => 'The sub-command related to command to get information on.',
             'required' => false,
         ])->setEpilog([
-            "The various modes allow you to get help information on commands and their arguments.",
-            "The available modes are:",
-            "",
+            'The various modes allow you to get help information on commands and their arguments.',
+            'The available modes are:',
+            '',
             $modeHelp,
-            "",
+            '',
             'This command is not intended to be called manually, and should be invoked from a ' .
                 'terminal completion script.',
         ]);
@@ -147,7 +147,7 @@ class CompletionCommand extends Command implements CommandCollectionAwareInterfa
     protected function getSubcommands(Arguments $args, ConsoleIo $io): int
     {
         $name = $args->getArgument('command');
-        if ($name === null || !strlen($name)) {
+        if ($name === null || $name === '') {
             return static::CODE_SUCCESS;
         }
 
@@ -185,7 +185,7 @@ class CompletionCommand extends Command implements CommandCollectionAwareInterfa
      * Reflect the subcommands names out of a shell.
      *
      * @param \Cake\Console\Shell $shell The shell to get commands for
-     * @return string[] A list of commands
+     * @return array<string> A list of commands
      */
     protected function shellSubcommands(Shell $shell): array
     {

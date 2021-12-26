@@ -16,11 +16,14 @@ declare(strict_types=1);
  */
 namespace Cake\I18n;
 
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
+use Locale;
 
 /**
  * Utility class used to determine the plural number to be used for a variable
- * base on the locale
+ * base on the locale.
+ *
+ * @internal
  */
 class PluralRules
 {
@@ -28,7 +31,7 @@ class PluralRules
      * A map of locale => plurals group used to determine
      * which plural rules apply to the language
      *
-     * @var array
+     * @var array<string, int>
      */
     protected static $_rulesMap = [
         'af' => 1,
@@ -103,7 +106,7 @@ class PluralRules
         'pap' => 1,
         'pl' => 11,
         'ps' => 1,
-        'pt_pt' => 2,
+        'pt_BR' => 2,
         'pt' => 1,
         'ro' => 12,
         'ru' => 3,
@@ -133,14 +136,14 @@ class PluralRules
      * to the countable provided in $n.
      *
      * @param string $locale The locale to get the rule calculated for.
-     * @param int|float $n The number to apply the rules to.
+     * @param int $n The number to apply the rules to.
      * @return int The plural rule number that should be used.
      * @link http://localization-guide.readthedocs.org/en/latest/l10n/pluralforms.html
      * @link https://developer.mozilla.org/en-US/docs/Mozilla/Localization/Localization_and_Plurals#List_of_Plural_Rules
      */
     public static function calculate(string $locale, $n): int
     {
-        $locale = strtolower($locale);
+        $locale = Locale::canonicalize($locale);
 
         if (!isset(static::$_rulesMap[$locale])) {
             $locale = explode('_', $locale)[0];
@@ -200,6 +203,6 @@ class PluralRules
                 return $n % 10 !== 1 || $n % 100 === 11 ? 1 : 0;
         }
 
-        throw new Exception('Unable to find plural rule number.');
+        throw new CakeException('Unable to find plural rule number.');
     }
 }

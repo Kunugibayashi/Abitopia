@@ -16,6 +16,7 @@ declare(strict_types=1);
  */
 namespace Cake\Database\Log;
 
+use Cake\Database\Driver\Sqlserver;
 use JsonSerializable;
 
 /**
@@ -26,6 +27,13 @@ use JsonSerializable;
  */
 class LoggedQuery implements JsonSerializable
 {
+    /**
+     * Driver executing the query
+     *
+     * @var \Cake\Database\DriverInterface|null
+     */
+    public $driver = null;
+
     /**
      * Query string that was executed
      *
@@ -73,8 +81,13 @@ class LoggedQuery implements JsonSerializable
             if ($p === null) {
                 return 'NULL';
             }
+
             if (is_bool($p)) {
-                return $p ? '1' : '0';
+                if ($this->driver instanceof Sqlserver) {
+                    return $p ? '1' : '0';
+                }
+
+                return $p ? 'TRUE' : 'FALSE';
             }
 
             if (is_string($p)) {
@@ -108,9 +121,22 @@ class LoggedQuery implements JsonSerializable
     }
 
     /**
+     * Get the logging context data for a query.
+     *
+     * @return array<string, mixed>
+     */
+    public function getContext(): array
+    {
+        return [
+            'numRows' => $this->numRows,
+            'took' => $this->took,
+        ];
+    }
+
+    /**
      * Returns data that will be serialized as JSON
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array
     {
@@ -144,6 +170,6 @@ class LoggedQuery implements JsonSerializable
             $sql = $this->interpolate();
         }
 
-        return "duration={$this->took} rows={$this->numRows} {$sql}";
+        return $sql;
     }
 }

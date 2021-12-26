@@ -34,15 +34,14 @@ use Laminas\Diactoros\CallbackStream as BaseCallbackStream;
 class CallbackStream extends BaseCallbackStream
 {
     /**
-     * {@inheritDoc}
-     *
-     * @return string
+     * @inheritDoc
      */
     public function getContents(): string
     {
         $callback = $this->detach();
         $result = '';
-        if (is_callable($callback)) {
+        /** @psalm-suppress TypeDoesNotContainType */
+        if ($callback !== null) {
             $result = $callback();
         }
         if (!is_string($result)) {

@@ -14,21 +14,26 @@ declare(strict_types=1);
  */
 namespace Cake\View\Exception;
 
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 use Throwable;
 
 /**
  * Used when a template file cannot be found.
  */
-class MissingTemplateException extends Exception
+class MissingTemplateException extends CakeException
 {
+    /**
+     * @var string|null
+     */
+    protected $templateName;
+
     /**
      * @var string
      */
-    protected $file;
+    protected $filename;
 
     /**
-     * @var string[]
+     * @var array<string>
      */
     protected $paths;
 
@@ -40,14 +45,20 @@ class MissingTemplateException extends Exception
     /**
      * Constructor
      *
-     * @param string|array $file Either the file name as a string, or in an array for backwards compatibility.
-     * @param string[] $paths The path list that template could not be found in.
+     * @param array<string>|string $file Either the file name as a string, or in an array for backwards compatibility.
+     * @param array<string> $paths The path list that template could not be found in.
      * @param int|null $code The code of the error.
      * @param \Throwable|null $previous the previous exception.
      */
     public function __construct($file, array $paths = [], ?int $code = null, ?Throwable $previous = null)
     {
-        $this->file = is_array($file) ? array_pop($file) : $file;
+        if (is_array($file)) {
+            $this->filename = array_pop($file);
+            $this->templateName = array_pop($file);
+        } else {
+            $this->filename = $file;
+            $this->templateName = null;
+        }
         $this->paths = $paths;
 
         parent::__construct($this->formatMessage(), $code, $previous);
@@ -60,11 +71,12 @@ class MissingTemplateException extends Exception
      */
     public function formatMessage(): string
     {
-        $message = "{$this->type} file `{$this->file}` could not be found.";
+        $name = $this->templateName ?? $this->filename;
+        $message = "{$this->type} file `{$name}` could not be found.";
         if ($this->paths) {
             $message .= "\n\nThe following paths were searched:\n\n";
             foreach ($this->paths as $path) {
-                $message .= "- `{$path}{$this->file}`\n";
+                $message .= "- `{$path}{$this->filename}`\n";
             }
         }
 
@@ -80,7 +92,7 @@ class MissingTemplateException extends Exception
     public function getAttributes(): array
     {
         return [
-            'file' => $this->file,
+            'file' => $this->filename,
             'paths' => $this->paths,
         ];
     }

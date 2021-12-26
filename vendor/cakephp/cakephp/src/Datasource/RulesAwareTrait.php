@@ -39,7 +39,7 @@ trait RulesAwareTrait
     protected $_rulesChecker;
 
     /**
-     * Returns whether or not the passed entity complies with all the rules stored in
+     * Returns whether the passed entity complies with all the rules stored in
      * the rules checker.
      *
      * @param \Cake\Datasource\EntityInterface $entity The entity to check for validity.
@@ -95,7 +95,9 @@ trait RulesAwareTrait
         if ($this->_rulesChecker !== null) {
             return $this->_rulesChecker;
         }
+        /** @psalm-var class-string<\Cake\Datasource\RulesChecker> $class */
         $class = defined('static::RULES_CLASS') ? static::RULES_CLASS : RulesChecker::class;
+        /** @psalm-suppress ArgumentTypeCoercion */
         $this->_rulesChecker = $this->buildRules(new $class(['repository' => $this]));
         $this->dispatchEvent('Model.buildRules', ['rules' => $this->_rulesChecker]);
 

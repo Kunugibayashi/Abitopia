@@ -26,7 +26,7 @@ use Cake\Shell\Task\CommandTask;
 use Cake\Utility\Inflector;
 
 /**
- * Shell dispatcher handles dispatching cli commands.
+ * Shell dispatcher handles dispatching CLI commands.
  *
  * Consult /bin/cake.php for how this class is used in practice.
  *
@@ -44,7 +44,7 @@ class ShellDispatcher
     /**
      * List of connected aliases.
      *
-     * @var array
+     * @var array<string, string>
      */
     protected static $_aliases = [];
 
@@ -60,7 +60,7 @@ class ShellDispatcher
     public function __construct(array $args = [], bool $bootstrap = true)
     {
         set_time_limit(0);
-        $this->args = (array)$args;
+        $this->args = $args;
 
         $this->addShortPluginAliases();
 
@@ -134,7 +134,7 @@ class ShellDispatcher
      * Defines current working environment.
      *
      * @return void
-     * @throws \Cake\Core\Exception\Exception
+     * @throws \Cake\Core\Exception\CakeException
      */
     protected function _initEnvironment(): void
     {
@@ -172,7 +172,7 @@ class ShellDispatcher
      * Built-in extra parameter is :
      *
      * - `requested` : if used, will prevent the Shell welcome message to be displayed
-     * @return int The cli command exit code. 0 is success.
+     * @return int The CLI command exit code. 0 is success.
      */
     public function dispatch(array $extra = []): int
     {
@@ -181,7 +181,7 @@ class ShellDispatcher
         } catch (StopException $e) {
             $code = $e->getCode();
 
-            return (int)$code;
+            return $code;
         }
         if ($result === null || $result === true) {
             /** @psalm-suppress DeprecatedClass */
@@ -203,7 +203,7 @@ class ShellDispatcher
      * Built-in extra parameter is :
      *
      * - `requested` : if used, will prevent the Shell welcome message to be displayed
-     * @return bool|int|null
+     * @return int|bool|null
      * @throws \Cake\Console\Exception\MissingShellMethodException
      */
     protected function _dispatch(array $extra = [])
@@ -279,7 +279,6 @@ class ShellDispatcher
 
             $other = static::alias($shell);
             if ($other) {
-                $other = $aliases[$shell];
                 if ($other !== $plugin) {
                     Log::write(
                         'debug',

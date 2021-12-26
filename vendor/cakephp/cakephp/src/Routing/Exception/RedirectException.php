@@ -16,7 +16,7 @@ declare(strict_types=1);
  */
 namespace Cake\Routing\Exception;
 
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 
 /**
  * An exception subclass used by the routing layer to indicate
@@ -27,8 +27,13 @@ use Cake\Core\Exception\Exception;
  * ```
  * throw new RedirectException('http://example.com/some/path', 301);
  * ```
+ *
+ * If you need a more general purpose redirect exception use
+ * {@link \Cake\Http\Exception\RedirectException} instead of this class.
+ *
+ * @deprecated 4.1.0 Use {@link \Cake\Http\Exception\RedirectException} instead.
  */
-class RedirectException extends Exception
+class RedirectException extends CakeException
 {
     /**
      * @inheritDoc

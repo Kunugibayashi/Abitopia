@@ -18,7 +18,7 @@ declare(strict_types=1);
  */
 namespace Cake\Mailer\Transport;
 
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 use Cake\Mailer\AbstractTransport;
 use Cake\Mailer\Message;
 
@@ -41,7 +41,7 @@ class MailTransport extends AbstractTransport
         $to = $message->getHeaders(['to'])['To'];
         $to = str_replace("\r\n", '', $to);
 
-        $eol = $this->getConfig('eol', PHP_EOL);
+        $eol = $this->getConfig('eol', version_compare(PHP_VERSION, '8.0', '>=') ? "\r\n" : "\n");
         $headers = $message->getHeadersString(
             [
                 'from',
@@ -91,7 +91,7 @@ class MailTransport extends AbstractTransport
         if (!@mail($to, $subject, $message, $headers, $params)) {
             $error = error_get_last();
             $msg = 'Could not send email: ' . ($error['message'] ?? 'unknown');
-            throw new Exception($msg);
+            throw new CakeException($msg);
         }
         // phpcs:enable
     }

@@ -62,6 +62,7 @@ class CellCommand extends SimpleBakeCommand
      *
      * @param \Cake\Console\Arguments $arguments Arguments object.
      * @return array
+     * @phpstan-return array<string, mixed>
      */
     public function templateData(Arguments $arguments): array
     {

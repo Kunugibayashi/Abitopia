@@ -25,7 +25,7 @@ use SessionHandlerInterface;
 /**
  * This class is a wrapper for the native PHP session functions. It provides
  * several defaults for the most common session configuration
- * via external handlers and helps with using session in cli without any warnings.
+ * via external handlers and helps with using session in CLI without any warnings.
  *
  * Sessions can be created from the defaults using `Session::create()` or you can get
  * an instance of a new session by just instantiating this class and passing the complete
@@ -201,7 +201,7 @@ class Session
      *   the configuration array for the engine. You can set the `engine` key to an already
      *   instantiated session handler object.
      *
-     * @param array $config The Configuration to apply to this session object
+     * @param array<string, mixed> $config The Configuration to apply to this session object
      */
     public function __construct(array $config = [])
     {
@@ -250,8 +250,8 @@ class Session
      * If no arguments are passed it will return the currently configured handler instance
      * or null if none exists.
      *
-     * @param string|\SessionHandlerInterface|null $class The session handler to use
-     * @param array $options the options to pass to the SessionHandler constructor
+     * @param \SessionHandlerInterface|string|null $class The session handler to use
+     * @param array<string, mixed> $options the options to pass to the SessionHandler constructor
      * @return \SessionHandlerInterface|null
      * @throws \InvalidArgumentException
      */
@@ -306,7 +306,7 @@ class Session
      * $session->options(['session.use_cookies' => 1]);
      * ```
      *
-     * @param array $options Ini options to set.
+     * @param array<string, mixed> $options Ini options to set.
      * @return void
      * @throws \RuntimeException if any directive could not be set
      */
@@ -430,31 +430,48 @@ class Session
      * Returns given session variable, or all of them, if no parameters given.
      *
      * @param string|null $name The name of the session variable (or a path as sent to Hash.extract)
-     * @return string|array|null The value of the session variable, null if session not available,
-     *   session not started, or provided name not found in the session.
+     * @param mixed $default The return value when the path does not exist
+     * @return mixed|null The value of the session variable, or default value if a session
+     *   is not available, can't be started, or provided $name is not found in the session.
      */
-    public function read(?string $name = null)
+    public function read(?string $name = null, $default = null)
     {
         if ($this->_hasSession() && !$this->started()) {
             $this->start();
         }
 
         if (!isset($_SESSION)) {
-            return null;
+            return $default;
         }
 
         if ($name === null) {
             return $_SESSION ?: [];
         }
 
-        return Hash::get($_SESSION, $name);
+        return Hash::get($_SESSION, $name, $default);
+    }
+
+    /**
+     * Returns given session variable, or throws Exception if not found.
+     *
+     * @param string $name The name of the session variable (or a path as sent to Hash.extract)
+     * @throws \RuntimeException
+     * @return mixed|null
+     */
+    public function readOrFail(string $name)
+    {
+        if (!$this->check($name)) {
+            throw new RuntimeException(sprintf('Expected session key "%s" not found.', $name));
+        }
+
+        return $this->read($name);
     }
 
     /**
      * Reads and deletes a variable from session.
      *
      * @param string $name The key to read and remove (or a path as sent to Hash.extract).
-     * @return mixed The value of the session variable, null if session not available,
+     * @return mixed|null The value of the session variable, null if session not available,
      *   session not started, or provided name not found in the session.
      */
     public function consume(string $name)
@@ -473,7 +490,7 @@ class Session
     /**
      * Writes value to given session variable name.
      *
-     * @param string|array $name Name of variable
+     * @param array|string $name Name of variable
      * @param mixed $value Value to write
      * @return void
      */
@@ -492,6 +509,7 @@ class Session
             $data = Hash::insert($data, $key, $val);
         }
 
+        /** @psalm-suppress PossiblyNullArgument */
         $this->_overwrite($_SESSION, $data);
     }
 

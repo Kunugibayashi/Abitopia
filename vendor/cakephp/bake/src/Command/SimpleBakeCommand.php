@@ -55,6 +55,7 @@ abstract class SimpleBakeCommand extends BakeCommand
      *
      * @param \Cake\Console\Arguments $arguments The arguments for the command
      * @return array
+     * @phpstan-return array<string, mixed>
      */
     public function templateData(Arguments $arguments): array
     {
@@ -101,7 +102,7 @@ abstract class SimpleBakeCommand extends BakeCommand
      */
     protected function bake(string $name, Arguments $args, ConsoleIo $io): void
     {
-        $renderer = new TemplateRenderer();
+        $renderer = new TemplateRenderer($args->getOption('theme'));
         $renderer->set('name', $name);
         $renderer->set($this->templateData($args));
         $contents = $renderer->generate($this->template());

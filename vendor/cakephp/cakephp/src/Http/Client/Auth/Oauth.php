@@ -15,7 +15,7 @@ declare(strict_types=1);
  */
 namespace Cake\Http\Client\Auth;
 
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 use Cake\Http\Client\Request;
 use Cake\Utility\Security;
 use Psr\Http\Message\UriInterface;
@@ -28,7 +28,7 @@ use RuntimeException;
  * provider. It only handles make client requests *after* you have obtained the Oauth
  * tokens.
  *
- * Generally not directly constructed, but instead used by Cake\Http\Client
+ * Generally not directly constructed, but instead used by {@link \Cake\Http\Client}
  * when $options['auth']['type'] is 'oauth'
  */
 class Oauth
@@ -39,7 +39,7 @@ class Oauth
      * @param \Cake\Http\Client\Request $request The request object.
      * @param array $credentials Authentication credentials.
      * @return \Cake\Http\Client\Request The updated request.
-     * @throws \Cake\Core\Exception\Exception On invalid signature types.
+     * @throws \Cake\Core\Exception\CakeException On invalid signature types.
      */
     public function authentication(Request $request, array $credentials): Request
     {
@@ -85,7 +85,7 @@ class Oauth
                 break;
 
             default:
-                throw new Exception(sprintf('Unknown Oauth signature method %s', $credentials['method']));
+                throw new CakeException(sprintf('Unknown Oauth signature method %s', $credentials['method']));
         }
 
         return $request->withHeader('Authorization', $value);
@@ -141,9 +141,13 @@ class Oauth
             'oauth_timestamp' => $timestamp,
             'oauth_signature_method' => 'HMAC-SHA1',
             'oauth_token' => $credentials['token'],
-            'oauth_consumer_key' => $credentials['consumerKey'],
+            'oauth_consumer_key' => $this->_encode($credentials['consumerKey']),
         ];
         $baseString = $this->baseString($request, $values);
+
+        // Consumer key should only be encoded for base string calculation as
+        // auth header generation already encodes independently
+        $values['oauth_consumer_key'] = $credentials['consumerKey'];
 
         if (isset($credentials['realm'])) {
             $values['oauth_realm'] = $credentials['realm'];
@@ -216,9 +220,15 @@ class Oauth
             $credentials['privateKeyPassphrase'] = $passphrase;
         }
         $privateKey = openssl_pkey_get_private($credentials['privateKey'], $credentials['privateKeyPassphrase']);
+        $this->checkSslError();
+
         $signature = '';
         openssl_sign($baseString, $signature, $privateKey);
-        openssl_free_key($privateKey);
+        $this->checkSslError();
+
+        if (PHP_MAJOR_VERSION < 8) {
+            openssl_free_key($privateKey);
+        }
 
         $values['oauth_signature'] = base64_encode($signature);
 
@@ -285,9 +295,10 @@ class Oauth
         parse_str((string)$query, $queryArgs);
 
         $post = [];
-        $body = (string)$request->getBody();
-        parse_str($body, $post);
-
+        $contentType = $request->getHeaderLine('Content-Type');
+        if ($contentType === '' || $contentType === 'application/x-www-form-urlencoded') {
+            parse_str((string)$request->getBody(), $post);
+        }
         $args = array_merge($queryArgs, $oauthValues, $post);
         $pairs = $this->_normalizeData($args);
         $data = [];
@@ -359,5 +370,22 @@ class Oauth
     protected function _encode(string $value): string
     {
         return str_replace(['%7E', '+'], ['~', ' '], rawurlencode($value));
+    }
+
+    /**
+     * Check for SSL errors and raise if one is encountered.
+     *
+     * @return void
+     */
+    protected function checkSslError(): void
+    {
+        $error = '';
+        while ($text = openssl_error_string()) {
+            $error .= $text;
+        }
+
+        if (strlen($error) > 0) {
+            throw new RuntimeException('openssl error: ' . $error);
+        }
     }
 }

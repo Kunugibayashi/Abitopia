@@ -57,7 +57,7 @@ class FileEngine extends CacheEngine
      *    cache::gc from ever being called automatically.
      * - `serialize` Should cache objects be serialized first.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'duration' => 3600,
@@ -81,7 +81,7 @@ class FileEngine extends CacheEngine
      *
      * Called automatically by the cache frontend.
      *
-     * @param array $config array of setting for the engine
+     * @param array<string, mixed> $config array of setting for the engine
      * @return bool True if the engine has been successfully initialized, false if not
      */
     public function init(array $config = []): bool
@@ -105,15 +105,15 @@ class FileEngine extends CacheEngine
      * Write data for key into cache
      *
      * @param string $key Identifier for the data
-     * @param mixed $data Data to be cached
+     * @param mixed $value Data to be cached
      * @param \DateInterval|int|null $ttl Optional. The TTL value of this item. If no value is sent and
      *   the driver supports TTL then the library may set a default value
      *   for it or let the driver take care of that.
      * @return bool True on success and false on failure.
      */
-    public function set($key, $data, $ttl = null): bool
+    public function set($key, $value, $ttl = null): bool
     {
-        if ($data === '' || !$this->_init) {
+        if ($value === '' || !$this->_init) {
             return false;
         }
 
@@ -124,11 +124,11 @@ class FileEngine extends CacheEngine
         }
 
         if (!empty($this->_config['serialize'])) {
-            $data = serialize($data);
+            $value = serialize($value);
         }
 
         $expires = time() + $this->duration($ttl);
-        $contents = implode([$expires, PHP_EOL, $data, PHP_EOL]);
+        $contents = implode([$expires, PHP_EOL, $value, PHP_EOL]);
 
         if ($this->_config['lock']) {
             /** @psalm-suppress PossiblyNullReference */
@@ -198,7 +198,7 @@ class FileEngine extends CacheEngine
         $data = trim($data);
 
         if ($data !== '' && !empty($this->_config['serialize'])) {
-            $data = unserialize((string)$data);
+            $data = unserialize($data);
         }
 
         return $data;
@@ -251,17 +251,32 @@ class FileEngine extends CacheEngine
             RecursiveIteratorIterator::SELF_FIRST
         );
         $cleared = [];
-        foreach ($contents as $path) {
-            if ($path->isFile()) {
+        /** @var \SplFileInfo $fileInfo */
+        foreach ($contents as $fileInfo) {
+            if ($fileInfo->isFile()) {
+                unset($fileInfo);
                 continue;
             }
 
-            $path = $path->getRealPath() . DIRECTORY_SEPARATOR;
+            $realPath = $fileInfo->getRealPath();
+            if (!$realPath) {
+                unset($fileInfo);
+                continue;
+            }
+
+            $path = $realPath . DIRECTORY_SEPARATOR;
             if (!in_array($path, $cleared, true)) {
                 $this->_clearDirectory($path);
                 $cleared[] = $path;
             }
+
+            // possible inner iterators need to be unset too in order for locks on parents to be released
+            unset($fileInfo);
         }
+
+        // unsetting iterators helps releasing possible locks in certain environments,
+        // which could otherwise make `rmdir()` fail
+        unset($directory, $contents);
 
         return true;
     }
@@ -365,7 +380,7 @@ class FileEngine extends CacheEngine
             $this->_File->getBasename() !== $key ||
             $this->_File->valid() === false
         ) {
-            $exists = file_exists($path->getPathname());
+            $exists = is_file($path->getPathname());
             try {
                 $this->_File = $path->openFile('c+');
             } catch (Exception $e) {
@@ -476,6 +491,10 @@ class FileEngine extends CacheEngine
             // phpcs:ignore
             @unlink($path);
         }
+
+        // unsetting iterators helps releasing possible locks in certain environments,
+        // which could otherwise make `rmdir()` fail
+        unset($directoryIterator, $contents, $filtered);
 
         return true;
     }

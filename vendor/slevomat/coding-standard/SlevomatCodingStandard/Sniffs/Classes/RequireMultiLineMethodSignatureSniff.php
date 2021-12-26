@@ -60,14 +60,20 @@ class RequireMultiLineMethodSignatureSniff extends AbstractMethodSignature
 		}
 
 		$signature = $this->getSignature($phpcsFile, $signatureStartPointer, $signatureEndPointer);
-		$signatureWithoutTabIndentation = $this->getSignatureWithoutTabs($signature);
+		$signatureWithoutTabIndentation = $this->getSignatureWithoutTabs($phpcsFile, $signature);
 		$methodName = FunctionHelper::getName($phpcsFile, $methodPointer);
 
-		if (count($this->includedMethodPatterns) !== 0 && !$this->isMethodNameInPatterns($methodName, $this->getIncludedMethodNormalizedPatterns())) {
+		if (
+			count($this->includedMethodPatterns) !== 0
+			&& !$this->isMethodNameInPatterns($methodName, $this->getIncludedMethodNormalizedPatterns())
+		) {
 			return;
 		}
 
-		if (count($this->excludedMethodPatterns) !== 0 && $this->isMethodNameInPatterns($methodName, $this->getExcludedMethodNormalizedPatterns())) {
+		if (
+			count($this->excludedMethodPatterns) !== 0
+			&& $this->isMethodNameInPatterns($methodName, $this->getExcludedMethodNormalizedPatterns())
+		) {
 			return;
 		}
 
@@ -76,7 +82,7 @@ class RequireMultiLineMethodSignatureSniff extends AbstractMethodSignature
 			return;
 		}
 
-		$error = sprintf('Signature of method "%s" should be splitted to more lines so each parameter is on its own line.', $methodName);
+		$error = sprintf('Signature of method "%s" should be split to more lines so each parameter is on its own line.', $methodName);
 		$fix = $phpcsFile->addFixableError($error, $methodPointer, self::CODE_REQUIRED_MULTI_LINE_SIGNATURE);
 		if (!$fix) {
 			return;
@@ -87,7 +93,12 @@ class RequireMultiLineMethodSignatureSniff extends AbstractMethodSignature
 		$phpcsFile->fixer->beginChangeset();
 
 		foreach ($parameters as $parameter) {
-			$pointerBeforeParameter = TokenHelper::findPrevious($phpcsFile, T_COMMA, $parameter['token'] - 1, $tokens[$methodPointer]['parenthesis_opener']);
+			$pointerBeforeParameter = TokenHelper::findPrevious(
+				$phpcsFile,
+				T_COMMA,
+				$parameter['token'] - 1,
+				$tokens[$methodPointer]['parenthesis_opener']
+			);
 			if ($pointerBeforeParameter === null) {
 				$pointerBeforeParameter = $tokens[$methodPointer]['parenthesis_opener'];
 			}

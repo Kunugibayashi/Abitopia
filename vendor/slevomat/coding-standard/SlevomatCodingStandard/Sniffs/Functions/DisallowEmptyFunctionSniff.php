@@ -4,6 +4,7 @@ namespace SlevomatCodingStandard\Sniffs\Functions;
 
 use PHP_CodeSniffer\Files\File;
 use PHP_CodeSniffer\Sniffs\Sniff;
+use PHP_CodeSniffer\Util\Tokens;
 use SlevomatCodingStandard\Helpers\FunctionHelper;
 use SlevomatCodingStandard\Helpers\TokenHelper;
 use const T_FUNCTION;
@@ -22,7 +23,6 @@ class DisallowEmptyFunctionSniff implements Sniff
 		return [T_FUNCTION];
 	}
 
-
 	/**
 	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
 	 * @param File $phpcsFile
@@ -34,6 +34,19 @@ class DisallowEmptyFunctionSniff implements Sniff
 
 		if (FunctionHelper::isAbstract($phpcsFile, $functionPointer)) {
 			return;
+		}
+
+		if (FunctionHelper::getName($phpcsFile, $functionPointer) === '__construct') {
+			$propertyPromotion = TokenHelper::findNext(
+				$phpcsFile,
+				Tokens::$scopeModifiers,
+				$tokens[$functionPointer]['parenthesis_opener'] + 1,
+				$tokens[$functionPointer]['parenthesis_closer']
+			);
+
+			if ($propertyPromotion !== null) {
+				return;
+			}
 		}
 
 		$firstContent = TokenHelper::findNextExcluding(

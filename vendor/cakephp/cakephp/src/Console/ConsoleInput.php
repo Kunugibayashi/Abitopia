@@ -60,10 +60,9 @@ class ConsoleInput
     public function read(): ?string
     {
         if ($this->_canReadline) {
-            /** @var string|false $line */
             $line = readline('');
 
-            if ($line !== false && strlen($line) > 0) {
+            if ($line !== false && $line !== '') {
                 readline_add_history($line);
             }
         } else {
@@ -93,6 +92,8 @@ class ConsoleInput
         $error = null;
         set_error_handler(function (int $code, string $message) use (&$error) {
             $error = "stream_select failed with code={$code} message={$message}.";
+
+            return true;
         });
         $readyFds = stream_select($readFds, $writeFds, $errorFds, $timeout);
         restore_error_handler();

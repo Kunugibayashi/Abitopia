@@ -17,6 +17,7 @@ declare(strict_types=1);
 namespace Cake\Log\Engine;
 
 use Cake\Core\Configure;
+use Cake\Log\Formatter\DefaultFormatter;
 use Cake\Utility\Text;
 
 /**
@@ -40,8 +41,9 @@ class FileLog extends BaseLog
      *   If value is 0, old versions are removed rather then rotated.
      * - `mask` A mask is applied when log files are created. Left empty no chmod
      *   is made.
+     * - `dateFormat` PHP date() format.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'path' => null,
@@ -52,6 +54,9 @@ class FileLog extends BaseLog
         'rotate' => 10,
         'size' => 10485760, // 10MB
         'mask' => null,
+        'formatter' => [
+            'className' => DefaultFormatter::class,
+        ],
     ];
 
     /**
@@ -78,13 +83,13 @@ class FileLog extends BaseLog
     /**
      * Sets protected properties based on config provided
      *
-     * @param array $config Configuration array
+     * @param array<string, mixed> $config Configuration array
      */
     public function __construct(array $config = [])
     {
         parent::__construct($config);
 
-        $this->_path = $this->getConfig('path', sys_get_temp_dir());
+        $this->_path = $this->getConfig('path', sys_get_temp_dir() . DIRECTORY_SEPARATOR);
         if (Configure::read('debug') && !is_dir($this->_path)) {
             mkdir($this->_path, 0775, true);
         }
@@ -103,6 +108,11 @@ class FileLog extends BaseLog
                 $this->_size = Text::parseFileSize($this->_config['size']);
             }
         }
+
+        if (isset($this->_config['dateFormat'])) {
+            deprecationWarning('`dateFormat` option should now be set in the formatter options.', 0);
+            $this->formatter->setConfig('dateFormat', $this->_config['dateFormat']);
+        }
     }
 
     /**
@@ -112,12 +122,13 @@ class FileLog extends BaseLog
      * @param string $message The message you want to log.
      * @param array $context Additional information about the logged message
      * @return void
-     * @see Cake\Log\Log::$_levels
+     * @see \Cake\Log\Log::$_levels
      */
     public function log($level, $message, array $context = []): void
     {
         $message = $this->_format($message, $context);
-        $output = date('Y-m-d H:i:s') . ' ' . ucfirst($level) . ': ' . $message . "\n";
+        $message = $this->formatter->format($level, $message, $context);
+
         $filename = $this->_getFilename($level);
         if ($this->_size) {
             $this->_rotateFile($filename);
@@ -126,13 +137,13 @@ class FileLog extends BaseLog
         $pathname = $this->_path . $filename;
         $mask = $this->_config['mask'];
         if (!$mask) {
-            file_put_contents($pathname, $output, FILE_APPEND);
+            file_put_contents($pathname, $message . "\n", FILE_APPEND);
 
             return;
         }
 
-        $exists = file_exists($pathname);
-        file_put_contents($pathname, $output, FILE_APPEND);
+        $exists = is_file($pathname);
+        file_put_contents($pathname, $message . "\n", FILE_APPEND);
         static $selfError = false;
 
         if (!$selfError && !$exists && !chmod($pathname, (int)$mask)) {
@@ -182,7 +193,7 @@ class FileLog extends BaseLog
         clearstatcache(true, $filePath);
 
         if (
-            !file_exists($filePath) ||
+            !is_file($filePath) ||
             filesize($filePath) < $this->_size
         ) {
             return null;

@@ -16,9 +16,6 @@ declare(strict_types=1);
  */
 namespace Cake\View;
 
-use Cake\Event\EventManager;
-use Cake\Http\Response;
-use Cake\Http\ServerRequest;
 use Cake\View\Exception\SerializationFailureException;
 use Exception;
 use TypeError;
@@ -45,31 +42,19 @@ abstract class SerializedView extends View
      *   names. If true all view variables will be serialized. If null or false
      *   normal view template will be rendered.
      *
-     * @var array{serialize:string|bool|null}
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'serialize' => null,
     ];
 
     /**
-     * Constructor
-     *
-     * @param \Cake\Http\ServerRequest|null $request Request instance.
-     * @param \Cake\Http\Response|null $response Response instance.
-     * @param \Cake\Event\EventManager|null $eventManager EventManager instance.
-     * @param array $viewOptions An array of view options
+     * @inheritDoc
      */
-    public function __construct(
-        ?ServerRequest $request = null,
-        ?Response $response = null,
-        ?EventManager $eventManager = null,
-        array $viewOptions = []
-    ) {
-        if ($response) {
-            $response = $response->withType($this->_responseType);
-        }
-
-        parent::__construct($request, $response, $eventManager, $viewOptions);
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->setResponse($this->getResponse()->withType($this->_responseType));
     }
 
     /**

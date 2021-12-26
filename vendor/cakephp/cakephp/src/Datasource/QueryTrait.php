@@ -57,7 +57,7 @@ trait QueryTrait
      * List of formatter classes or callbacks that will post-process the
      * results when fetched
      *
-     * @var callable[]
+     * @var array<callable>
      */
     protected $_formatters = [];
 
@@ -87,12 +87,12 @@ trait QueryTrait
      * Set the default Table object that will be used by this query
      * and form the `FROM` clause.
      *
-     * @param \Cake\Datasource\RepositoryInterface|\Cake\ORM\Table $table The default table object to use
+     * @param \Cake\Datasource\RepositoryInterface|\Cake\ORM\Table $repository The default table object to use
      * @return $this
      */
-    public function repository(RepositoryInterface $table)
+    public function repository(RepositoryInterface $repository)
     {
-        $this->_repository = $table;
+        $this->_repository = $repository;
 
         return $this;
     }
@@ -173,7 +173,7 @@ trait QueryTrait
      *
      * @param \Closure|string|false $key Either the cache key or a function to generate the cache key.
      *   When using a function, this query instance will be supplied as an argument.
-     * @param string|\Psr\SimpleCache\CacheInterface $config Either the name of the cache config to use, or
+     * @param \Psr\SimpleCache\CacheInterface|string $config Either the name of the cache config to use, or
      *   a cache engine instance.
      * @return $this
      */
@@ -203,7 +203,7 @@ trait QueryTrait
      * Sets the query instance to be an eager loaded query. If no argument is
      * passed, the current configured query `_eagerLoaded` value is returned.
      *
-     * @param bool $value Whether or not to eager load.
+     * @param bool $value Whether to eager load.
      * @return $this
      */
     public function eagerLoaded(bool $value)
@@ -227,21 +227,15 @@ trait QueryTrait
      */
     public function aliasField(string $field, ?string $alias = null): array
     {
-        $namespaced = strpos($field, '.') !== false;
-        $aliasedField = $field;
-
-        if ($namespaced) {
+        if (strpos($field, '.') === false) {
+            $alias = $alias ?: $this->getRepository()->getAlias();
+            $aliasedField = $alias . '.' . $field;
+        } else {
+            $aliasedField = $field;
             [$alias, $field] = explode('.', $field);
         }
 
-        if (!$alias) {
-            $alias = $this->getRepository()->getAlias();
-        }
-
         $key = sprintf('%s__%s', $alias, $field);
-        if (!$namespaced) {
-            $aliasedField = $alias . '.' . $field;
-        }
 
         return [$key => $aliasedField];
     }
@@ -252,7 +246,7 @@ trait QueryTrait
      *
      * @param array $fields The fields to alias
      * @param string|null $defaultAlias The default alias
-     * @return string[]
+     * @return array<string>
      */
     public function aliasFields(array $fields, ?string $defaultAlias = null): array
     {
@@ -285,10 +279,11 @@ trait QueryTrait
             return $this->_results;
         }
 
+        $results = null;
         if ($this->_cache) {
             $results = $this->_cache->fetch($this);
         }
-        if (!isset($results)) {
+        if ($results === null) {
             $results = $this->_decorateResults($this->_execute());
             if ($this->_cache) {
                 $this->_cache->store($this, $results);
@@ -356,35 +351,91 @@ trait QueryTrait
      * Registers a new formatter callback function that is to be executed when trying
      * to fetch the results from the database.
      *
-     * Formatting callbacks will get a first parameter, an object implementing
-     * `\Cake\Collection\CollectionInterface`, that can be traversed and modified at will.
+     * If the second argument is set to true, it will erase previous formatters
+     * and replace them with the passed first argument.
      *
      * Callbacks are required to return an iterator object, which will be used as
      * the return value for this query's result. Formatter functions are applied
      * after all the `MapReduce` routines for this query have been executed.
      *
-     * If the second argument is set to true, it will erase previous formatters
-     * and replace them with the passed first argument.
+     * Formatting callbacks will receive two arguments, the first one being an object
+     * implementing `\Cake\Collection\CollectionInterface`, that can be traversed and
+     * modified at will. The second one being the query instance on which the formatter
+     * callback is being applied.
      *
-     * ### Example:
+     * Usually the query instance received by the formatter callback is the same query
+     * instance on which the callback was attached to, except for in a joined
+     * association, in that case the callback will be invoked on the association source
+     * side query, and it will receive that query instance instead of the one on which
+     * the callback was originally attached to - see the examples below!
+     *
+     * ### Examples:
+     *
+     * Return all results from the table indexed by id:
      *
      * ```
-     * // Return all results from the table indexed by id
      * $query->select(['id', 'name'])->formatResults(function ($results) {
-     *   return $results->indexBy('id');
+     *     return $results->indexBy('id');
      * });
+     * ```
      *
-     * // Add a new column to the ResultSet
+     * Add a new column to the ResultSet:
+     *
+     * ```
      * $query->select(['name', 'birth_date'])->formatResults(function ($results) {
-     *   return $results->map(function ($row) {
-     *     $row['age'] = $row['birth_date']->diff(new DateTime)->y;
-     *     return $row;
-     *   });
+     *     return $results->map(function ($row) {
+     *         $row['age'] = $row['birth_date']->diff(new DateTime)->y;
+     *
+     *         return $row;
+     *     });
+     * });
+     * ```
+     *
+     * Add a new column to the results with respect to the query's hydration configuration:
+     *
+     * ```
+     * $query->formatResults(function ($results, $query) {
+     *     return $results->map(function ($row) use ($query) {
+     *         $data = [
+     *             'bar' => 'baz',
+     *         ];
+     *
+     *         if ($query->isHydrationEnabled()) {
+     *             $row['foo'] = new Foo($data)
+     *         } else {
+     *             $row['foo'] = $data;
+     *         }
+     *
+     *         return $row;
+     *     });
+     * });
+     * ```
+     *
+     * Retaining access to the association target query instance of joined associations,
+     * by inheriting the contain callback's query argument:
+     *
+     * ```
+     * // Assuming a `Articles belongsTo Authors` association that uses the join strategy
+     *
+     * $articlesQuery->contain('Authors', function ($authorsQuery) {
+     *     return $authorsQuery->formatResults(function ($results, $query) use ($authorsQuery) {
+     *         // Here `$authorsQuery` will always be the instance
+     *         // where the callback was attached to.
+     *
+     *         // The instance passed to the callback in the second
+     *         // argument (`$query`), will be the one where the
+     *         // callback is actually being applied to, in this
+     *         // example that would be `$articlesQuery`.
+     *
+     *         // ...
+     *
+     *         return $results;
+     *     });
      * });
      * ```
      *
      * @param callable|null $formatter The formatting callable.
-     * @param int|true $mode Whether or not to overwrite, append or prepend the formatter.
+     * @param int|bool $mode Whether to overwrite, append or prepend the formatter.
      * @return $this
      * @throws \InvalidArgumentException
      */
@@ -415,7 +466,7 @@ trait QueryTrait
     /**
      * Returns the list of previously registered format routines.
      *
-     * @return callable[]
+     * @return array<callable>
      */
     public function getResultFormatters(): array
     {
@@ -453,7 +504,6 @@ trait QueryTrait
     {
         $entity = $this->first();
         if (!$entity) {
-            /** @var \Cake\ORM\Table $table */
             $table = $this->getRepository();
             throw new RecordNotFoundException(sprintf(
                 'Record not found in table "%s"',
@@ -478,6 +528,7 @@ trait QueryTrait
      * @see \Cake\Datasource\QueryInterface::applyOptions() to read about the options that will
      * be processed by this class and not returned by this function
      * @return array
+     * @see applyOptions()
      */
     public function getOptions(): array
     {
@@ -496,6 +547,11 @@ trait QueryTrait
     {
         $resultSetClass = $this->_decoratorClass();
         if (in_array($method, get_class_methods($resultSetClass), true)) {
+            deprecationWarning(sprintf(
+                'Calling result set method `%s()` directly on query instance is deprecated. ' .
+                'You must call `all()` to retrieve the results first.',
+                $method
+            ), 2);
             $results = $this->all();
 
             return $results->$method(...$arguments);
@@ -509,7 +565,7 @@ trait QueryTrait
      * Populates or adds parts to current query clauses using an array.
      * This is handy for passing all query clauses at once.
      *
-     * @param array $options the options to be applied
+     * @param array<string, mixed> $options the options to be applied
      * @return $this
      */
     abstract public function applyOptions(array $options);
@@ -539,7 +595,7 @@ trait QueryTrait
         }
 
         foreach ($this->_formatters as $formatter) {
-            $result = $formatter($result);
+            $result = $formatter($result, $this);
         }
 
         if (!empty($this->_formatters) && !($result instanceof $decorator)) {

@@ -22,12 +22,14 @@ use Cake\Console\Arguments;
 use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOptionParser;
 use Cake\Core\Configure;
+use Cake\Database\Connection;
+use Cake\Database\Driver\Sqlserver;
 use Cake\Database\Exception;
+use Cake\Database\Schema\CachedCollection;
 use Cake\Database\Schema\TableSchema;
 use Cake\Database\Schema\TableSchemaInterface;
 use Cake\Datasource\ConnectionManager;
 use Cake\ORM\Table;
-use Cake\ORM\TableRegistry;
 use Cake\Utility\Inflector;
 
 /**
@@ -79,6 +81,16 @@ class ModelCommand extends BakeCommand
             return static::CODE_SUCCESS;
         }
 
+        // Disable caching before baking with connection
+        $connection = ConnectionManager::get($this->connection);
+        if ($connection instanceof Connection) {
+            $collection = $connection->getSchemaCollection();
+            if ($collection instanceof CachedCollection) {
+                $connection->getCacher()->clear();
+                $connection->cacheMetadata(false);
+            }
+        }
+
         $this->bake($this->_camelize($name), $args, $io);
 
         return static::CODE_SUCCESS;
@@ -96,11 +108,32 @@ class ModelCommand extends BakeCommand
     {
         $table = $this->getTable($name, $args);
         $tableObject = $this->getTableObject($name, $table);
+        $this->validateNames($tableObject->getSchema(), $io);
         $data = $this->getTableContext($tableObject, $table, $name, $args, $io);
         $this->bakeTable($tableObject, $data, $args, $io);
         $this->bakeEntity($tableObject, $data, $args, $io);
         $this->bakeFixture($tableObject->getAlias(), $tableObject->getTable(), $args, $io);
         $this->bakeTest($tableObject->getAlias(), $args, $io);
+    }
+
+    /**
+     * Validates table and column names are supported.
+     *
+     * @param \Cake\Database\Schema\TableSchemaInterface $schema Table schema
+     * @param \Cake\Console\ConsoleIo $io Console io
+     * @return void
+     * @throws \Cake\Console\Exception\StopException When table or column names are not supported
+     */
+    public function validateNames(TableSchemaInterface $schema, ConsoleIo $io): void
+    {
+        foreach ($schema->columns() as $column) {
+            if (!is_string($column) || (!ctype_alpha($column[0]) && $column[0] !== '_')) {
+                $io->abort(sprintf(
+                    'Unable to bake model. Table column names must start with a letter or underscore. Found `%s`.',
+                    (string)$column
+                ));
+            }
+        }
     }
 
     /**
@@ -163,11 +196,11 @@ class ModelCommand extends BakeCommand
             $className = $this->plugin . '.' . $className;
         }
 
-        if (TableRegistry::getTableLocator()->exists($className)) {
-            return TableRegistry::getTableLocator()->get($className);
+        if ($this->getTableLocator()->exists($className)) {
+            return $this->getTableLocator()->get($className);
         }
 
-        return TableRegistry::getTableLocator()->get($className, [
+        return $this->getTableLocator()->get($className, [
             'name' => $className,
             'table' => $this->tablePrefix . $table,
             'connection' => ConnectionManager::get($this->connection),
@@ -201,8 +234,8 @@ class ModelCommand extends BakeCommand
         $associations = $this->findBelongsTo($table, $associations);
 
         if (is_array($primary) && count($primary) > 1) {
-            $io->err(
-                '<warning>Bake cannot generate associations for composite primary keys at this time</warning>.'
+            $io->warning(
+                'Bake cannot generate associations for composite primary keys at this time.'
             );
 
             return $associations;
@@ -473,16 +506,14 @@ class ModelCommand extends BakeCommand
      *
      * @param \Cake\ORM\Table $model The model to introspect.
      * @param \Cake\Console\Arguments $args CLI Arguments
-     * @return string|null
-     * @psalm-suppress InvalidReturnType
+     * @return array<string>|string|null
      */
-    public function getDisplayField(Table $model, Arguments $args): ?string
+    public function getDisplayField(Table $model, Arguments $args)
     {
         if ($args->getOption('display-field')) {
             return (string)$args->getOption('display-field');
         }
 
-        /** @psalm-suppress InvalidReturnStatement */
         return $model->getDisplayField();
     }
 
@@ -491,7 +522,7 @@ class ModelCommand extends BakeCommand
      *
      * @param \Cake\ORM\Table $model The model to introspect.
      * @param \Cake\Console\Arguments $args CLI Arguments
-     * @return array The columns in the primary key
+     * @return string[] The columns in the primary key
      */
     public function getPrimaryKey(Table $model, Arguments $args): array
     {
@@ -580,7 +611,7 @@ class ModelCommand extends BakeCommand
      *
      * @param \Cake\ORM\Table $table The table instance to get fields for.
      * @param \Cake\Console\Arguments $args CLI Arguments
-     * @return array|bool|null Either an array of fields, `false` in
+     * @return string[]|false|null Either an array of fields, `false` in
      *   case the no-fields option is used, or `null` if none of the
      *   field options is used.
      */
@@ -611,7 +642,7 @@ class ModelCommand extends BakeCommand
      *
      * @param \Cake\ORM\Table $model The model to introspect.
      * @param \Cake\Console\Arguments $args CLI Arguments
-     * @return array The columns to make accessible
+     * @return string[] The columns to make accessible
      */
     public function getHiddenFields(Table $model, Arguments $args): array
     {
@@ -746,7 +777,7 @@ class ModelCommand extends BakeCommand
         if (in_array($fieldName, $primaryKey, true)) {
             $validation['allowEmpty'] = [
                 'rule' => $this->getEmptyMethod($fieldName, $metaData),
-                'args' => ['null', "'create'"],
+                'args' => [null, 'create'],
             ];
         } elseif ($metaData['null'] === true) {
             $validation['allowEmpty'] = [
@@ -757,7 +788,7 @@ class ModelCommand extends BakeCommand
             if ($metaData['default'] === null || $metaData['default'] === false) {
                 $validation['requirePresence'] = [
                     'rule' => 'requirePresence',
-                    'args' => ["'create'"],
+                    'args' => ['create'],
                 ];
             }
             $validation['notEmpty'] = [
@@ -849,7 +880,7 @@ class ModelCommand extends BakeCommand
         $rules = [];
         foreach ($fields as $fieldName) {
             if (in_array($fieldName, $uniqueColumns, true)) {
-                $rules[$fieldName] = ['name' => 'isUnique'];
+                $rules[$fieldName] = ['name' => 'isUnique', 'fields' => [$fieldName], 'options' => []];
             }
         }
         foreach ($schema->constraints() as $name) {
@@ -857,10 +888,18 @@ class ModelCommand extends BakeCommand
             if ($constraint['type'] !== TableSchema::CONSTRAINT_UNIQUE) {
                 continue;
             }
-            if (count($constraint['columns']) > 1) {
-                continue;
+
+            $options = [];
+            $fields = $constraint['columns'];
+            foreach ($fields as $field) {
+                if ($schema->isNullable($field)) {
+                    $allowMultiple = !ConnectionManager::get($this->connection)->getDriver() instanceof Sqlserver;
+                    $options['allowMultipleNulls'] = $allowMultiple;
+                    break;
+                }
             }
-            $rules[$constraint['columns'][0]] = ['name' => 'isUnique'];
+
+            $rules[$constraint['columns'][0]] = ['name' => 'isUnique', 'fields' => $fields, 'options' => $options];
         }
 
         if (empty($associations['belongsTo'])) {
@@ -868,7 +907,7 @@ class ModelCommand extends BakeCommand
         }
 
         foreach ($associations['belongsTo'] as $assoc) {
-            $rules[$assoc['foreignKey']] = ['name' => 'existsIn', 'extra' => $assoc['alias']];
+            $rules[$assoc['foreignKey']] = ['name' => 'existsIn', 'extra' => $assoc['alias'], 'options' => []];
         }
 
         return $rules;
@@ -914,7 +953,7 @@ class ModelCommand extends BakeCommand
      * Get CounterCaches
      *
      * @param \Cake\ORM\Table $model The table to get counter cache fields for.
-     * @return array CounterCache configurations
+     * @return array<string, array> CounterCache configurations
      */
     public function getCounterCache(Table $model): array
     {
@@ -934,7 +973,7 @@ class ModelCommand extends BakeCommand
             $alias = $model->getAlias();
             $field = Inflector::singularize(Inflector::underscore($alias)) . '_count';
             if (in_array($field, $otherFields, true)) {
-                $counterCache[] = "'{$otherAlias}' => ['{$field}']";
+                $counterCache[$otherAlias] = [$field];
             }
         }
 
@@ -1038,9 +1077,9 @@ class ModelCommand extends BakeCommand
         if (file_exists($filename)) {
             require_once $filename;
         }
-        TableRegistry::getTableLocator()->clear();
+        $this->getTableLocator()->clear();
 
-        $emptyFile = $path . 'Table' . DS . 'empty';
+        $emptyFile = $path . 'Table' . DS . '.gitkeep';
         $this->deleteEmptyFile($emptyFile, $io);
     }
 

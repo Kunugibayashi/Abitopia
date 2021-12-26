@@ -56,9 +56,9 @@ class DocBlockHelper extends Helper
             $lines[] = $annotation;
         }
 
-        $lines = array_merge(["/**"], (new Collection($lines))->map(function ($line) {
+        $lines = array_merge(['/**'], (new Collection($lines))->map(function ($line) {
             return rtrim(" * {$line}");
-        })->toArray(), [" */"]);
+        })->toArray(), [' */']);
 
         return implode("\n", $lines);
     }
@@ -165,11 +165,11 @@ class DocBlockHelper extends Helper
      * Converts a column type to its DocBlock type counterpart.
      *
      * This method only supports the default CakePHP column types,
-     * custom column/database types will be ignored.
+     * for custom column/database types `'string'` will be returned.
      *
      * @see \Cake\Database\Type
      * @param string $type The column type.
-     * @return string|null The DocBlock type, or `null` for unsupported column types.
+     * @return string|null The DocBlock type, or `'string'` for unsupported column types.
      */
     public function columnTypeToHintType(string $type): ?string
     {
@@ -215,7 +215,8 @@ class DocBlockHelper extends Helper
                 return '\Cake\I18n\Time';
         }
 
-        return null;
+        // Any unique or custom types will have a `string` type hint
+        return 'string';
     }
 
     /**
@@ -223,7 +224,7 @@ class DocBlockHelper extends Helper
      * `@property` hints.
      *
      * @param string[] $properties A key value pair where key is the name of a property and the value is the type.
-     * @return array
+     * @return string[]
      */
     public function propertyHints(array $properties): array
     {

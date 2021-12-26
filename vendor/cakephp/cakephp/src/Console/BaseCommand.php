@@ -172,6 +172,10 @@ abstract class BaseCommand implements CommandInterface
             return static::CODE_SUCCESS;
         }
 
+        if ($args->getOption('quiet')) {
+            $io->setInteractive(false);
+        }
+
         return $this->execute($args, $io);
     }
 
@@ -238,9 +242,13 @@ abstract class BaseCommand implements CommandInterface
     /**
      * Execute another command with the provided set of arguments.
      *
-     * @param string|\Cake\Console\CommandInterface $command The command class name or command instance.
+     * If you are using a string command name, that command's dependencies
+     * will not be resolved with the application container. Instead you will
+     * need to pass the command as an object with all of its dependencies.
+     *
+     * @param \Cake\Console\CommandInterface|string $command The command class name or command instance.
      * @param array $args The arguments to invoke the command with.
-     * @param \Cake\Console\ConsoleIo $io The ConsoleIo instance to use for the executed command.
+     * @param \Cake\Console\ConsoleIo|null $io The ConsoleIo instance to use for the executed command.
      * @return int|null The exit code or null for success of the command.
      */
     public function executeCommand($command, array $args = [], ?ConsoleIo $io = null): ?int

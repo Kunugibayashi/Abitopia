@@ -55,8 +55,9 @@ class BenchmarkCommand extends Command
         $times = [];
 
         $io->out(Text::insert(__d('debug_kit', '-> Testing :url'), compact('url')));
-        $io->out("");
+        $io->out('');
         for ($i = 0; $i < $options['n']; $i++) {
+            /** @psalm-suppress PossiblyInvalidOperand */
             if (floor($options['t'] - array_sum($times)) <= 0 || $options['n'] <= 1) {
                 break;
             }
@@ -75,7 +76,7 @@ class BenchmarkCommand extends Command
     /**
      * Prints calculated results
      *
-     * @param array $times Array of time values
+     * @param float[] $times Array of time values
      * @return void
      */
     protected function _results($times)
@@ -86,26 +87,28 @@ class BenchmarkCommand extends Command
         $this->io->out(Text::insert(__d('debug_kit', 'Total Requests made: :requests'), compact('requests')));
         $this->io->out(Text::insert(__d('debug_kit', 'Total Time elapsed: :duration (seconds)'), compact('duration')));
 
-        $this->io->out("");
+        $this->io->out('');
 
         $this->io->out(Text::insert(__d('debug_kit', 'Requests/Second: :rps req/sec'), [
-                'rps' => round($requests / $duration, 3),
+            'rps' => round($requests / $duration, 3),
         ]));
 
         $this->io->out(Text::insert(__d('debug_kit', 'Average request time: :average-time seconds'), [
-                'average-time' => round($duration / $requests, 3),
+            'average-time' => round($duration / $requests, 3),
         ]));
 
         $this->io->out(Text::insert(__d('debug_kit', 'Standard deviation of average request time: :std-dev'), [
-                'std-dev' => round($this->_deviation($times, true), 3),
+            'std-dev' => round($this->_deviation($times, true), 3),
         ]));
 
-        $this->io->out(Text::insert(__d('debug_kit', 'Longest/shortest request: :longest sec/:shortest sec'), [
+        if (!empty($times)) {
+            $this->io->out(Text::insert(__d('debug_kit', 'Longest/shortest request: :longest sec/:shortest sec'), [
                 'longest' => round(max($times), 3),
                 'shortest' => round(min($times), 3),
-        ]));
+            ]));
+        }
 
-        $this->io->out("");
+        $this->io->out('');
     }
 
     /**

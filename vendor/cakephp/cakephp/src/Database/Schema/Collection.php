@@ -17,7 +17,7 @@ declare(strict_types=1);
 namespace Cake\Database\Schema;
 
 use Cake\Database\Connection;
-use Cake\Database\Exception;
+use Cake\Database\Exception\DatabaseException;
 use PDOException;
 
 /**
@@ -38,7 +38,7 @@ class Collection implements CollectionInterface
     /**
      * Schema dialect instance.
      *
-     * @var \Cake\Database\Schema\BaseSchema
+     * @var \Cake\Database\Schema\SchemaDialect
      */
     protected $_dialect;
 
@@ -56,7 +56,7 @@ class Collection implements CollectionInterface
     /**
      * Get the list of tables available in the current connection.
      *
-     * @return string[] The list of tables in the connected database/schema.
+     * @return array<string> The list of tables in the connected database/schema.
      */
     public function listTables(): array
     {
@@ -85,9 +85,9 @@ class Collection implements CollectionInterface
      *   Defaults to false.
      *
      * @param string $name The name of the table to describe.
-     * @param array $options The options to use, see above.
+     * @param array<string, mixed> $options The options to use, see above.
      * @return \Cake\Database\Schema\TableSchema Object with column metadata.
-     * @throws \Cake\Database\Exception when table cannot be described.
+     * @throws \Cake\Database\Exception\DatabaseException when table cannot be described.
      */
     public function describe(string $name, array $options = []): TableSchemaInterface
     {
@@ -99,7 +99,7 @@ class Collection implements CollectionInterface
 
         $this->_reflect('Column', $name, $config, $table);
         if (count($table->columns()) === 0) {
-            throw new Exception(sprintf('Cannot describe %s. It has 0 columns.', $name));
+            throw new DatabaseException(sprintf('Cannot describe %s. It has 0 columns.', $name));
         }
 
         $this->_reflect('Index', $name, $config, $table);
@@ -114,18 +114,18 @@ class Collection implements CollectionInterface
      *
      * @param string $stage The stage name.
      * @param string $name The table name.
-     * @param array $config The config data.
+     * @param array<string, mixed> $config The config data.
      * @param \Cake\Database\Schema\TableSchema $schema The table schema instance.
      * @return void
-     * @throws \Cake\Database\Exception on query failure.
-     * @uses \Cake\Database\Schema\BaseSchema::describeColumnSql
-     * @uses \Cake\Database\Schema\BaseSchema::describeIndexSql
-     * @uses \Cake\Database\Schema\BaseSchema::describeForeignKeySql
-     * @uses \Cake\Database\Schema\BaseSchema::describeOptionsSql
-     * @uses \Cake\Database\Schema\BaseSchema::convertColumnDescription
-     * @uses \Cake\Database\Schema\BaseSchema::convertIndexDescription
-     * @uses \Cake\Database\Schema\BaseSchema::convertForeignKeyDescription
-     * @uses \Cake\Database\Schema\BaseSchema::convertOptionsDescription
+     * @throws \Cake\Database\Exception\DatabaseException on query failure.
+     * @uses \Cake\Database\Schema\SchemaDialect::describeColumnSql
+     * @uses \Cake\Database\Schema\SchemaDialect::describeIndexSql
+     * @uses \Cake\Database\Schema\SchemaDialect::describeForeignKeySql
+     * @uses \Cake\Database\Schema\SchemaDialect::describeOptionsSql
+     * @uses \Cake\Database\Schema\SchemaDialect::convertColumnDescription
+     * @uses \Cake\Database\Schema\SchemaDialect::convertIndexDescription
+     * @uses \Cake\Database\Schema\SchemaDialect::convertForeignKeyDescription
+     * @uses \Cake\Database\Schema\SchemaDialect::convertOptionsDescription
      */
     protected function _reflect(string $stage, string $name, array $config, TableSchema $schema): void
     {
@@ -139,7 +139,7 @@ class Collection implements CollectionInterface
         try {
             $statement = $this->_connection->execute($sql, $params);
         } catch (PDOException $e) {
-            throw new Exception($e->getMessage(), 500, $e);
+            throw new DatabaseException($e->getMessage(), 500, $e);
         }
         /** @psalm-suppress PossiblyFalseIterator */
         foreach ($statement->fetchAll('assoc') as $row) {

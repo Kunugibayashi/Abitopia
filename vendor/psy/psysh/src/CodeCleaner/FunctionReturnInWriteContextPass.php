@@ -46,7 +46,7 @@ class FunctionReturnInWriteContextPass extends CodeCleanerPass
             $items = $node instanceof Array_ ? $node->items : $node->args;
             foreach ($items as $item) {
                 if ($item && $item->byRef && $this->isCallNode($item->value)) {
-                    throw new FatalErrorException(self::EXCEPTION_MESSAGE, 0, E_ERROR, null, $node->getLine());
+                    throw new FatalErrorException(self::EXCEPTION_MESSAGE, 0, \E_ERROR, null, $node->getLine());
                 }
             }
         } elseif ($node instanceof Isset_ || $node instanceof Unset_) {
@@ -56,14 +56,14 @@ class FunctionReturnInWriteContextPass extends CodeCleanerPass
                 }
 
                 $msg = $node instanceof Isset_ ? self::ISSET_MESSAGE : self::EXCEPTION_MESSAGE;
-                throw new FatalErrorException($msg, 0, E_ERROR, null, $node->getLine());
+                throw new FatalErrorException($msg, 0, \E_ERROR, null, $node->getLine());
             }
         } elseif ($node instanceof Assign && $this->isCallNode($node->var)) {
-            throw new FatalErrorException(self::EXCEPTION_MESSAGE, 0, E_ERROR, null, $node->getLine());
+            throw new FatalErrorException(self::EXCEPTION_MESSAGE, 0, \E_ERROR, null, $node->getLine());
         }
     }
 
-    private function isCallNode(Node $node)
+    private function isCallNode(Node $node): bool
     {
         return $node instanceof FuncCall || $node instanceof MethodCall || $node instanceof StaticCall;
     }

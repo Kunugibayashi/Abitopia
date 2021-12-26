@@ -6,7 +6,9 @@ Project's ROOT directory (where the **composer.json** file is located)
 
 .. code-block:: bash
 
-    php composer.phar require cakephp/authentication:^2.0
+    php composer.phar require "cakephp/authentication:^2.0"
+
+Version 2 of the Authentication Plugin is compatible with CakePHP 4.
 
 Load the plugin by adding the following statement in your project's ``src/Application.php``::
 
@@ -21,74 +23,107 @@ Load the plugin by adding the following statement in your project's ``src/Applic
 Getting Started
 ===============
 
-Add the authentication to the middleware. See the CakePHP `documentation
-<http://book.cakephp.org/3.0/en/controllers/middleware.html>`_ on how to use
-middleware if you are not familiar with it.
-
-Example of configuring the authentication middleware using ``authentication`` application hook::
+The authentication plugin integrates with your application as a `middleware <http://book.cakephp.org/4/en/controllers/middleware.html>`_. It can also
+be used as a component to make unauthenticated access simpler. First, let's
+apply the middleware. In **src/Application.php**, add the following to the class
+imports::
 
     use Authentication\AuthenticationService;
     use Authentication\AuthenticationServiceInterface;
     use Authentication\AuthenticationServiceProviderInterface;
+    use Authentication\Identifier\IdentifierInterface;
     use Authentication\Middleware\AuthenticationMiddleware;
     use Cake\Http\MiddlewareQueue;
+    use Cake\Routing\Router;
     use Psr\Http\Message\ServerRequestInterface;
 
+
+Next, add ``AuthenticationServiceProviderInterface`` to the implemented interfaces
+on your application::
+
     class Application extends BaseApplication implements AuthenticationServiceProviderInterface
+
+
+Then add ``AuthenticationMiddleware`` to the middleware queue in your ``middleware()`` function::
+
+Then update your application's ``middleware()`` method to look like::
+
+    public function middleware(MiddlewareQueue $middlewareQueue): MiddlewareQueue
     {
-        /**
-         * Returns a service provider instance.
-         *
-         * @param \Psr\Http\Message\ServerRequestInterface $request Request
-         * @return \Authentication\AuthenticationServiceInterface
-         */
-        public function getAuthenticationService(ServerRequestInterface $request): AuthenticationServiceInterface
-        {
-            $service = new AuthenticationService();
-            $service->setConfig([
-                'unauthenticatedRedirect' => '/users/login',
-                'queryParam' => 'redirect',
-            ]);
+        $middlewareQueue->add(new ErrorHandlerMiddleware(Configure::read('Error')))
+            // Other middleware that CakePHP provides.
+            ->add(new AssetMiddleware())
+            ->add(new RoutingMiddleware($this))
+            ->add(new BodyParserMiddleware())
 
-            $fields = [
-                'username' => 'email',
-                'password' => 'password'
-            ];
+            // Add the AuthenticationMiddleware. It should be
+            // after routing and body parser.
+            ->add(new AuthenticationMiddleware($this));
 
-            // Load the authenticators, you want session first
-            $service->loadAuthenticator('Authentication.Session');
-            $service->loadAuthenticator('Authentication.Form', [
-                'fields' => $fields,
-                'loginUrl' => '/users/login'
-            ]);
-
-            // Load identifiers
-            $service->loadIdentifier('Authentication.Password', compact('fields'));
-
-            return $service;
-        }
-
-        /**
-         * Setup the middleware queue your application will use.
-         *
-         * @param \Cake\Http\MiddlewareQueue $middlewareQueue The middleware queue.
-         * @return \Cake\Http\MiddlewareQueue The updated middleware queue.
-         */
-        public function middleware(MiddlewareQueue $middlewareQueue): MiddlewareQueue
-        {
-            // Various other middlewares for error handling, routing etc. added here.
-
-            // Create an authentication middleware object
-            $authentication = new AuthenticationMiddleware($this);
-
-            // Add the middleware to the middleware queue.
-            // Authentication should be added *after* RoutingMiddleware.
-            // So that subdirectory information and routes are loaded.
-            $middlewareQueue->add($authentication);
-
-            return $middlewareQueue;
-        }
+        return $middlewareQueue();
     }
+
+.. warning::
+    The order of middleware is important. Ensure that you have
+    ``AuthenticationMiddleware`` after the routing and body parser middleware.
+    If you're having trouble logging in with JSON requests or redirects are
+    incorrect double check your middleware order.
+
+``AuthenticationMiddleware`` will call a hook method on your application when
+it starts handling the request. This hook method allows your application to
+define the ``AuthenticationService`` it wants to use. Add the following method to your
+**src/Application.php**::
+
+    /**
+     * Returns a service provider instance.
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request Request
+     * @return \Authentication\AuthenticationServiceInterface
+     */
+    public function getAuthenticationService(ServerRequestInterface $request): AuthenticationServiceInterface
+    {
+        $service = new AuthenticationService();
+
+        // Define where users should be redirected to when they are not authenticated
+        $service->setConfig([
+            'unauthenticatedRedirect' => Router::url([
+                    'prefix' => false,
+                    'plugin' => null,
+                    'controller' => 'Users',
+                    'action' => 'login',
+            ]),
+            'queryParam' => 'redirect',
+        ]);
+
+        $fields = [
+            IdentifierInterface::CREDENTIAL_USERNAME => 'email',
+            IdentifierInterface::CREDENTIAL_PASSWORD => 'password'
+        ];
+        // Load the authenticators. Session should be first.
+        $service->loadAuthenticator('Authentication.Session');
+        $service->loadAuthenticator('Authentication.Form', [
+            'fields' => $fields,
+            'loginUrl' => Router::url([
+                'prefix' => false,
+                'plugin' => null,
+                'controller' => 'Users',
+                'action' => 'login',
+            ]),
+        ]);
+
+        // Load identifiers
+        $service->loadIdentifier('Authentication.Password', compact('fields'));
+
+        return $service;
+    }
+
+First, we configure what to do with users when they are not authenticated.
+Next, we attach the ``Session`` and ``Form`` :doc:`/authenticators` which define the
+mechanisms that our application will use to authenticate users. ``Session`` enables us to identify
+users based on data in the session while ``Form`` enables us
+to handle a login form at the ``loginUrl``. Finally we attach an :doc:`identifier
+</identifiers>` to convert the credentials users will give us into an
+:doc:`identity </identity-object>` which represents our logged in user.
 
 If one of the configured authenticators was able to validate the credentials,
 the middleware will add the authentication service to the request object as an
@@ -116,9 +151,17 @@ Building a Login Action
 =======================
 
 Once you have the middleware applied to your application you'll need a way for
-users to login. A simplistic login action in a ``UsersController`` would look
+users to login. First generate a Users model and controller with bake:
+
+.. code-block:: shell
+
+    bin/cake bake model Users
+    bin/cake bake controller Users
+
+Then, we'll add a basic login action to your ``UsersController``. It should look
 like::
 
+    // in src/Controller/UsersController.php
     public function login()
     {
         $result = $this->Authentication->getResult();
@@ -132,10 +175,11 @@ like::
         }
     }
 
-Make sure that you whitelist the ``login`` action in your controller's
+Make sure that you allow access to the ``login`` action in your controller's
 ``beforeFilter()`` callback as mentioned in the previous section, so that
 unauthenticated users are able to access it::
 
+    // in src/Controller/UsersController.php
     public function beforeFilter(\Cake\Event\EventInterface $event)
     {
         parent::beforeFilter($event);
@@ -143,13 +187,33 @@ unauthenticated users are able to access it::
         $this->Authentication->allowUnauthenticated(['login']);
     }
 
-and then add a simple logout action::
+Next we'll add a view template for our login form::
 
+    // in templates/Users/login.php
+    <div class="users form content">
+        <?= $this->Form->create() ?>
+        <fieldset>
+            <legend><?= __('Please enter your email and password') ?></legend>
+            <?= $this->Form->control('email') ?>
+            <?= $this->Form->control('password') ?>
+        </fieldset>
+        <?= $this->Form->button(__('Login')); ?>
+        <?= $this->Form->end() ?>
+    </div>
+
+Then add a simple logout action::
+
+    // in src/Controller/UsersController.php
     public function logout()
     {
         $this->Authentication->logout();
         return $this->redirect(['controller' => 'Users', 'action' => 'login']);
     }
+
+We don't need a template for our logout action as we redirect at the end of it.
+
+Adding Password Hashing
+=======================
 
 In order to login your users will need to have hashed passwords. You can
 automatically hash passwords when users update their password using an entity
@@ -170,19 +234,20 @@ setter method::
         }
     }
 
+You should now be able to go to ``/users/add`` and register a new user. Once
+registered you can go to ``/users/login`` and login with your newly created
+user.
+
 
 Further Reading
 ===============
 
-.. toctree::
-    :maxdepth: 1
-
-    /authenticators
-    /identifiers
-    /password-hashers
-    /identity-object
-    /authentication-component
-    /migration-from-the-authcomponent
-    /url-checkers
-    /testing
-    /view-helper
+* :doc:`/authenticators`
+* :doc:`/identifiers`
+* :doc:`/password-hashers`
+* :doc:`/identity-object`
+* :doc:`/authentication-component`
+* :doc:`/migration-from-the-authcomponent`
+* :doc:`/url-checkers`
+* :doc:`/testing`
+* :doc:`/view-helper`

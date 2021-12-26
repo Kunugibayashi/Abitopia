@@ -135,7 +135,7 @@ class BehaviorRegistry extends ObjectRegistry implements EventDispatcherInterfac
      *
      * @param string $class The classname that is missing.
      * @param string $alias The alias of the object.
-     * @param array $config An array of config to use for the behavior.
+     * @param array<string, mixed> $config An array of config to use for the behavior.
      * @return \Cake\ORM\Behavior The constructed behavior class.
      * @psalm-suppress MoreSpecificImplementedParamType
      */
@@ -249,7 +249,7 @@ class BehaviorRegistry extends ObjectRegistry implements EventDispatcherInterfac
         if ($this->hasMethod($method) && $this->has($this->_methodMap[$method][0])) {
             [$behavior, $callMethod] = $this->_methodMap[$method];
 
-            return call_user_func_array([$this->_loaded[$behavior], $callMethod], $args);
+            return $this->_loaded[$behavior]->{$callMethod}(...$args);
         }
 
         throw new BadMethodCallException(
@@ -271,8 +271,9 @@ class BehaviorRegistry extends ObjectRegistry implements EventDispatcherInterfac
 
         if ($this->hasFinder($type) && $this->has($this->_finderMap[$type][0])) {
             [$behavior, $callMethod] = $this->_finderMap[$type];
+            $callable = [$this->_loaded[$behavior], $callMethod];
 
-            return call_user_func_array([$this->_loaded[$behavior], $callMethod], $args);
+            return $callable(...$args);
         }
 
         throw new BadMethodCallException(

@@ -61,14 +61,14 @@ use Cake\Utility\Xml;
 class XmlView extends SerializedView
 {
     /**
-     * XML layouts are located in the xml sub directory of `Layouts/`
+     * XML layouts are located in the `layouts/xml/` subdirectory
      *
      * @var string
      */
     protected $layoutPath = 'xml';
 
     /**
-     * XML views are located in the 'xml' sub directory for controllers' views.
+     * XML views are located in the 'xml' subdirectory for controllers' views.
      *
      * @var string
      */
@@ -80,15 +80,6 @@ class XmlView extends SerializedView
      * @var string
      */
     protected $_responseType = 'xml';
-
-    /**
-     * Option to allow setting an array of custom options for Xml::fromArray()
-     *
-     * For e.g. 'format' as 'attributes' instead of 'tags'.
-     *
-     * @var array|null
-     */
-    protected $xmlOptions;
 
     /**
      * Default config options.
@@ -103,8 +94,7 @@ class XmlView extends SerializedView
      *   For e.g. 'format' as 'attributes' instead of 'tags'.
      * - `rootNode`: Root node name. Defaults to "response".
      *
-     * @var array
-     * @psalm-var array{serialize:string|bool|null, xmlOptions: int|null, rootNode: string|null}
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'serialize' => null,
@@ -139,7 +129,11 @@ class XmlView extends SerializedView
             }
         } else {
             $data = $this->viewVars[$serialize] ?? [];
-            if ($data && Hash::numeric(array_keys($data))) {
+            if (
+                $data &&
+                (!is_array($data) || Hash::numeric(array_keys($data)))
+            ) {
+                /** @psalm-suppress InvalidArrayOffset */
                 $data = [$rootNode => [$serialize => $data]];
             }
         }

@@ -26,6 +26,7 @@ use Cake\ORM\Entity;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\ORM\Query;
 use Cake\ORM\Table;
+use Cake\Utility\Hash;
 
 /**
  * This class provides a way to translate dynamic data by keeping translations
@@ -51,7 +52,7 @@ class EavStrategy implements TranslateStrategyInterface
      *
      * These are merged with user-provided configuration.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'fields' => [],
@@ -69,7 +70,7 @@ class EavStrategy implements TranslateStrategyInterface
      * Constructor
      *
      * @param \Cake\ORM\Table $table The table this strategy is attached to.
-     * @param array $config The config for this strategy.
+     * @param array<string, mixed> $config The config for this strategy.
      */
     public function __construct(Table $table, array $config = [])
     {
@@ -79,7 +80,10 @@ class EavStrategy implements TranslateStrategyInterface
 
         $this->setConfig($config);
         $this->table = $table;
-        $this->translationTable = $this->getTableLocator()->get($this->_config['translationTable']);
+        $this->translationTable = $this->getTableLocator()->get(
+            $this->_config['translationTable'],
+            ['allowFallbackClass' => true]
+        );
 
         $this->setupAssociations();
     }
@@ -113,6 +117,7 @@ class EavStrategy implements TranslateStrategyInterface
                     'className' => $table,
                     'alias' => $name,
                     'table' => $this->translationTable->getTable(),
+                    'allowFallbackClass' => true,
                 ]);
             } else {
                 $fieldTable = $tableLocator->get($name);
@@ -162,7 +167,7 @@ class EavStrategy implements TranslateStrategyInterface
      */
     public function beforeFind(EventInterface $event, Query $query, ArrayObject $options)
     {
-        $locale = $this->getLocale();
+        $locale = Hash::get($options, 'locale', $this->getLocale());
 
         if ($locale === $this->getConfig('defaultLocale')) {
             return;
@@ -281,7 +286,6 @@ class EavStrategy implements TranslateStrategyInterface
 
         $preexistent = [];
         if ($key) {
-            /** @psalm-suppress UndefinedClass */
             $preexistent = $this->translationTable->find()
                 ->select(['id', 'field'])
                 ->where([
@@ -379,6 +383,7 @@ class EavStrategy implements TranslateStrategyInterface
 
             $row['_locale'] = $locale;
             if ($hydrated) {
+                /** @psalm-suppress PossiblyInvalidMethodCall */
                 $row->clean();
             }
 

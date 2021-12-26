@@ -17,11 +17,14 @@ declare(strict_types=1);
 namespace Cake\Error\Middleware;
 
 use Cake\Core\App;
+use Cake\Core\Configure;
 use Cake\Core\InstanceConfigTrait;
 use Cake\Error\ErrorHandler;
 use Cake\Error\ExceptionRenderer;
+use Cake\Http\Exception\RedirectException;
 use Cake\Http\Response;
 use InvalidArgumentException;
+use Laminas\Diactoros\Response\RedirectResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -56,7 +59,7 @@ class ErrorHandlerMiddleware implements MiddlewareInterface
      *   which returns a \Cake\Error\ExceptionRendererInterface instance.
      *   Defaults to \Cake\Error\ExceptionRenderer
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'skipLog' => [],
@@ -90,6 +93,10 @@ class ErrorHandlerMiddleware implements MiddlewareInterface
             $errorHandler = func_get_arg(1);
         }
 
+        if (PHP_VERSION_ID >= 70400 && Configure::read('debug')) {
+            ini_set('zend.exception_ignore_args', '0');
+        }
+
         if (is_array($errorHandler)) {
             $this->setConfig($errorHandler);
 
@@ -117,6 +124,8 @@ class ErrorHandlerMiddleware implements MiddlewareInterface
     {
         try {
             return $handler->handle($request);
+        } catch (RedirectException $exception) {
+            return $this->handleRedirect($exception);
         } catch (Throwable $exception) {
             return $this->handleException($exception, $request);
         }
@@ -135,14 +144,29 @@ class ErrorHandlerMiddleware implements MiddlewareInterface
         $renderer = $errorHandler->getRenderer($exception, $request);
 
         try {
-            $response = $renderer->render();
             $errorHandler->logException($exception, $request);
+            $response = $renderer->render();
         } catch (Throwable $internalException) {
             $errorHandler->logException($internalException, $request);
             $response = $this->handleInternalError();
         }
 
         return $response;
+    }
+
+    /**
+     * Convert a redirect exception into a response.
+     *
+     * @param \Cake\Http\Exception\RedirectException $exception The exception to handle
+     * @return \Psr\Http\Message\ResponseInterface Response created from the redirect.
+     */
+    public function handleRedirect(RedirectException $exception): ResponseInterface
+    {
+        return new RedirectResponse(
+            $exception->getMessage(),
+            $exception->getCode(),
+            $exception->getHeaders()
+        );
     }
 
     /**

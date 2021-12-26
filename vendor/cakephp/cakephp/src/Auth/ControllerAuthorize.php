@@ -18,13 +18,13 @@ namespace Cake\Auth;
 
 use Cake\Controller\ComponentRegistry;
 use Cake\Controller\Controller;
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 use Cake\Http\ServerRequest;
 
 /**
  * An authorization adapter for AuthComponent. Provides the ability to authorize
  * using a controller callback. Your controller's isAuthorized() method should
- * return a boolean to indicate whether or not the user is authorized.
+ * return a boolean to indicate whether the user is authorized.
  *
  * ```
  *  public function isAuthorized($user)
@@ -78,15 +78,15 @@ class ControllerAuthorize extends BaseAuthorize
     /**
      * Checks user authorization using a controller callback.
      *
-     * @param array|\ArrayAccess $user Active user data
+     * @param \ArrayAccess|array $user Active user data
      * @param \Cake\Http\ServerRequest $request Request instance.
-     * @throws \Cake\Core\Exception\Exception If controller does not have method `isAuthorized()`.
+     * @throws \Cake\Core\Exception\CakeException If controller does not have method `isAuthorized()`.
      * @return bool
      */
     public function authorize($user, ServerRequest $request): bool
     {
         if (!method_exists($this->_Controller, 'isAuthorized')) {
-            throw new Exception(sprintf(
+            throw new CakeException(sprintf(
                 '%s does not implement an isAuthorized() method.',
                 get_class($this->_Controller)
             ));

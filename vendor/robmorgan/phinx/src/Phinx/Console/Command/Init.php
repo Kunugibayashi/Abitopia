@@ -41,7 +41,13 @@ class Init extends Command
     protected function configure()
     {
         $this->setDescription('Initialize the application for Phinx')
-            ->addOption('--format', '-f', InputArgument::OPTIONAL, 'What format should we use to initialize?', 'yml')
+            ->addOption(
+                '--format',
+                '-f',
+                InputArgument::OPTIONAL,
+                'What format should we use to initialize?',
+                AbstractCommand::FORMAT_DEFAULT
+            )
             ->addArgument('path', InputArgument::OPTIONAL, 'Which path should we initialize for Phinx?')
             ->setHelp(sprintf(
                 '%sInitializes the application for Phinx%s',
@@ -55,7 +61,6 @@ class Init extends Command
      *
      * @param \Symfony\Component\Console\Input\InputInterface $input Interface implemented by all input classes.
      * @param \Symfony\Component\Console\Output\OutputInterface $output Interface implemented by all output classes.
-     *
      * @return int 0 on success
      */
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -74,9 +79,7 @@ class Init extends Command
      *
      * @param \Symfony\Component\Console\Input\InputInterface $input Interface implemented by all input classes.
      * @param string $format Format to resolve for
-     *
      * @throws \InvalidArgumentException
-     *
      * @return string
      */
     protected function resolvePath(InputInterface $input, $format)
@@ -127,13 +130,11 @@ class Init extends Command
      *
      * @param string $path Config file's path.
      * @param string $format Format to use for config file
-     *
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
-     *
      * @return void
      */
-    protected function writeConfig($path, $format = AbstractCommand::FORMAT_YML)
+    protected function writeConfig($path, $format = AbstractCommand::FORMAT_DEFAULT)
     {
         // Check if dir is writable
         $dirname = dirname($path);

@@ -17,9 +17,9 @@ namespace Cake\Test\Fixture;
 use Cake\TestSuite\Fixture\TestFixture;
 
 /**
- * BinaryUuiditemsFixture
+ * BinaryUuidItemsFixture
  */
-class BinaryUuiditemsFixture extends TestFixture
+class BinaryUuidItemsFixture extends TestFixture
 {
     /**
      * fields property

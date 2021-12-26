@@ -37,19 +37,27 @@ class RulesChecker extends BaseRulesChecker
      * Returns a callable that can be used as a rule for checking the uniqueness of a value
      * in the table.
      *
-     * ### Example:
+     * ### Example
      *
      * ```
      * $rules->add($rules->isUnique(['email'], 'The email should be unique'));
      * ```
      *
-     * @param string[] $fields The list of fields to check for uniqueness.
-     * @param string|array|null $message The error message to show in case the rule does not pass. Can
+     * ### Options
+     *
+     * - `allowMultipleNulls` Allows any field to have multiple null values. Defaults to false.
+     *
+     * @param array<string> $fields The list of fields to check for uniqueness.
+     * @param array<string, mixed>|string|null $message The error message to show in case the rule does not pass. Can
      *   also be an array of options. When an array, the 'message' key can be used to provide a message.
      * @return \Cake\Datasource\RuleInvoker
      */
     public function isUnique(array $fields, $message = null): RuleInvoker
     {
+        $options = is_array($message) ? $message : ['message' => $message];
+        $message = $options['message'] ?? null;
+        unset($options['message']);
+
         if (!$message) {
             if ($this->_useI18n) {
                 $message = __d('cake', 'This value is already in use');
@@ -60,7 +68,7 @@ class RulesChecker extends BaseRulesChecker
 
         $errorField = current($fields);
 
-        return $this->_addError(new IsUnique($fields), '_isUnique', compact('errorField', 'message'));
+        return $this->_addError(new IsUnique($fields, $options), '_isUnique', compact('errorField', 'message'));
     }
 
     /**
@@ -81,10 +89,10 @@ class RulesChecker extends BaseRulesChecker
      * 'message' sets a custom error message.
      * Set 'allowNullableNulls' to true to accept composite foreign keys where one or more nullable columns are null.
      *
-     * @param string|string[] $field The field or list of fields to check for existence by
+     * @param array<string>|string $field The field or list of fields to check for existence by
      * primary key lookup in the other table.
      * @param \Cake\ORM\Table|\Cake\ORM\Association|string $table The table name where the fields existence will be checked.
-     * @param string|array|null $message The error message to show in case the rule does not pass. Can
+     * @param array<string, mixed>|string|null $message The error message to show in case the rule does not pass. Can
      *   also be an array of options. When an array, the 'message' key can be used to provide a message.
      * @return \Cake\Datasource\RuleInvoker
      */

@@ -19,7 +19,7 @@ namespace Cake\Core;
 use Cake\Cache\Cache;
 use Cake\Core\Configure\ConfigEngineInterface;
 use Cake\Core\Configure\Engine\PhpConfig;
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 use Cake\Utility\Hash;
 use RuntimeException;
 
@@ -47,12 +47,12 @@ class Configure
      * Configured engine classes, used to load config files from resources
      *
      * @see \Cake\Core\Configure::load()
-     * @var \Cake\Core\Configure\ConfigEngineInterface[]
+     * @var array<\Cake\Core\Configure\ConfigEngineInterface>
      */
     protected static $_engines = [];
 
     /**
-     * Flag to track whether or not ini_set exists.
+     * Flag to track whether ini_set exists.
      *
      * @var bool|null
      */
@@ -76,7 +76,7 @@ class Configure
      * ]);
      * ```
      *
-     * @param string|array $config The key to write, can be a dot notation value.
+     * @param array<string, mixed>|string $config The key to write, can be a dot notation value.
      * Alternatively can be an array containing key(s) and value(s).
      * @param mixed $value Value to set for var
      * @return void
@@ -162,7 +162,7 @@ class Configure
      */
     public static function readOrFail(string $var)
     {
-        if (static::check($var) === false) {
+        if (!static::check($var)) {
             throw new RuntimeException(sprintf('Expected configuration key "%s" not found.', $var));
         }
 
@@ -202,7 +202,7 @@ class Configure
      */
     public static function consumeOrFail(string $var)
     {
-        if (static::check($var) === false) {
+        if (!static::check($var)) {
             throw new RuntimeException(sprintf('Expected configuration key "%s" not found.', $var));
         }
 
@@ -270,7 +270,7 @@ class Configure
     /**
      * Gets the names of the configured Engine objects.
      *
-     * @return string[]
+     * @return array<string>
      */
     public static function configured(): array
     {
@@ -321,15 +321,23 @@ class Configure
      * @param string $key name of configuration resource to load.
      * @param string $config Name of the configured engine to use to read the resource identified by $key.
      * @param bool $merge if config files should be merged instead of simply overridden
-     * @return bool False if file not found, true if load successful.
+     * @return bool True if load successful.
+     * @throws \Cake\Core\Exception\CakeException if the $config engine is not found
      * @link https://book.cakephp.org/4/en/development/configuration.html#reading-and-writing-configuration-files
      */
     public static function load(string $key, string $config = 'default', bool $merge = true): bool
     {
         $engine = static::_getEngine($config);
         if (!$engine) {
-            return false;
+            throw new CakeException(
+                sprintf(
+                    'Config %s engine not found when attempting to load %s.',
+                    $config,
+                    $key
+                )
+            );
         }
+
         $values = $engine->read($key);
 
         if ($merge) {
@@ -365,16 +373,16 @@ class Configure
      * @param string $key The identifier to create in the config adapter.
      *   This could be a filename or a cache key depending on the adapter being used.
      * @param string $config The name of the configured adapter to dump data with.
-     * @param string[] $keys The name of the top-level keys you want to dump.
+     * @param array<string> $keys The name of the top-level keys you want to dump.
      *   This allows you save only some data stored in Configure.
      * @return bool Success
-     * @throws \Cake\Core\Exception\Exception if the adapter does not implement a `dump` method.
+     * @throws \Cake\Core\Exception\CakeException if the adapter does not implement a `dump` method.
      */
     public static function dump(string $key, string $config = 'default', array $keys = []): bool
     {
         $engine = static::_getEngine($config);
         if (!$engine) {
-            throw new Exception(sprintf('There is no "%s" config engine.', $config));
+            throw new CakeException(sprintf('There is no "%s" config engine.', $config));
         }
         $values = static::$_values;
         if (!empty($keys)) {
@@ -421,7 +429,7 @@ class Configure
         }
 
         $path = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'config/config.php';
-        if (file_exists($path)) {
+        if (is_file($path)) {
             $config = require $path;
             static::write($config);
 

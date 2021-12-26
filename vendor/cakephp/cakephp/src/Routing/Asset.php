@@ -51,7 +51,7 @@ class Asset
      * `Asset::assetTimestamp()` to add timestamp to local files.
      *
      * @param string $path Path string.
-     * @param array $options Options array. Possible keys:
+     * @param array<string, mixed> $options Options array. Possible keys:
      *   `fullBase` Return full URL with domain name
      *   `pathPrefix` Path prefix for relative URLs
      *   `plugin` False value will prevent parsing path as a plugin
@@ -75,7 +75,7 @@ class Asset
      * `Asset::assetTimestamp()` to add timestamp to local files.
      *
      * @param string $path Path string.
-     * @param array $options Options array. Possible keys:
+     * @param array<string, mixed> $options Options array. Possible keys:
      *   `fullBase` Return full URL with domain name
      *   `pathPrefix` Path prefix for relative URLs
      *   `ext` Asset extension to append
@@ -101,7 +101,7 @@ class Asset
      * `Asset::assetTimestamp()` to add timestamp to local files.
      *
      * @param string $path Path string.
-     * @param array $options Options array. Possible keys:
+     * @param array<string, mixed> $options Options array. Possible keys:
      *   `fullBase` Return full URL with domain name
      *   `pathPrefix` Path prefix for relative URLs
      *   `ext` Asset extension to append
@@ -140,7 +140,7 @@ class Asset
      *    enable timestamping regardless of debug value.
      *
      * @param string $path Path string or URL array
-     * @param array $options Options array.
+     * @param array<string, mixed> $options Options array.
      * @return string Generated URL
      */
     public static function url(string $path, array $options = []): string
@@ -214,13 +214,15 @@ class Asset
     protected static function encodeUrl(string $url): string
     {
         $path = parse_url($url, PHP_URL_PATH);
+        if ($path === false) {
+            $path = $url;
+        }
+
         $parts = array_map('rawurldecode', explode('/', $path));
         $parts = array_map('rawurlencode', $parts);
         $encoded = implode('/', $parts);
 
-        $url = str_replace($path, $encoded, $url);
-
-        return $url;
+        return str_replace($path, $encoded, $url);
     }
 
     /**
@@ -229,7 +231,7 @@ class Asset
      * a timestamp will be added.
      *
      * @param string $path The file path to timestamp, the path must be inside `App.wwwRoot` in Configure.
-     * @param bool|string $timestamp If set will overrule the value of `Asset.timestamp` in Configure.
+     * @param string|bool $timestamp If set will overrule the value of `Asset.timestamp` in Configure.
      * @return string Path with a timestamp added, or not.
      */
     public static function assetTimestamp(string $path, $timestamp = null): string
@@ -249,18 +251,23 @@ class Asset
                 urldecode($path)
             );
             $webrootPath = Configure::read('App.wwwRoot') . str_replace('/', DIRECTORY_SEPARATOR, $filepath);
-            if (file_exists($webrootPath)) {
+            if (is_file($webrootPath)) {
                 return $path . '?' . filemtime($webrootPath);
             }
+            // Check for plugins and org prefixed plugins.
             $segments = explode('/', ltrim($filepath, '/'));
             $plugin = Inflector::camelize($segments[0]);
+            if (!Plugin::isLoaded($plugin) && count($segments) > 1) {
+                $plugin = implode('/', [$plugin, Inflector::camelize($segments[1])]);
+                unset($segments[1]);
+            }
             if (Plugin::isLoaded($plugin)) {
                 unset($segments[0]);
                 $pluginPath = Plugin::path($plugin)
                     . 'webroot'
                     . DIRECTORY_SEPARATOR
                     . implode(DIRECTORY_SEPARATOR, $segments);
-                if (file_exists($pluginPath)) {
+                if (is_file($pluginPath)) {
                     return $path . '?' . filemtime($pluginPath);
                 }
             }
@@ -277,7 +284,7 @@ class Asset
      * - `theme` Optional theme name
      *
      * @param string $file The file to create a webroot path to.
-     * @param array $options Options array.
+     * @param array<string, mixed> $options Options array.
      * @return string Web accessible path to file.
      */
     public static function webroot(string $file, array $options = []): string
@@ -299,12 +306,12 @@ class Asset
                 $file = str_replace('/', '\\', $file);
             }
 
-            if (file_exists(Configure::read('App.wwwRoot') . $theme . $file)) {
+            if (is_file(Configure::read('App.wwwRoot') . $theme . $file)) {
                 $webPath = $requestWebroot . $theme . $asset[0];
             } else {
                 $themePath = Plugin::path($themeName);
                 $path = $themePath . 'webroot/' . $file;
-                if (file_exists($path)) {
+                if (is_file($path)) {
                     $webPath = $requestWebroot . $theme . $asset[0];
                 }
             }

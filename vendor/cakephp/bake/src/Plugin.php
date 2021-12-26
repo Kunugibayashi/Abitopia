@@ -24,7 +24,6 @@ use Cake\Core\Configure;
 use Cake\Core\Plugin as CorePlugin;
 use Cake\Core\PluginApplicationInterface;
 use Cake\Routing\RouteBuilder;
-use Cake\Utility\Inflector;
 use DirectoryIterator;
 use ReflectionClass;
 use ReflectionException;
@@ -74,7 +73,7 @@ class Plugin extends BasePlugin
         $commands = $this->discoverCommands($commands);
 
         // Add entry command to handle entry point and backwards compat.
-        $commands->add('bake', EntryCommand::class);
+        $commands->add(EntryCommand::defaultName(), EntryCommand::class);
 
         return $commands;
     }
@@ -114,40 +113,44 @@ class Plugin extends BasePlugin
      *
      * @param string $namespace The namespace classes are expected to be in.
      * @param string $path The path to look in.
-     * @return array
+     * @return string[]
+     * @psalm-return array<string, class-string<\Bake\Command\BakeCommand>>
      */
     protected function findInPath(string $namespace, string $path): array
     {
+        $hasSubfolder = false;
         $path .= 'Command/';
-        if (!file_exists($path)) {
+        $namespace .= '\Command\\';
+
+        if (file_exists($path . 'Bake/')) {
+            $hasSubfolder = true;
+            $path .= 'Bake/';
+            $namespace .= 'Bake\\';
+        } elseif (!file_exists($path)) {
             return [];
         }
+
         $iterator = new DirectoryIterator($path);
         $candidates = [];
         foreach ($iterator as $item) {
             if ($item->isDot() || $item->isDir()) {
                 continue;
             }
-            $class = $namespace . '\Command\\' . $item->getBasename('.php');
+            /** @psalm-var class-string<\Bake\Command\BakeCommand> $class */
+            $class = $namespace . $item->getBasename('.php');
 
-            try {
-                $reflection = new ReflectionClass($class);
-            } catch (ReflectionException $e) {
-                continue;
-            }
-            if (!$reflection->isInstantiable() || !$reflection->isSubclassOf(BakeCommand::class)) {
-                continue;
+            if (!$hasSubfolder) {
+                try {
+                    $reflection = new ReflectionClass($class);
+                } catch (ReflectionException $e) {
+                    continue;
+                }
+                if (!$reflection->isInstantiable() || !$reflection->isSubclassOf(BakeCommand::class)) {
+                    continue;
+                }
             }
 
-            // Trim off 'Command' from the name.
-            [$ns, $className] = namespaceSplit($class);
-            $name = Inflector::underscore(substr($className, 0, -7));
-
-            // Commands ending with `_all` should be ` all` instead.
-            if (substr($name, -4) === '_all') {
-                $name = substr($name, 0, -4) . ' all';
-            }
-            $candidates["bake {$name}"] = $class;
+            $candidates[$class::defaultName()] = $class;
         }
 
         return $candidates;

@@ -37,13 +37,15 @@ use Cake\Utility\Security;
  * - Requiring that SSL be used.
  *
  * @link https://book.cakephp.org/4/en/controllers/components/security.html
- * @deprecated 4.0.0 Use FormProtectionComponent instead, for form tampering protection
- *   or HttpsEnforcerMiddleware to enforce use of HTTPS (SSL) for requests.
+ * @deprecated 4.0.0 Use {@link FormProtectionComponent} instead, for form tampering protection
+ *   or {@link HttpsEnforcerMiddleware} to enforce use of HTTPS (SSL) for requests.
  */
 class SecurityComponent extends Component
 {
     /**
      * Default message used for exceptions thrown
+     *
+     * @var string
      */
     public const DEFAULT_EXCEPTION_MESSAGE = 'The request has been black-holed';
 
@@ -62,7 +64,7 @@ class SecurityComponent extends Component
      * - `validatePost` - Whether to validate POST data. Set to false to disable
      *   for data coming from 3rd party services, etc.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'blackHoleCallback' => null,
@@ -125,7 +127,7 @@ class SecurityComponent extends Component
     /**
      * Events supported by this component.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function implementedEvents(): array
     {
@@ -137,7 +139,7 @@ class SecurityComponent extends Component
     /**
      * Sets the actions that require a request that is SSL-secured, or empty for all actions
      *
-     * @param string|string[]|null $actions Actions list
+     * @param array<string>|string|null $actions Actions list
      * @return void
      */
     public function requireSecure($actions = null): void
@@ -258,6 +260,9 @@ class SecurityComponent extends Component
         if (!isset($check['_Token']['fields'])) {
             throw new AuthSecurityException(sprintf($message, '_Token.fields'));
         }
+        if (!is_string($check['_Token']['fields'])) {
+            throw new AuthSecurityException("'_Token.fields' is invalid.");
+        }
         if (!isset($check['_Token']['unlocked'])) {
             throw new AuthSecurityException(sprintf($message, '_Token.unlocked'));
         }
@@ -280,7 +285,7 @@ class SecurityComponent extends Component
      * Return hash parts for the Token generation
      *
      * @param \Cake\Controller\Controller $controller Instantiating controller
-     * @return string[]
+     * @return array<string>
      */
     protected function _hashParts(Controller $controller): array
     {
@@ -404,7 +409,7 @@ class SecurityComponent extends Component
      * Create a message for humans to understand why Security token is not matching
      *
      * @param \Cake\Controller\Controller $controller Instantiating controller
-     * @param array $hashParts Elements used to generate the Token hash
+     * @param array<string> $hashParts Elements used to generate the Token hash
      * @return string Message explaining why the tokens are not matching
      */
     protected function _debugPostTokenNotMatching(Controller $controller, array $hashParts): string
@@ -458,7 +463,7 @@ class SecurityComponent extends Component
      * @param string $stringKeyMessage Message string if tampered found in
      *  data fields indexed by string (protected).
      * @param string $missingMessage Message string if missing field
-     * @return string[] Messages
+     * @return array<string> Messages
      */
     protected function _debugCheckFields(
         array $dataFields,
@@ -505,11 +510,13 @@ class SecurityComponent extends Component
      */
     protected function _callback(Controller $controller, string $method, array $params = [])
     {
-        if (!is_callable([$controller, $method])) {
+        $callable = [$controller, $method];
+
+        if (!is_callable($callable)) {
             throw new BadRequestException('The request has been black-holed');
         }
 
-        return call_user_func_array([&$controller, $method], $params);
+        return $callable(...$params);
     }
 
     /**
@@ -521,7 +528,7 @@ class SecurityComponent extends Component
      * @param string $intKeyMessage Message string if unexpected found in data fields indexed by int (not protected)
      * @param string $stringKeyMessage Message string if tampered found in
      *   data fields indexed by string (protected)
-     * @return string[] Error messages
+     * @return array<string> Error messages
      */
     protected function _matchExistingFields(
         array $dataFields,
@@ -532,7 +539,7 @@ class SecurityComponent extends Component
         $messages = [];
         foreach ($dataFields as $key => $value) {
             if (is_int($key)) {
-                $foundKey = array_search($value, (array)$expectedFields, true);
+                $foundKey = array_search($value, $expectedFields, true);
                 if ($foundKey === false) {
                     $messages[] = sprintf($intKeyMessage, $value);
                 } else {
@@ -563,7 +570,7 @@ class SecurityComponent extends Component
         }
 
         $expectedFieldNames = [];
-        foreach ((array)$expectedFields as $key => $expectedField) {
+        foreach ($expectedFields as $key => $expectedField) {
             if (is_int($key)) {
                 $expectedFieldNames[] = $expectedField;
             } else {

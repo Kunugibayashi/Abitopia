@@ -13,19 +13,19 @@ namespace Psy\VersionUpdater;
 
 interface Checker
 {
-    const ALWAYS  = 'always';
-    const DAILY   = 'daily';
-    const WEEKLY  = 'weekly';
+    const ALWAYS = 'always';
+    const DAILY = 'daily';
+    const WEEKLY = 'weekly';
     const MONTHLY = 'monthly';
-    const NEVER   = 'never';
+    const NEVER = 'never';
 
     /**
      * @return bool
      */
-    public function isLatest();
+    public function isLatest(): bool;
 
     /**
      * @return string
      */
-    public function getLatest();
+    public function getLatest(): string;
 }

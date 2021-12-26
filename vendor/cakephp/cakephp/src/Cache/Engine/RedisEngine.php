@@ -18,8 +18,10 @@ declare(strict_types=1);
 namespace Cake\Cache\Engine;
 
 use Cake\Cache\CacheEngine;
+use Cake\Log\Log;
 use Redis;
 use RedisException;
+use RuntimeException;
 
 /**
  * Redis storage engine for cache.
@@ -45,11 +47,11 @@ class RedisEngine extends CacheEngine
      * - `port` port number to the Redis server.
      * - `prefix` Prefix appended to all entries. Good for when you need to share a keyspace
      *    with either another cache config or another application.
-     * - `server` URL or ip to the Redis server host.
+     * - `server` URL or IP to the Redis server host.
      * - `timeout` timeout in seconds (float).
      * - `unix_socket` Path to the unix socket file (default: false)
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [
         'database' => 0,
@@ -70,13 +72,13 @@ class RedisEngine extends CacheEngine
      *
      * Called automatically by the cache frontend
      *
-     * @param array $config array of setting for the engine
+     * @param array<string, mixed> $config array of setting for the engine
      * @return bool True if the engine has been successfully initialized, false if not
      */
     public function init(array $config = []): bool
     {
         if (!extension_loaded('redis')) {
-            return false;
+            throw new RuntimeException('The `redis` extension must be enabled to use RedisEngine.');
         }
 
         if (!empty($config['host'])) {
@@ -115,6 +117,10 @@ class RedisEngine extends CacheEngine
                 );
             }
         } catch (RedisException $e) {
+            if (class_exists(Log::class)) {
+                Log::error('RedisEngine could not connect. Got error: ' . $e->getMessage());
+            }
+
             return false;
         }
         if ($return && $this->_config['password']) {
@@ -180,7 +186,7 @@ class RedisEngine extends CacheEngine
         $duration = $this->_config['duration'];
         $key = $this->_key($key);
 
-        $value = (int)$this->_Redis->incrBy($key, $offset);
+        $value = $this->_Redis->incrBy($key, $offset);
         if ($duration > 0) {
             $this->_Redis->expire($key, $duration);
         }
@@ -200,7 +206,7 @@ class RedisEngine extends CacheEngine
         $duration = $this->_config['duration'];
         $key = $this->_key($key);
 
-        $value = (int)$this->_Redis->decrBy($key, $offset);
+        $value = $this->_Redis->decrBy($key, $offset);
         if ($duration > 0) {
             $this->_Redis->expire($key, $duration);
         }
@@ -277,7 +283,7 @@ class RedisEngine extends CacheEngine
      * If the group initial value was not found, then it initializes
      * the group accordingly.
      *
-     * @return string[]
+     * @return array<string>
      */
     public function groups(): array
     {

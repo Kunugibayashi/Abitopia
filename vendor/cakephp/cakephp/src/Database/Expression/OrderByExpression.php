@@ -28,8 +28,8 @@ class OrderByExpression extends QueryExpression
     /**
      * Constructor
      *
-     * @param string|array|\Cake\Database\ExpressionInterface $conditions The sort columns
-     * @param array|\Cake\Database\TypeMap $types The types for each column.
+     * @param \Cake\Database\ExpressionInterface|array|string $conditions The sort columns
+     * @param \Cake\Database\TypeMap|array<string, string> $types The types for each column.
      * @param string $conjunction The glue used to join conditions together.
      */
     public function __construct($conditions = [], $types = [], $conjunction = '')
@@ -38,17 +38,14 @@ class OrderByExpression extends QueryExpression
     }
 
     /**
-     * Convert the expression into a SQL fragment.
-     *
-     * @param \Cake\Database\ValueBinder $generator Placeholder generator object
-     * @return string
+     * @inheritDoc
      */
-    public function sql(ValueBinder $generator): string
+    public function sql(ValueBinder $binder): string
     {
         $order = [];
         foreach ($this->_conditions as $k => $direction) {
             if ($direction instanceof ExpressionInterface) {
-                $direction = $direction->sql($generator);
+                $direction = $direction->sql($binder);
             }
             $order[] = is_numeric($k) ? $direction : sprintf('%s %s', $k, $direction);
         }
@@ -62,26 +59,30 @@ class OrderByExpression extends QueryExpression
      *
      * New order by expressions are merged to existing ones
      *
-     * @param array $orders list of order by expressions
+     * @param array $conditions list of order by expressions
      * @param array $types list of types associated on fields referenced in $conditions
      * @return void
      */
-    protected function _addConditions(array $orders, array $types): void
+    protected function _addConditions(array $conditions, array $types): void
     {
-        foreach ($orders as $key => $val) {
+        foreach ($conditions as $key => $val) {
             if (
                 is_string($key) &&
                 is_string($val) &&
                 !in_array(strtoupper($val), ['ASC', 'DESC'], true)
             ) {
                 throw new RuntimeException(
-                    'Passing extra expressions by associative array is not ' .
-                    'allowed to avoid potential SQL injection. ' .
-                    'Use QueryExpression or numeric array instead.'
+                    sprintf(
+                        'Passing extra expressions by associative array (`\'%s\' => \'%s\'`) ' .
+                        'is not allowed to avoid potential SQL injection. ' .
+                        'Use QueryExpression or numeric array instead.',
+                        $key,
+                        $val
+                    )
                 );
             }
         }
 
-        $this->_conditions = array_merge($this->_conditions, $orders);
+        $this->_conditions = array_merge($this->_conditions, $conditions);
     }
 }

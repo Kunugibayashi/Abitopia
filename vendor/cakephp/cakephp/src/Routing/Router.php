@@ -114,7 +114,7 @@ class Router
     /**
      * Named expressions
      *
-     * @var array
+     * @var array<string, string>
      */
     protected static $_namedExpressions = [
         'Action' => Router::ACTION,
@@ -145,14 +145,14 @@ class Router
      * The stack of URL filters to apply against routing URLs before passing the
      * parameters to the route collection.
      *
-     * @var callable[]
+     * @var array<callable>
      */
     protected static $_urlFilters = [];
 
     /**
      * Default extensions defined with Router::extensions()
      *
-     * @var string[]
+     * @var array<string>
      */
     protected static $_defaultExtensions = [];
 
@@ -182,7 +182,7 @@ class Router
     /**
      * Gets the named route patterns for use in config/routes.php
      *
-     * @return array Named route elements
+     * @return array<string, string> Named route elements
      * @see \Cake\Routing\Router::$_namedExpressions
      */
     public static function getNamedExpressions(): array
@@ -195,20 +195,25 @@ class Router
      *
      * Compatibility proxy to \Cake\Routing\RouteBuilder::connect() in the `/` scope.
      *
-     * @param string|\Cake\Routing\Route\Route $route A string describing the template of the route
+     * @param \Cake\Routing\Route\Route|string $route A string describing the template of the route
      * @param array|string $defaults An array describing the default route parameters.
      *   These parameters will be used by default and can supply routing parameters that are not dynamic. See above.
-     * @param array $options An array matching the named elements in the route to regular expressions which that
+     * @param array<string, mixed> $options An array matching the named elements in the route to regular expressions which that
      *   element should match. Also contains additional parameters such as which routed parameters should be
      *   shifted into the passed arguments, supplying patterns for routing parameters and supplying the name of a
      *   custom routing class.
      * @return void
-     * @throws \Cake\Core\Exception\Exception
+     * @throws \Cake\Core\Exception\CakeException
      * @see \Cake\Routing\RouteBuilder::connect()
      * @see \Cake\Routing\Router::scope()
+     * @deprecated 4.3.0 Use the non-static method `RouteBuilder::connect()` instead.
      */
     public static function connect($route, $defaults = [], $options = []): void
     {
+        deprecationWarning(
+            '`Router::connect()` is deprecated, use the non-static method `RouteBuilder::connect()` instead.'
+        );
+
         static::scope('/', function ($routes) use ($route, $defaults, $options): void {
             /** @var \Cake\Routing\RouteBuilder $routes */
             $routes->connect($route, $defaults, $options);
@@ -355,6 +360,7 @@ class Router
                 if (is_array($filter)) {
                     $ref = new ReflectionMethod($filter[0], $filter[1]);
                 } else {
+                    /** @psalm-var \Closure|callable-string $filter */
                     $ref = new ReflectionFunction($filter);
                 }
                 $message = sprintf(
@@ -379,7 +385,7 @@ class Router
      *
      * - `Router::url('/posts/edit/1');` Returns the string with the base dir prepended.
      *   This usage does not use reverser routing.
-     * - `Router::url(['controller' => 'posts', 'action' => 'edit']);` Returns a URL
+     * - `Router::url(['controller' => 'Posts', 'action' => 'edit']);` Returns a URL
      *   generated through reverse routing.
      * - `Router::url(['_name' => 'custom-name', ...]);` Returns a URL generated
      *   through reverse routing. This form allows you to leverage named routes.
@@ -399,23 +405,21 @@ class Router
      * - `_name` - Name of route. If you have setup named routes you can use this key
      *   to specify it.
      *
-     * @param string|array|\Psr\Http\Message\UriInterface|null $url An array specifying any of the following:
+     * @param \Psr\Http\Message\UriInterface|array|string|null $url An array specifying any of the following:
      *   'controller', 'action', 'plugin' additionally, you can provide routed
      *   elements or query string parameters. If string it can be name any valid url
      *   string or it can be an UriInterface instance.
      * @param bool $full If true, the full base URL will be prepended to the result.
      *   Default is false.
      * @return string Full translated URL with base path.
-     * @throws \Cake\Core\Exception\Exception When the route name is not found
+     * @throws \Cake\Core\Exception\CakeException When the route name is not found
      */
     public static function url($url = null, bool $full = false): string
     {
         $context = static::$_requestContext;
         $request = static::getRequest();
 
-        if (!isset($context['_base'])) {
-            $context['_base'] = Configure::read('App.base') ?: '';
-        }
+        $context['_base'] = $context['_base'] ?? Configure::read('App.base') ?: '';
 
         if (empty($url)) {
             $here = $request ? $request->getRequestTarget() : '/';
@@ -551,7 +555,7 @@ class Router
      * ### Usage
      *
      * @see Router::url()
-     * @param string|array|null $url An array specifying any of the following:
+     * @param array|string|null $url An array specifying any of the following:
      *   'controller', 'action', 'plugin' additionally, you can provide routed
      *   elements or query string parameters. If string it can be name any valid url
      *   string.
@@ -646,11 +650,28 @@ class Router
         }
         $pass = $params['pass'] ?? [];
 
+        $template = $params['_matchedRoute'] ?? null;
         unset(
             $params['pass'],
             $params['_matchedRoute'],
             $params['_name']
         );
+        $route = null;
+        if ($template) {
+            // Locate the route that was used to match this route
+            // so we can access the pass parameter configuration.
+            foreach (static::getRouteCollection()->routes() as $maybe) {
+                if ($maybe->template === $template) {
+                    $route = $maybe;
+                    break;
+                }
+            }
+        }
+        if ($route) {
+            // If we found a route, slice off the number of passed args.
+            $routePass = $route->options['pass'] ?? [];
+            $pass = array_slice($pass, count($routePass));
+        }
         $params = array_merge($params, $pass);
 
         return $params;
@@ -696,8 +717,8 @@ class Router
         $request = static::getRequest();
 
         if ($request) {
-            $base = $request->getAttribute('base');
-            if (strlen($base) && stristr($url, $base)) {
+            $base = $request->getAttribute('base', '');
+            if ($base !== '' && stristr($url, $base)) {
                 $url = preg_replace('/^' . preg_quote($base, '/') . '/', '', $url, 1);
             }
         }
@@ -730,10 +751,10 @@ class Router
      * A string or an array of valid extensions can be passed to this method.
      * If called without any parameters it will return current list of set extensions.
      *
-     * @param string[]|string|null $extensions List of extensions to be added.
+     * @param array<string>|string|null $extensions List of extensions to be added.
      * @param bool $merge Whether to merge with or override existing extensions.
      *   Defaults to `true`.
-     * @return string[] Array of extensions Router is configured to parse.
+     * @return array<string> Array of extensions Router is configured to parse.
      */
     public static function extensions($extensions = null, $merge = true): array
     {
@@ -741,6 +762,7 @@ class Router
         if ($extensions === null) {
             return array_unique(array_merge(static::$_defaultExtensions, $collection->getExtensions()));
         }
+
         $extensions = (array)$extensions;
         if ($merge) {
             $extensions = array_unique(array_merge(static::$_defaultExtensions, $extensions));
@@ -753,7 +775,7 @@ class Router
      * Create a RouteBuilder for the provided path.
      *
      * @param string $path The path to set the builder to.
-     * @param array $options The options for the builder
+     * @param array<string, mixed> $options The options for the builder
      * @return \Cake\Routing\RouteBuilder
      */
     public static function createRouteBuilder(string $path, array $options = []): RouteBuilder
@@ -806,14 +828,19 @@ class Router
      *
      * @param string $path The path prefix for the scope. This path will be prepended
      *   to all routes connected in the scoped collection.
-     * @param array|callable $params An array of routing defaults to add to each connected route.
+     * @param callable|array $params An array of routing defaults to add to each connected route.
      *   If you have no parameters, this argument can be a callable.
      * @param callable|null $callback The callback to invoke with the scoped collection.
      * @throws \InvalidArgumentException When an invalid callable is provided.
      * @return void
+     * @deprecated 4.3.0 Use the non-static method `RouteBuilder::scope()` instead.
      */
     public static function scope(string $path, $params = [], $callback = null): void
     {
+        deprecationWarning(
+            '`Router::scope()` is deprecated, use the non-static method `RouteBuilder::scope()` instead.'
+        );
+
         $options = [];
         if (is_array($params)) {
             $options = $params;
@@ -841,13 +868,18 @@ class Router
      * to the `Controller\Admin\Api\` namespace.
      *
      * @param string $name The prefix name to use.
-     * @param array|callable $params An array of routing defaults to add to each connected route.
+     * @param callable|array $params An array of routing defaults to add to each connected route.
      *   If you have no parameters, this argument can be a callable.
      * @param callable|null $callback The callback to invoke that builds the prefixed routes.
      * @return void
+     * @deprecated 4.3.0 Use the non-static method `RouteBuilder::prefix()` instead.
      */
     public static function prefix(string $name, $params = [], $callback = null): void
     {
+        deprecationWarning(
+            '`Router::prefix()` is deprecated, use the non-static method `RouteBuilder::prefix()` instead.'
+        );
+
         if (!is_array($params)) {
             $callback = $params;
             $params = [];
@@ -873,13 +905,18 @@ class Router
      * prepended, and have a matching plugin routing key set.
      *
      * @param string $name The plugin name to build routes for
-     * @param array|callable $options Either the options to use, or a callback
+     * @param callable|array $options Either the options to use, or a callback
      * @param callable|null $callback The callback to invoke that builds the plugin routes.
      *   Only required when $options is defined
      * @return void
+     * @deprecated 4.3.0 Use the non-static method `RouteBuilder::plugin()` instead.
      */
     public static function plugin(string $name, $options = [], $callback = null): void
     {
+        deprecationWarning(
+            '`Router::plugin()` is deprecated, use the non-static method `RouteBuilder::plugin()` instead.'
+        );
+
         if (!is_array($options)) {
             $callback = $options;
             $options = [];
@@ -895,7 +932,7 @@ class Router
     /**
      * Get the route scopes and their connected routes.
      *
-     * @return \Cake\Routing\Route\Route[]
+     * @return array<\Cake\Routing\Route\Route>
      */
     public static function routes(): array
     {
@@ -958,7 +995,7 @@ class Router
      * - Vendor/Cms.Management/Admin/Articles::view
      *
      * @param string $url Route path in [Plugin.][Prefix/]Controller::action format
-     * @return string[]
+     * @return array<string, string>
      */
     public static function parseRoutePath(string $url): array
     {

@@ -50,7 +50,7 @@ trait ValidatorAwareTrait
     /**
      * A list of validation objects indexed by name
      *
-     * @var \Cake\Validation\Validator[]
+     * @var array<\Cake\Validation\Validator>
      */
     protected $_validators = [];
 
@@ -68,11 +68,12 @@ trait ValidatorAwareTrait
      * ```
      * public function validationForSubscription($validator)
      * {
-     *  return $validator
-     *  ->add('email', 'valid-email', ['rule' => 'email'])
-     *  ->add('password', 'valid', ['rule' => 'notBlank'])
-     *  ->requirePresence('username');
+     *     return $validator
+     *         ->add('email', 'valid-email', ['rule' => 'email'])
+     *         ->add('password', 'valid', ['rule' => 'notBlank'])
+     *         ->requirePresence('username');
      * }
+     *
      * $validator = $this->getValidator('forSubscription');
      * ```
      *
@@ -143,11 +144,11 @@ trait ValidatorAwareTrait
      * You can build the object by yourself and store it in your object:
      *
      * ```
-     * $validator = new \Cake\Validation\Validator($table);
+     * $validator = new \Cake\Validation\Validator();
      * $validator
-     *  ->add('email', 'valid-email', ['rule' => 'email'])
-     *  ->add('password', 'valid', ['rule' => 'notBlank'])
-     *  ->allowEmpty('bio');
+     *     ->add('email', 'valid-email', ['rule' => 'email'])
+     *     ->add('password', 'valid', ['rule' => 'notBlank'])
+     *     ->allowEmpty('bio');
      * $this->setValidator('forSubscription', $validator);
      * ```
      *
@@ -164,7 +165,7 @@ trait ValidatorAwareTrait
     }
 
     /**
-     * Checks whether or not a validator has been set.
+     * Checks whether a validator has been set.
      *
      * @param string $name The name of a validator.
      * @return bool

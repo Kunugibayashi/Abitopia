@@ -50,7 +50,7 @@ class AutoCompleter
      *
      * @return array
      */
-    public function processCallback($input, $index, $info = [])
+    public function processCallback(string $input, int $index, array $info = []): array
     {
         // Some (Windows?) systems provide incomplete `readline_info`, so let's
         // try to work around it.
@@ -62,7 +62,7 @@ class AutoCompleter
             $line = $input;
         }
 
-        $tokens = \token_get_all('<?php ' . $line);
+        $tokens = \token_get_all('<?php '.$line);
 
         // remove whitespaces
         $tokens = \array_filter($tokens, function ($token) {
@@ -91,7 +91,7 @@ class AutoCompleter
      *
      * @return array
      */
-    public function callback($input, $index)
+    public function callback(string $input, int $index): array
     {
         return $this->processCallback($input, $index, \readline_info());
     }

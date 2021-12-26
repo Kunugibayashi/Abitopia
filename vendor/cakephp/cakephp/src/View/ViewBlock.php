@@ -16,7 +16,7 @@ declare(strict_types=1);
  */
 namespace Cake\View;
 
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 
 /**
  * ViewBlock implements the concept of Blocks or Slots in the View layer.
@@ -50,14 +50,14 @@ class ViewBlock
     /**
      * Block content. An array of blocks indexed by name.
      *
-     * @var string[]
+     * @var array<string>
      */
     protected $_blocks = [];
 
     /**
      * The active blocks being captured.
      *
-     * @var string[]
+     * @var array<string>
      */
     protected $_active = [];
 
@@ -82,13 +82,13 @@ class ViewBlock
      * @param string $mode If ViewBlock::OVERRIDE existing content will be overridden by new content.
      *   If ViewBlock::APPEND content will be appended to existing content.
      *   If ViewBlock::PREPEND it will be prepended.
-     * @throws \Cake\Core\Exception\Exception When starting a block twice
+     * @throws \Cake\Core\Exception\CakeException When starting a block twice
      * @return void
      */
     public function start(string $name, string $mode = ViewBlock::OVERRIDE): void
     {
         if (array_key_exists($name, $this->_active)) {
-            throw new Exception(sprintf("A view block with the name '%s' is already/still open.", $name));
+            throw new CakeException(sprintf("A view block with the name '%s' is already/still open.", $name));
         }
         $this->_active[$name] = $mode;
         ob_start();
@@ -180,11 +180,7 @@ class ViewBlock
      */
     public function get(string $name, string $default = ''): string
     {
-        if (!isset($this->_blocks[$name])) {
-            return $default;
-        }
-
-        return $this->_blocks[$name];
+        return $this->_blocks[$name] ?? $default;
     }
 
     /**
@@ -201,7 +197,7 @@ class ViewBlock
     /**
      * Get the names of all the existing blocks.
      *
-     * @return string[] An array containing the blocks.
+     * @return array<string> An array containing the blocks.
      */
     public function keys(): array
     {
@@ -223,7 +219,7 @@ class ViewBlock
     /**
      * Get the unclosed/active blocks. Key is name, value is mode.
      *
-     * @return string[] An array of unclosed blocks.
+     * @return array<string> An array of unclosed blocks.
      */
     public function unclosed(): array
     {

@@ -34,6 +34,7 @@ class SqlServerAdapter extends PdoAdapter
      */
     protected static $specificColumnTypes = [
         self::PHINX_TYPE_FILESTREAM,
+        self::PHINX_TYPE_BINARYUUID,
     ];
 
     /**
@@ -55,7 +56,6 @@ class SqlServerAdapter extends PdoAdapter
      * {@inheritDoc}
      *
      * @throws \InvalidArgumentException
-     *
      * @return void
      */
     public function connect()
@@ -70,13 +70,12 @@ class SqlServerAdapter extends PdoAdapter
 
             $options = $this->getOptions();
 
+            $dsn = 'sqlsrv:server=' . $options['host'];
             // if port is specified use it, otherwise use the SqlServer default
-            if (empty($options['port'])) {
-                $dsn = 'sqlsrv:server=' . $options['host'] . ';database=' . $options['name'];
-            } else {
-                $dsn = 'sqlsrv:server=' . $options['host'] . ',' . $options['port'] . ';database=' . $options['name'];
+            if (!empty($options['port'])) {
+                $dsn .= ',' . $options['port'];
             }
-            $dsn .= ';MultipleActiveResultSets=false';
+            $dsn .= ';database=' . $options['name'] . ';MultipleActiveResultSets=false';
 
             $driverOptions = [];
 
@@ -94,11 +93,15 @@ class SqlServerAdapter extends PdoAdapter
             // http://php.net/manual/en/ref.pdo-sqlsrv.php#pdo-sqlsrv.constants
             foreach ($options as $key => $option) {
                 if (strpos($key, 'sqlsrv_attr_') === 0) {
-                    $driverOptions[constant('\PDO::' . strtoupper($key))] = $option;
+                    $pdoConstant = '\PDO::' . strtoupper($key);
+                    if (!defined($pdoConstant)) {
+                        throw new \UnexpectedValueException('Invalid PDO attribute: ' . $key . ' (' . $pdoConstant . ')');
+                    }
+                    $driverOptions[constant($pdoConstant)] = $option;
                 }
             }
 
-            $db = $this->createPdoConnection($dsn, $options['user'], $options['pass'], $driverOptions);
+            $db = $this->createPdoConnection($dsn, $options['user'] ?? null, $options['pass'] ?? null, $driverOptions);
 
             $this->setConnection($db);
         }
@@ -111,7 +114,6 @@ class SqlServerAdapter extends PdoAdapter
      *
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
-     *
      * @return void
      */
     protected function connectDblib()
@@ -146,9 +148,7 @@ class SqlServerAdapter extends PdoAdapter
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @return void
+     * @inheritDoc
      */
     public function disconnect()
     {
@@ -164,9 +164,7 @@ class SqlServerAdapter extends PdoAdapter
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @return void
+     * @inheritDoc
      */
     public function beginTransaction()
     {
@@ -174,9 +172,7 @@ class SqlServerAdapter extends PdoAdapter
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @return void
+     * @inheritDoc
      */
     public function commitTransaction()
     {
@@ -184,9 +180,7 @@ class SqlServerAdapter extends PdoAdapter
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @return void
+     * @inheritDoc
      */
     public function rollbackTransaction()
     {
@@ -224,9 +218,7 @@ class SqlServerAdapter extends PdoAdapter
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @return void
+     * @inheritDoc
      */
     public function createTable(Table $table, array $columns = [], array $indexes = [])
     {
@@ -339,15 +331,14 @@ class SqlServerAdapter extends PdoAdapter
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      *
+     * SqlServer does not implement this functionality, and so will always throw an exception if used.
      * @throws \BadMethodCallException
-     *
-     * @return void
      */
     protected function getChangeCommentInstructions(Table $table, $newComment)
     {
-        throw new BadMethodCallException('SQLite does not have table comments');
+        throw new BadMethodCallException('SqlServer does not have table comments');
     }
 
     /**
@@ -355,7 +346,6 @@ class SqlServerAdapter extends PdoAdapter
      *
      * @param \Phinx\Db\Table\Column $column Column
      * @param string $tableName Table name
-     *
      * @return string
      */
     protected function getColumnCommentSqlDefinition(Column $column, $tableName)
@@ -363,7 +353,7 @@ class SqlServerAdapter extends PdoAdapter
         // passing 'null' is to remove column comment
         $currentComment = $this->getColumnComment($tableName, $column->getName());
 
-        $comment = (strcasecmp($column->getComment(), 'NULL') !== 0) ? $this->getConnection()->quote($column->getComment()) : '\'\'';
+        $comment = strcasecmp($column->getComment(), 'NULL') !== 0 ? $this->getConnection()->quote($column->getComment()) : '\'\'';
         $command = $currentComment === false ? 'sp_addextendedproperty' : 'sp_updateextendedproperty';
 
         return sprintf(
@@ -403,9 +393,7 @@ class SqlServerAdapter extends PdoAdapter
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @return void
+     * @inheritDoc
      */
     public function truncateTable($tableName)
     {
@@ -420,7 +408,6 @@ class SqlServerAdapter extends PdoAdapter
     /**
      * @param string $tableName Table name
      * @param string $columnName Column name
-     *
      * @return string|false
      */
     public function getColumnComment($tableName, $columnName)
@@ -491,7 +478,6 @@ class SqlServerAdapter extends PdoAdapter
 
     /**
      * @param string $default Default
-     *
      * @return int|string|null
      */
     protected function parseDefault($default)
@@ -581,7 +567,6 @@ SQL;
      *
      * @param string $tableName The table where the column is
      * @param \Phinx\Db\Table\Column $newColumn The column to alter
-     *
      * @return \Phinx\Db\Util\AlterInstructions
      */
     protected function getChangeDefault($tableName, Column $newColumn)
@@ -670,7 +655,6 @@ SQL;
     /**
      * @param string $tableName Table name
      * @param string|null $columnName Column name
-     *
      * @return \Phinx\Db\Util\AlterInstructions
      */
     protected function getDropDefaultConstraint($tableName, $columnName)
@@ -687,7 +671,6 @@ SQL;
     /**
      * @param string $tableName Table name
      * @param string $columnName Column name
-     *
      * @return string|false
      */
     protected function getDefaultConstraint($tableName, $columnName)
@@ -722,7 +705,6 @@ WHERE
     /**
      * @param int $tableId Table ID
      * @param int $indexId Index ID
-     *
      * @return array
      */
     protected function getIndexColums($tableId, $indexId)
@@ -746,7 +728,6 @@ ORDER BY IC.[key_ordinal];";
      * Get an array of indexes from a particular table.
      *
      * @param string $tableName Table name
-     *
      * @return array
      */
     public function getIndexes($tableName)
@@ -890,7 +871,7 @@ ORDER BY T.[name], I.[index_id];";
         }
 
         if ($constraint) {
-            return ($primaryKey['constraint'] === $constraint);
+            return $primaryKey['constraint'] === $constraint;
         }
 
         if (is_string($columns)) {
@@ -905,7 +886,6 @@ ORDER BY T.[name], I.[index_id];";
      * Get the primary key from a particular table.
      *
      * @param string $tableName Table name
-     *
      * @return array
      */
     public function getPrimaryKey($tableName)
@@ -965,7 +945,6 @@ ORDER BY T.[name], I.[index_id];";
      * Get an array of foreign keys from a particular table.
      *
      * @param string $tableName Table name
-     *
      * @return array
      */
     protected function getForeignKeys($tableName)
@@ -1080,6 +1059,8 @@ ORDER BY T.[name], I.[index_id];";
                 return ['name' => 'ntext'];
             case static::PHINX_TYPE_INTEGER:
                 return ['name' => 'int'];
+            case static::PHINX_TYPE_TINY_INTEGER:
+                return ['name' => 'tinyint'];
             case static::PHINX_TYPE_SMALL_INTEGER:
                 return ['name' => 'smallint'];
             case static::PHINX_TYPE_BIG_INTEGER:
@@ -1091,6 +1072,7 @@ ORDER BY T.[name], I.[index_id];";
                 return ['name' => 'varbinary'];
             case static::PHINX_TYPE_BOOLEAN:
                 return ['name' => 'bit'];
+            case static::PHINX_TYPE_BINARYUUID:
             case static::PHINX_TYPE_UUID:
                 return ['name' => 'uniqueidentifier'];
             case static::PHINX_TYPE_FILESTREAM:
@@ -1112,11 +1094,8 @@ ORDER BY T.[name], I.[index_id];";
      * Returns Phinx type by SQL type
      *
      * @internal param string $sqlType SQL type
-     *
      * @param string $sqlType SQL Type definition
-     *
      * @throws \Phinx\Db\Adapter\UnsupportedColumnTypeException
-     *
      * @return string Phinx type
      */
     public function getPhinxType($sqlType)
@@ -1138,6 +1117,8 @@ ORDER BY T.[name], I.[index_id];";
             case 'numeric':
             case 'money':
                 return static::PHINX_TYPE_DECIMAL;
+            case 'tinyint':
+                return static::PHINX_TYPE_TINY_INTEGER;
             case 'smallint':
                 return static::PHINX_TYPE_SMALL_INTEGER;
             case 'bigint':
@@ -1168,9 +1149,7 @@ ORDER BY T.[name], I.[index_id];";
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @return void
+     * @inheritDoc
      */
     public function createDatabase($name, $options = [])
     {
@@ -1198,9 +1177,7 @@ ORDER BY T.[name], I.[index_id];";
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @return void
+     * @inheritDoc
      */
     public function dropDatabase($name)
     {
@@ -1211,6 +1188,7 @@ ALTER DATABASE [$name] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
 DROP DATABASE [$name];
 SQL;
         $this->execute($sql);
+        $this->createdTables = [];
     }
 
     /**
@@ -1218,7 +1196,6 @@ SQL;
      *
      * @param \Phinx\Db\Table\Column $column Column
      * @param bool $create Create column flag
-     *
      * @return string
      */
     protected function getColumnSqlDefinition(Column $column, $create = true)
@@ -1234,6 +1211,7 @@ SQL;
                 'bigint',
                 'int',
                 'tinyint',
+                'smallint',
             ];
             if ($sqlType['name'] === static::PHINX_TYPE_DECIMAL && $column->getPrecision() && $column->getScale()) {
                 $buffer[] = sprintf(
@@ -1274,24 +1252,35 @@ SQL;
      *
      * @param \Phinx\Db\Table\Index $index Index
      * @param string $tableName Table name
-     *
      * @return string
      */
     protected function getIndexSqlDefinition(Index $index, $tableName)
     {
+        $columnNames = $index->getColumns();
         if (is_string($index->getName())) {
             $indexName = $index->getName();
         } else {
-            $columnNames = $index->getColumns();
             $indexName = sprintf('%s_%s', $tableName, implode('_', $columnNames));
         }
+        $order = $index->getOrder() ?? [];
+        $columnNames = array_map(function ($columnName) use ($order) {
+            $ret = '[' . $columnName . ']';
+            if (isset($order[$columnName])) {
+                $ret .= ' ' . $order[$columnName];
+            }
+
+            return $ret;
+        }, $columnNames);
+
+        $includedColumns = $index->getInclude() ? sprintf('INCLUDE ([%s])', implode('],[', $index->getInclude())) : '';
 
         return sprintf(
-            'CREATE %s INDEX %s ON %s (%s);',
+            'CREATE %s INDEX %s ON %s (%s) %s;',
             ($index->getType() === Index::UNIQUE ? 'UNIQUE' : ''),
             $indexName,
             $this->quoteTableName($tableName),
-            '[' . implode('],[', $index->getColumns()) . ']'
+            implode(',', $columnNames),
+            $includedColumns
         );
     }
 
@@ -1300,7 +1289,6 @@ SQL;
      *
      * @param \Phinx\Db\Table\ForeignKey $foreignKey Foreign key
      * @param string $tableName Table name
-     *
      * @return string
      */
     protected function getForeignKeySqlDefinition(ForeignKey $foreignKey, $tableName)
@@ -1334,7 +1322,6 @@ SQL;
      * @param string $direction Direction
      * @param string $startTime Start Time
      * @param string $endTime End Time
-     *
      * @return \Phinx\Db\Adapter\AdapterInterface
      */
     public function migrated(MigrationInterface $migration, $direction, $startTime, $endTime)
@@ -1352,8 +1339,8 @@ SQL;
     {
         $options = $this->getOptions();
         $options = [
-            'username' => $options['user'],
-            'password' => $options['pass'],
+            'username' => $options['user'] ?? null,
+            'password' => $options['pass'] ?? null,
             'database' => $options['name'],
             'quoteIdentifiers' => true,
         ] + $options;
