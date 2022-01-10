@@ -49,7 +49,6 @@ jQuery(function(){
         jQuery('#id-open-log-window').trigger('click');
     });
     jQuery('#id-send-message').on('click', function(){
-        console.log('send');
         var mesObj = jQuery('#message');
         var message = mesObj.val();
         message = jQuery.trim(message);

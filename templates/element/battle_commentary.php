@@ -22,7 +22,6 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
-            console.log('getBattleCommentary');
             clearInterval(this.getBattleCommentaryTimerObj);
             this.getBattleCommentaryTimerObj = setInterval(function() {
                 getBattleCommentary();

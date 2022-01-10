@@ -23,7 +23,6 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
-            console.log('getInformation');
             clearInterval(this.getInformationTimerObj);
             this.getInformationTimerObj = setInterval(function() {
                 getInformation();

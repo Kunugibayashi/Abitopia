@@ -41,7 +41,6 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
-            console.log('getChatEntrieslist');
             clearInterval(this.getChatEntrieslistTimerObj);
             this.getChatEntrieslistTimerObj = setInterval(function() {
                 getChatEntrieslist();

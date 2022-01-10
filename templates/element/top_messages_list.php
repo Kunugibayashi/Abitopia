@@ -23,7 +23,6 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
-            console.log('getMessages');
             clearInterval(this.getMessagesTimerObj);
             this.getMessagesTimerObj = setInterval(function() {
                 getMessages();

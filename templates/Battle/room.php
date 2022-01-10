@@ -37,11 +37,9 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
-            console.log('defenseSet');
         });
     });
     jQuery('#is-attack-label').on('click', function(){
-        console.log('is_attack');
         var checkbox = jQuery('#id-is-attack');
         var button = jQuery('#id-send-battle-message-button');
         if (checkbox.prop('checked')){
@@ -59,7 +57,6 @@ jQuery(function(){
         return false;
     });
     jQuery('#id-send-battle-message-button').on('click', function(){
-        console.log('battle send');
         var mesObj = jQuery('#message');
         var message = mesObj.val();
         message = jQuery.trim(message);

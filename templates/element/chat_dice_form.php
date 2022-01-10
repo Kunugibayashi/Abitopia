@@ -25,8 +25,6 @@
 <script>
 jQuery(function(){
     jQuery('#id-dice-button').on('click', function(){
-        console.log('dice');
-
         var mesObj = jQuery('#id-dice');
         var errObj = jQuery('#id-dice-error-message');
 

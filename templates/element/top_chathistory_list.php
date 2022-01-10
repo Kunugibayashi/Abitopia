@@ -18,7 +18,6 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
-            console.log('getChatHistory');
             clearInterval(this.getChatHistoryTimerObj);
             this.getChatHistoryTimerObj = setInterval(function() {
                 getChatHistory();

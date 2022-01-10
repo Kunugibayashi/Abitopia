@@ -23,7 +23,6 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
-            console.log('getChatLogWarehouses');
             clearInterval(this.getChatLogWarehousesObj);
             this.getChatLogWarehousesObj = setInterval(function() {
                 getChatLogWarehouses();

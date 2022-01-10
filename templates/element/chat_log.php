@@ -52,7 +52,6 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
-            console.log('getChatLogList');
             clearInterval(this.getChatLogListTimerObj);
             this.getChatLogListTimerObj = setInterval(function() {
                 getChatLogList();

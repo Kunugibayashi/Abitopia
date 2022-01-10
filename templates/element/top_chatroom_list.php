@@ -20,7 +20,6 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
-            console.log('getChatRoomList');
             clearInterval(this.getChatRoomListObj);
             this.getChatRoomListObj = setInterval(function() {
                 getChatRoomList();
@@ -41,7 +40,6 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
-            console.log('getViewCount');
             clearInterval(this.getViewCountObj);
             this.getViewCountObj = setInterval(function() {
                 getViewCount();
