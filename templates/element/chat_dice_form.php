@@ -18,50 +18,41 @@
 <div class="dice-container">
     <?= $this->Form->button(__('ダイスを振る'), [
             'type' => 'button',
-            'v-on:click' => 'rollDice',
+            'id' => 'id-dice-button',
         ]) ?>
 </div>
 <?= $this->Form->end() ?>
 <script>
-var diceform = new Vue({
-    el: '#id-diceform',
-    data: {
-    },
-    methods: {
-        rollDice: function (event) {
-            var self = this;
-            console.log('dice');
+jQuery(function(){
+    jQuery('#id-dice-button').on('click', function(){
+        console.log('dice');
 
-            var mesObj = jQuery('#id-dice');
-            var errObj = jQuery('#id-dice-error-message');
+        var mesObj = jQuery('#id-dice');
+        var errObj = jQuery('#id-dice-error-message');
 
-            var message = mesObj.val();
-            message = jQuery.trim(message);
-            if (!message) return;
+        var message = mesObj.val();
+        message = jQuery.trim(message);
+        if (!message) return;
 
-            var sendData = jQuery('#id-diceform').serializeArray();
-            jQuery.ajax({
-                data: sendData,
-                url: '<?php echo $this->Url->build(['controller' => 'Chat', 'action' => 'dice', $chatRoomId, ]); ?>',
-                type: 'post',
-                dataType: 'json',
-            }).done(function (data, status, jqXHR) {
-                if (data['code'] != 200) {
-                    errMessage = "";
-                    if (jQuery.inArray('message', data)) errMessage = data['message'];
-                    errObj.text(errMessage);
-                    return;
-                }
-                errObj.text('');
-                self.reloadLog();
-            }).fail(function (jqXHR, status, error) {
-                console.log(error);
-            }).always(() => {
-            });
-        },
-        reloadLog: function () {
+        var sendData = jQuery('#id-diceform').serializeArray();
+        jQuery.ajax({
+            data: sendData,
+            url: '<?php echo $this->Url->build(['controller' => 'Chat', 'action' => 'dice', $chatRoomId, ]); ?>',
+            type: 'post',
+            dataType: 'json',
+        }).done(function (data, status, jqXHR) {
+            if (data['code'] != 200) {
+                errMessage = "";
+                if (jQuery.inArray('message', data)) errMessage = data['message'];
+                errObj.text(errMessage);
+                return;
+            }
+            errObj.text('');
             jQuery('#id-reload-log-button').trigger('click');
-        }
-    },
+        }).fail(function (jqXHR, status, error) {
+            console.log(error);
+        }).always(() => {
+        });
+    });
 });
 </script>

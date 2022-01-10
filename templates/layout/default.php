@@ -33,8 +33,8 @@ $cakeDescription = 'CakePHP: the rapid development php framework';
     <?= $this->Html->css('base.css') ?>
     <?= $this->Html->css('modal.css') ?>
 
-    <?= $this->Html->script('vue.min.js') ?>
-    <?= $this->Html->script('jquery-3.5.1.min.js') ?>
+    <?= $this->Html->script('jquery-3.6.0.min.js') ?>
+    <?= $this->Html->script('jquery-modal.js') ?>
 
     <?= $this->fetch('meta') ?>
     <?= $this->fetch('css') ?>
@@ -91,9 +91,5 @@ $cakeDescription = 'CakePHP: the rapid development php framework';
             </a>
         </div>
     </footer>
-<?php echo $this->element('vue/modaltemplate'); ?>
-<script>
-
-</script>
 </body>
 </html>

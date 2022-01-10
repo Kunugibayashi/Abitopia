@@ -1,70 +1,111 @@
-<style>
-</style>
-<div id="id-color-preview-modal">
-    <?php
-    echo $this->Form->control('color', [
-        'label' => 'キャラクター色',
-        'v-model' => 'activeColor',
-    ]);
-    echo $this->Form->button(__('色選択'), [
-        'type' => 'button',
-        'v-on:click' => 'showModal = true, cSelect = true, bSelect = false',
-    ]);
-    echo $this->Form->control('backgroundcolor', [
-        'label' => 'キャラクター背景色',
-        'v-model' => 'backgroundActiveColor',
-    ]);
-    echo $this->Form->button(__('色選択'), [
-        'type' => 'button',
-        'v-on:click' => 'showModal = true, bSelect = true, cSelect = false',
-    ]);
-    ?>
-    <?php
-    // プレビューのみなので間にスペース許容
-    echo $this->Form->control('ColorPreview', [
-            'label' => '選択色プレビュー',
-            'v-bind:style' => '{ color: activeColor, backgroundColor: backgroundActiveColor }',
-            'value' => __('選択した色はこのように表示されます。'),
-            'disabled' => true,
-        ]
-    );
-    ?>
-    <modal v-if="showModal" @close="showModal = false">
-        <h3 slot="header"><?php echo __('Select Color'); ?></h3>
-        <div slot="body">
-            <ul v-if="cSelect">
-              <li v-for="color in colors"
-                  v-bind:style="{ color: color.code }"
-                  @click="showModal = false, cSelect = false, activeColor = color.code">
-                  ■{{ color.name }}</li>
-            </ul>
-            <ul v-if="bSelect">
-              <li v-for="color in colors"
-                  v-bind:style="{ color: color.code }"
-                  @click="showModal = false, bSelect = false, backgroundActiveColor = color.code">
-                  ●{{ color.name }}</li>
-            </ul>
+<?php
+echo $this->Form->control('color', [
+    'label' => 'キャラクター色',
+]);
+echo $this->Form->button(__('色選択'), [
+    'type' => 'button',
+    'id' => 'show-color-modal',
+]);
+echo $this->Form->control('backgroundcolor', [
+    'label' => 'キャラクター背景色',
+]);
+echo $this->Form->button(__('色選択'), [
+    'type' => 'button',
+    'id' => 'show-background-color-modal',
+]);
+?>
+<?php
+// プレビューのみなので間にスペース許容
+echo $this->Form->control('ColorPreview', [
+        'label' => '選択色プレビュー',
+        'value' => __('選択した色はこのように表示されます。'),
+        'disabled' => true,
+    ]
+);
+?>
+<div class="modal-template" id="id-color-modal">
+    <div class="modal-mask">
+        <div class="modal-wrapper">
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h3>キャラクター色の選択</h3>
+                    <button class="modal-close-button" type="button">×</button>
+                </div>
+                <div class="modal-body">
+                    <ul>
+                        <?php foreach ($colorCodes as $value) { ?>
+                        <li>
+                            <label style="color: <?= $value['code'] ?>">
+                                <input type="radio" name="selectColor" value="<?= $value['code'] ?>">
+                                <?= $value['name'] ?>
+                            </label>
+                        </li>
+                        <?php } ?>
+                    </ul>
+                </div>
+            </div>
         </div>
-    </modal>
+    </div>
+</div>
+<div class="modal-template" id="id-background-color-modal">
+    <div class="modal-mask">
+        <div class="modal-wrapper">
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h3>背景色の選択</h3>
+                    <button class="modal-close-button" type="button">×</button>
+                </div>
+                <div class="modal-body">
+                    <ul>
+                        <?php foreach ($colorCodes as $value) { ?>
+                        <li>
+                            <label style="color: <?= $value['code'] ?>">
+                                <input type="radio" name="selectBackgroundColor" value="<?= $value['code'] ?>">
+                                <?= $value['name'] ?>
+                            </label>
+                        </li>
+                        <?php } ?>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 <script>
-var color_preview_modal = new Vue({
-    el: "#id-color-preview-modal",
-    data: {
-        activeColor: "<?php echo h($chatCharacter->color); ?>",
-        backgroundActiveColor: "<?php echo h($chatCharacter->backgroundcolor); ?>",
-        showModal: false,
-        colors: [
-            <?php foreach ($colorCodes as $value) { ?>
-                { 'code': '<?= $value['code'] ?>', 'name': '<?= $value['name'] ?>', },
-            <?php } ?>
-        ],
-        cSelect: false,
-        bSelect: false,
-    },
-    computed: {
-        activeColor: function () { return this.activeColor },
-        backgroundActiveColor: function () { return this.backgroundActiveColor },
-    }
+jQuery(function(){
+    // 初期色
+    jQuery('#colorpreview')
+        .css('color', "<?php echo h($chatCharacter->color); ?>")
+        .css('background-color', "<?php echo h($chatCharacter->backgroundcolor); ?>");
+    //発言色
+    jQuery('input:text[name="color"]').on('change', function(){
+        var color = jQuery('input:text[name="color"]').val();
+        jQuery('#colorpreview').css('color', color);
+    });
+    jQuery('button#show-color-modal').on('click', function(){
+        var color = jQuery('input:text[name="color"]').val();
+        $('input:radio[name="selectColor"]').val([color]);
+        jQuery("#id-color-modal").show();
+    });
+    jQuery('input:radio[name="selectColor"]').on('change', function(){
+        var color = jQuery(this).filter(':checked').val();
+        jQuery('input:text[name="color"]').val(color);
+        jQuery('#colorpreview').css('color', color);
+    });
+    // 背景色
+    jQuery('input:text[name="backgroundcolor"]').on('change', function(){
+        var color = jQuery('input:text[name="backgroundcolor"]').val();
+        jQuery('#colorpreview').css('background-color', color);
+    });
+    jQuery('button#show-background-color-modal').on('click', function(){
+        var color = jQuery('input:text[name="backgroundcolor"]').val();
+        $('input:radio[name="selectBackgroundColor"]').val([color]);
+        jQuery("#id-background-color-modal").show();
+    });
+    jQuery('input:radio[name="selectBackgroundColor"]').on('change', function(){
+        var color = jQuery(this).filter(':checked').val();
+        jQuery('input:text[name="backgroundcolor"]').val(color);
+        jQuery('#colorpreview').css('background-color', color);
+    });
 });
 </script>

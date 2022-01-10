@@ -36,7 +36,7 @@ body { color: #606c76; font-size: 1.6em; font-weight: 300; letter-spacing: .01em
 <?php
 if (isset($isChatLogWindow) && $isChatLogWindow) {
 ?>
-    <?= $this->Html->script('jquery-3.5.1.min.js') ?>
+    <?= $this->Html->script('jquery-3.6.0.min.js') ?>
     <script>
     // ブラウザによっては初回描画時にも beforeunload が動く
     // そのため、load も設定する

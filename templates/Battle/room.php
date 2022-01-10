@@ -58,61 +58,50 @@ jQuery(function(){
         jQuery('#id-battlecommentary-reload').trigger('click');
         return false;
     });
-});
-var battleform = new Vue({
-    el: '#id-battleform',
-    data: {
-    },
-    methods: {
-        sendBattleMessage: function (event) {
-            var self = this;
-            console.log('send');
-            var mesObj = jQuery('#message');
-            var message = mesObj.val();
-            message = jQuery.trim(message);
-            if (!message) return;
-            mesObj.val(message);
+    jQuery('#id-send-battle-message-button').on('click', function(){
+        console.log('battle send');
+        var mesObj = jQuery('#message');
+        var message = mesObj.val();
+        message = jQuery.trim(message);
+        if (!message) return;
+        mesObj.val(message);
 
-            var errObj = jQuery('#id-send-error-message');
+        var errObj = jQuery('#id-send-error-message');
 
-            var sendData = jQuery('#id-battleform').serializeArray();
-            jQuery.ajax({
-                data: sendData,
-                url: '<?php echo $this->Url->build([
-                            'controller' => 'Battle',
-                            'action' => 'attackSet',
-                            $chatRoomId,
-                        ]); ?>',
-                type: 'post',
-                dataType: 'json',
-            }).done(function (data, status, jqXHR) {
-                if (data['code'] != 200) {
-                    errMessage = "";
-                    if (jQuery.inArray('message', data)) errMessage = data['message'];
-                    errObj.text(errMessage);
-                    return;
-                }
+        var sendData = jQuery('#id-battleform').serializeArray();
+        jQuery.ajax({
+            data: sendData,
+            url: '<?php echo $this->Url->build([
+                        'controller' => 'Battle',
+                        'action' => 'attackSet',
+                        $chatRoomId,
+                    ]); ?>',
+            type: 'post',
+            dataType: 'json',
+        }).done(function (data, status, jqXHR) {
+            if (data['code'] != 200) {
+                errMessage = "";
+                if (jQuery.inArray('message', data)) errMessage = data['message'];
+                errObj.text(errMessage);
+                return;
+            }
 
-                // チェックボックスのリセット
-                var checkbox = jQuery('#id-is-attack');
-                var button = jQuery('#id-send-battle-message-button');
-                if (checkbox.prop('checked')) {
-                    checkbox.removeAttr('checked').prop('checked', false).change();
-                    button.removeClass('warning');
-                    button.text('送信');
-                }
+            // チェックボックスのリセット
+            var checkbox = jQuery('#id-is-attack');
+            var button = jQuery('#id-send-battle-message-button');
+            if (checkbox.prop('checked')) {
+                checkbox.removeAttr('checked').prop('checked', false).change();
+                button.removeClass('warning');
+                button.text('送信');
+            }
 
-                mesObj.val('');
-                errObj.text('');
-                self.reloadLog();
-            }).fail(function (jqXHR, status, error) {
-                console.log(error);
-            }).always(() => {
-            });
-        },
-        reloadLog: function () {
+            mesObj.val('');
+            errObj.text('');
             jQuery('#id-reload-log-button').trigger('click');
-        }
-    },
+        }).fail(function (jqXHR, status, error) {
+            console.log(error);
+        }).always(() => {
+        });
+    });
 });
 </script>

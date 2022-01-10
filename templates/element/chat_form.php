@@ -5,7 +5,6 @@
         echo $this->Form->control('message', [
             'label' => '発言',
             'maxlength' => '3000',
-            'v-on:keydown.ctrl.enter' => 'sendMessage',
         ]);
         echo $this->Html->link(__('使用可能タグ一覧'), ['controller' => 'Chat', 'action' => 'htmlTagList'], ['target' => '_blank']);
         echo $this->Form->control('note', ['label' => '備考',]);
@@ -19,7 +18,7 @@
 <div class="button-container">
     <?= $this->Form->button(__('送信'), [
             'type' => 'button',
-            'v-on:click' => 'sendMessage',
+            'id' => 'id-send-message',
         ]) ?>
     <?= $this->Form->button(__('リロード'), [
             'type' => 'button',
@@ -49,51 +48,45 @@ jQuery(function(){
     jQuery('#id-open-log-window-button').on('click', function(){
         jQuery('#id-open-log-window').trigger('click');
     });
-});
-var chatform = new Vue({
-    el: '#id-chatform',
-    data: {
-    },
-    methods: {
-        sendMessage: function (event) {
-            var self = this;
-            console.log('send');
-            var mesObj = jQuery('#message');
-            var message = mesObj.val();
-            message = jQuery.trim(message);
-            if (!message) return;
-            mesObj.val(message);
+    jQuery('#id-send-message').on('click', function(){
+        console.log('send');
+        var mesObj = jQuery('#message');
+        var message = mesObj.val();
+        message = jQuery.trim(message);
+        if (!message) return;
+        mesObj.val(message);
 
-            var errObj = jQuery('#id-send-error-message');
+        var errObj = jQuery('#id-send-error-message');
 
-            var sendData = jQuery('#id-chatform').serializeArray();
-            jQuery.ajax({
-                data: sendData,
-                url: '<?php echo $this->Url->build([
-                            'controller' => 'Chat',
-                            'action' => 'say',
-                            $chatRoomId,
-                        ]); ?>',
-                type: 'post',
-                dataType: 'json',
-            }).done(function (data, status, jqXHR) {
-                if (data['code'] != 200) {
-                    errMessage = "";
-                    if (jQuery.inArray('message', data)) errMessage = data['message'];
-                    errObj.text(errMessage);
-                    return;
-                }
-                mesObj.val('');
-                errObj.text('');
-                self.reloadLog();
-            }).fail(function (jqXHR, status, error) {
-                console.log(error);
-            }).always(() => {
-            });
-        },
-        reloadLog: function () {
+        var sendData = jQuery('#id-chatform').serializeArray();
+        jQuery.ajax({
+            data: sendData,
+            url: '<?php echo $this->Url->build([
+                        'controller' => 'Chat',
+                        'action' => 'say',
+                        $chatRoomId,
+                    ]); ?>',
+            type: 'post',
+            dataType: 'json',
+        }).done(function (data, status, jqXHR) {
+            if (data['code'] != 200) {
+                errMessage = "";
+                if (jQuery.inArray('message', data)) errMessage = data['message'];
+                errObj.text(errMessage);
+                return;
+            }
+            mesObj.val('');
+            errObj.text('');
             jQuery('#id-reload-log-button').trigger('click');
+        }).fail(function (jqXHR, status, error) {
+            console.log(error);
+        }).always(() => {
+        });
+    });
+    jQuery('textarea[name="message"]').on('keypress', function(e){
+        if (e.ctrlKey && e.keyCode === 13) {
+            jQuery('#id-send-message').trigger('click');
         }
-    },
+    });
 });
 </script>
