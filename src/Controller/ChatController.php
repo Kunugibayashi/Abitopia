@@ -189,18 +189,24 @@ class ChatController extends AppController
             $this->outputChatLog($chatRoomId, $entry_key);
         }
 
+        $connection->commit();
+
         // MAX以上のログは削除する
+        $connection->begin();
         $logMax = Configure::read('Site.logmax');
         $maxLog = $this->ChatLogs->find()
             ->order(['id' => 'DESC'])
-            ->limit($logMax)
+            ->limit(1)
+            ->offset($logMax)
             ->last();
-        if (!$this->ChatLogs->deleteAll(['id <' => $maxLog->id])) {
-            // 失敗した場合は警告のみ
-            $maxId = $maxLog->id;
-            $this->log(__CLASS__.":".__FUNCTION__.":" ."Error delete log. maxId = $maxId", 'warning');
+        $firstLog = $this->ChatLogs->find()
+            ->order(['id' => 'ASC'])
+            ->limit(1)
+            ->last();
+        for ($i = $firstLog->id; $i <= $maxLog->id; $i++) {
+            // 多すぎるとメモリを圧迫するため1つずつ
+            $this->ChatLogs->deleteAll(['id =' => $i]);
         }
-
         $connection->commit();
 
         // チャットで使用していたセッションを削除
@@ -417,17 +423,37 @@ class ChatController extends AppController
             }
         }
 
-        $chatLogs = $this->ChatLogs->find();
+        // 全体数
+        $tmpChatLogs = $this->ChatLogs->find()
+                            ->contain(['BattleLogs'])
+                            ->where(['chat_room_key' => $chatRoomId]);
         if ($chatEntryKey != null && $chatEntryKey != "") {
-            $chatLogs = $chatLogs
-                ->where(['entry_key' => $chatEntryKey]);
+            $tmpChatLogs = $tmpChatLogs
+                            ->where(['entry_key' => $chatEntryKey]);
         }
-        $chatLogs = $chatLogs
-            ->contain(['BattleLogs'])
-            ->where(['chat_room_key' => $chatRoomId])
-            ->order(['ChatLogs.id' => 'DESC'])
-            ->limit($chatLoglimit)
-            ->toArray();
+        $count = $tmpChatLogs->count();
+        //$this->log(__CLASS__.":".__FUNCTION__.":" ."count = $count", 'error');
+
+        // データ取得
+        $chatLogs = null;
+        $limit = 100;
+        for ($i = 0; $i <= $count; $i+=$limit){
+            $tmpChatLogs = $this->ChatLogs->find()
+                                ->contain(['BattleLogs'])
+                                ->where(['chat_room_key' => $chatRoomId])
+                                ->order(['ChatLogs.id' => 'DESC'])
+                                ->offset($i)
+                                ->limit($limit);
+            if ($chatEntryKey != null && $chatEntryKey != "") {
+                $tmpChatLogs = $tmpChatLogs
+                                ->where(['entry_key' => $chatEntryKey]);
+            }
+            $tmpChatLogs = $tmpChatLogs->toArray();
+            foreach ($tmpChatLogs as $tmpChatLog) {
+                $chatLogs[] = $tmpChatLog;
+            }
+            if ($i > $chatLoglimit) break;
+        }
 
         // toArray()を挟まないとこのIF文は機能しないので注意
         $chatRoom = [];
