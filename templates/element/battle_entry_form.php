@@ -45,3 +45,30 @@
     ]) ?>
 </div>
 <?= $this->Form->end() ?>
+<script>
+jQuery(function(){
+    const bscode = [
+        'select[name="battle_skill1_code"]',
+        'select[name="battle_skill2_code"]',
+        'select[name="battle_skill3_code"]',
+        'select[name="battle_skill4_code"]',
+        'select[name="battle_skill5_code"]',
+        'select[name="battle_skill6_code"]',
+        'select[name="battle_skill7_code"]',
+    ];
+    jQuery(bscode.join(',')).on('change', function(){
+        var code = jQuery(this).val();
+        if (code === '201' || code === '301') { //炎
+            jQuery(this).css('color', '#dc143c');
+        } else if(code === '202' || code === '302') { //地
+            jQuery(this).css('color', '#8b4513');
+        } else if(code === '203' || code === '303') { //風
+            jQuery(this).css('color', '#808000');
+        } else if(code === '204' || code === '304') { //水
+            jQuery(this).css('color', '#4682b4');
+        } else {
+            jQuery(this).css('color', '');
+        }
+    }).trigger('change');
+});
+</script>
