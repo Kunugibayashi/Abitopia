@@ -1,7 +1,7 @@
 <?php
 // 攻撃属性
-define('BT_ATTR_01', 1); //火
-define('BT_ATTR_02', 2); //木
+define('BT_ATTR_01', 1); //炎
+define('BT_ATTR_02', 2); //地
 define('BT_ATTR_03', 3); //風
 define('BT_ATTR_04', 4); //水
 // 防御属性
@@ -89,8 +89,8 @@ return [
             'NARR_KO' => '{0}は戦闘不能！',
         ],
         'attributes' => [
-            BT_ATTR_01 => '火',
-            BT_ATTR_02 => '木',
+            BT_ATTR_01 => '炎',
+            BT_ATTR_02 => '地',
             BT_ATTR_03 => '風',
             BT_ATTR_04 => '水',
         ],
@@ -123,12 +123,12 @@ return [
         ],
         'battleSkills' => [
             '攻撃スキル' => [ // ここの名称を使っていることがあるので、変更時は注意
-                BT_AT_SEI_01 => '精密射撃（火）',
-                BT_AT_SEI_02 => '精密射撃（木）',
+                BT_AT_SEI_01 => '精密射撃（炎）',
+                BT_AT_SEI_02 => '精密射撃（地）',
                 BT_AT_SEI_03 => '精密射撃（風）',
                 BT_AT_SEI_04 => '精密射撃（水）',
-                BT_AT_BUI_01 => '部位破壊（火）',
-                BT_AT_BUI_02 => '部位破壊（木）',
+                BT_AT_BUI_01 => '部位破壊（炎）',
+                BT_AT_BUI_02 => '部位破壊（地）',
                 BT_AT_BUI_03 => '部位破壊（風）',
                 BT_AT_BUI_04 => '部位破壊（水）',
                 BT_AT_GADO => 'ガードブレイク',

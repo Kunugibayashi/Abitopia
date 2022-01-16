@@ -16,7 +16,7 @@ if (!$battleTurn || $battleTurn->battle_status == BT_ST_KETYAKU) {
                 <li><input type="radio" id="attk-BT_ATTR_04" name="attack_skill_attribute" value="<?= BT_ATTR_04 ?>"></li>
                 <li>→</li>
                 <li><input type="radio" id="attk-BT_ATTR_01" name="attack_skill_attribute" value="<?= BT_ATTR_01 ?>" checked></li>
-                <li><label for="attk-BT_ATTR_01">火</label></li>
+                <li><label for="attk-BT_ATTR_01">炎</label></li>
                 <li></li>
                 <li>↑</li>
                 <li></li>
@@ -26,7 +26,7 @@ if (!$battleTurn || $battleTurn->battle_status == BT_ST_KETYAKU) {
                 <li><input type="radio" id="attk-BT_ATTR_03" name="attack_skill_attribute" value="<?= BT_ATTR_03 ?>"></li>
                 <li>←</li>
                 <li><input type="radio" id="attk-BT_ATTR_02" name="attack_skill_attribute" value="<?= BT_ATTR_02 ?>"></li>
-                <li><label for="attk-BT_ATTR_02">木</label></li>
+                <li><label for="attk-BT_ATTR_02">地</label></li>
             </ul>
         </div>
         <?php echo $this->Form->control('attack_kill', ['label' => false, 'options' => [
@@ -50,7 +50,7 @@ if (!$battleTurn || $battleTurn->battle_status == BT_ST_KETYAKU) {
                 <li><input type="radio" id="def-BT_ATTR_04" name="defense_skill_attribute" value="<?= BT_ATTR_04 ?>"></li>
                 <li>→</li>
                 <li><input type="radio" id="def-BT_ATTR_01" name="defense_skill_attribute" value="<?= BT_ATTR_01 ?>" checked></li>
-                <li><label for="def-BT_ATTR_01">火</label></li>
+                <li><label for="def-BT_ATTR_01">炎</label></li>
                 <li></li>
                 <li>↑</li>
                 <li></li>
@@ -60,7 +60,7 @@ if (!$battleTurn || $battleTurn->battle_status == BT_ST_KETYAKU) {
                 <li><input type="radio" id="def-BT_ATTR_03" name="defense_skill_attribute" value="<?= BT_ATTR_03 ?>"></li>
                 <li>←</li>
                 <li><input type="radio" id="def-BT_ATTR_02" name="defense_skill_attribute" value="<?= BT_ATTR_02 ?>"></li>
-                <li><label for="def-BT_ATTR_02">木</label></li>
+                <li><label for="def-BT_ATTR_02">地</label></li>
             </ul>
         </div>
         <?php echo $this->Form->control('defense_skill_code', ['label' => false, 'options' => $defenseSkillCodes, ]); ?>
