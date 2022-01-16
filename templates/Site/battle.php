@@ -129,7 +129,7 @@
                 <dd>
                     <?php echo $this->Html->image('site/bt_03_02.png',
                         [
-                            'height' => 200, 'width' => 300,
+                            'height' => 100, 'width' => 300,
                             'url' => '/img/site/bt_03_02.png',
                         ]
                     ); ?>

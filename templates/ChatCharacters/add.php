@@ -30,7 +30,7 @@
                     ]);
                 ?>
             </fieldset>
-            <?= $this->Form->button(__('Submit')) ?>
+            <?= $this->Form->button(__('登録')) ?>
             <?= $this->Form->end() ?>
         </div>
     </div>
