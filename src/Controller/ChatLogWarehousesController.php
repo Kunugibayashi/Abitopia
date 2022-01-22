@@ -19,6 +19,7 @@ class ChatLogWarehousesController extends AppController
     public function index()
     {
         $chatLogWarehouses = $this->ChatLogWarehouses->find()
+            ->select(['id', 'entry_key', 'chat_room_title', 'characters', 'modified', 'created'])
             ->order(['id' => 'DESC']);
         $chatLogWarehouses = $this->paginate($chatLogWarehouses);
 
