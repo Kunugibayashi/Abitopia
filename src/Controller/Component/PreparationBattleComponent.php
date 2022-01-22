@@ -25,7 +25,7 @@ class PreparationBattleComponent extends Component
     public function validate($request, $flash) {
         $enemyChatCharacterKey = $request->getData('enemy_chat_character_key');
         if (!$enemyChatCharacterKey) {
-            $flash->error(__('Choose an enemy.'));
+            $flash->error(__('対戦相手を選択してください。'));
             return 0;
         }
         $skills = [];
@@ -38,7 +38,7 @@ class PreparationBattleComponent extends Component
         $skills[] = $request->getData('battle_skill7_code');
         $skills = array_unique($skills);
         if (count($skills) != 7) {
-            $flash->error(__('The skills are overlapping.'));
+            $flash->error(__('スキルが重複しています。'));
             return 0;
         }
 

@@ -49,7 +49,7 @@ $routes->setRouteClass(DashedRoute::class);
 $routes->scope('/', function (RouteBuilder $builder) {
     // Register scoped middleware for in scopes.
     $builder->registerMiddleware('csrf', new CsrfProtectionMiddleware([
-        'httpOnly' => true,
+        'httponly' => true,
     ]));
 
     /*
@@ -71,13 +71,13 @@ $routes->scope('/', function (RouteBuilder $builder) {
      */
     $builder->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
 
-    $builder->connect('/:controller/:action/:chatRoomId/:chatEntryKey')
+    $builder->connect('/{controller}/{action}/{chatRoomId}/{chatEntryKey}')
         ->setPatterns(['chatRoomId' => '\d+'])
         ->setPass(['chatRoomId', 'chatEntryKey']);
-    $builder->connect('/:controller/:action/:chatRoomId')
+    $builder->connect('/{controller}/{action}/{chatRoomId}')
         ->setPatterns(['chatRoomId' => '\d+'])
         ->setPass(['chatRoomId']);
-    $builder->connect('/chat/:chatRoomId', ['controller' => 'Chat', 'action' => 'index'])
+    $builder->connect('/chat/{chatRoomId}', ['controller' => 'Chat', 'action' => 'index'])
         ->setPatterns(['chatRoomId' => '\d+'])
         ->setPass(['chatRoomId']);
 
@@ -108,7 +108,7 @@ $routes->scope('/', function (RouteBuilder $builder) {
  * });
  * ```
  */
-Router::prefix('Admin', function ($routes) {
+$routes->prefix('Admin', function (RouteBuilder $routes) {
     // ここのすべてのルートには、 `/admin` というプレフィックスが付きます。
     // また、 `'prefix' => 'Admin'` ルート要素が追加されます。
     // これは、これらのルートのURLを生成するときに必要になります

@@ -26,12 +26,7 @@ class MessagesController extends AppController
     public function isCharacters()
     {
         $userId = $this->Authentication->getIdentityData('id');
-        $chatCharacters = $this->ChatCharacters->find()
-            ->where(['user_id' => $userId]);
-        if (!$chatCharacters) {
-            return false;
-        }
-        return true;
+        return $this->ChatCharacters->exists(['user_id' => $userId]);
     }
 
     public function getCharacterIds()
@@ -55,8 +50,8 @@ class MessagesController extends AppController
 
         // 登録キャラがいない場合は表示しない
         if (!$this->isCharacters()) {
-            $this->Flash->error(__('指定キャラクターが見つかりません。'));
-            return $this->redirect(['action' => 'index']);
+            $this->Flash->error(__('私書を受取可能なキャラクターが見つかりません。'));
+            return $this->redirect(['controller' => '/', 'action' => 'index']);
         }
         $chatCharacterIds = $this->getCharacterIds();
 
