@@ -19,24 +19,36 @@ namespace Cake\Controller;
 use Cake\Controller\Exception\MissingActionException;
 use Cake\Core\App;
 use Cake\Datasource\ModelAwareTrait;
+use Cake\Datasource\Paging\Exception\PageOutOfBoundsException;
+use Cake\Datasource\Paging\NumericPaginator;
+use Cake\Datasource\Paging\PaginatorInterface;
 use Cake\Event\EventDispatcherInterface;
 use Cake\Event\EventDispatcherTrait;
 use Cake\Event\EventInterface;
 use Cake\Event\EventListenerInterface;
 use Cake\Event\EventManagerInterface;
+use Cake\Http\ContentTypeNegotiation;
+use Cake\Http\Exception\NotFoundException;
 use Cake\Http\Response;
 use Cake\Http\ServerRequest;
 use Cake\Log\LogTrait;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\Routing\Router;
+use Cake\View\View;
 use Cake\View\ViewVarsTrait;
 use Closure;
+use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionMethod;
 use RuntimeException;
 use UnexpectedValueException;
+use function Cake\Core\deprecationWarning;
+use function Cake\Core\getTypeName;
+use function Cake\Core\namespaceSplit;
+use function Cake\Core\pluginSplit;
+use function Cake\Core\triggerWarning;
 
 /**
  * Application controller class for organization of business logic.
@@ -84,8 +96,10 @@ use UnexpectedValueException;
  * @property \Cake\Controller\Component\RequestHandlerComponent $RequestHandler
  * @property \Cake\Controller\Component\SecurityComponent $Security
  * @property \Cake\Controller\Component\AuthComponent $Auth
+ * @property \Cake\Controller\Component\CheckHttpCacheComponent $CheckHttpCache
  * @link https://book.cakephp.org/4/en/controllers.html
  */
+#[\AllowDynamicProperties]
 class Controller implements EventListenerInterface, EventDispatcherInterface
 {
     use EventDispatcherTrait;
@@ -128,7 +142,7 @@ class Controller implements EventListenerInterface, EventDispatcherInterface
      * tables your controller will be paginating.
      *
      * @var array
-     * @see \Cake\Controller\Component\PaginatorComponent
+     * @see \Cake\Datasource\Paging\NumericPaginator
      */
     public $paginate = [];
 
@@ -161,6 +175,13 @@ class Controller implements EventListenerInterface, EventDispatcherInterface
      * @psalm-var array<int, array{middleware:\Psr\Http\Server\MiddlewareInterface|\Closure|string, options:array{only?: array|string, except?: array|string}}>
      */
     protected $middlewares = [];
+
+    /**
+     * View classes for content negotiation.
+     *
+     * @var array<string>
+     */
+    protected $viewClasses = [];
 
     /**
      * Constructor.
@@ -312,7 +333,7 @@ class Controller implements EventListenerInterface, EventDispatcherInterface
             }
 
             if ($class === $name) {
-                return $this->loadModel();
+                return $this->fetchModel();
             }
         }
 
@@ -560,6 +581,7 @@ class Controller implements EventListenerInterface, EventDispatcherInterface
      *  - `only`: (array|string) Only run the middleware for specified actions.
      *  - `except`: (array|string) Run the middleware for all actions except the specified ones.
      * @return void
+     * @since 4.3.0
      * @psalm-param array{only?: array|string, except?: array|string} $options
      */
     public function middleware($middleware, array $options = [])
@@ -574,6 +596,7 @@ class Controller implements EventListenerInterface, EventDispatcherInterface
      * Get middleware to be applied for this controller.
      *
      * @return array
+     * @since 4.3.0
      */
     public function getMiddleware(): array
     {
@@ -674,10 +697,14 @@ class Controller implements EventListenerInterface, EventDispatcherInterface
     {
         $this->autoRender = false;
 
-        if ($status) {
-            $this->response = $this->response->withStatus($status);
+        if ($status < 300 || $status > 399) {
+            throw new InvalidArgumentException(
+                sprintf('Invalid status code `%s`. It should be within the range ' .
+                    '`300` - `399` for redirect responses.', $status)
+            );
         }
 
+        $this->response = $this->response->withStatus($status);
         $event = $this->dispatchEvent('Controller.beforeRedirect', [$url, $this->response]);
         if ($event->getResult() instanceof Response) {
             return $this->response = $event->getResult();
@@ -757,12 +784,96 @@ class Controller implements EventListenerInterface, EventDispatcherInterface
         if ($builder->getTemplate() === null) {
             $builder->setTemplate($this->request->getParam('action'));
         }
+        $viewClass = $this->chooseViewClass();
+        $view = $this->createView($viewClass);
 
-        $view = $this->createView();
         $contents = $view->render();
-        $this->setResponse($view->getResponse()->withStringBody($contents));
+        $response = $view->getResponse()->withStringBody($contents);
 
-        return $this->response;
+        return $this->setResponse($response)->response;
+    }
+
+    /**
+     * Get the View classes this controller can perform content negotiation with.
+     *
+     * Each view class must implement the `getContentType()` hook method
+     * to participate in negotiation.
+     *
+     * @see Cake\Http\ContentTypeNegotiation
+     * @return array<string>
+     */
+    public function viewClasses(): array
+    {
+        return $this->viewClasses;
+    }
+
+    /**
+     * Add View classes this controller can perform content negotiation with.
+     *
+     * Each view class must implement the `getContentType()` hook method
+     * to participate in negotiation.
+     *
+     * @param array $viewClasses View classes list.
+     * @return $this
+     * @see Cake\Http\ContentTypeNegotiation
+     * @since 4.5.0
+     */
+    public function addViewClasses(array $viewClasses)
+    {
+        $this->viewClasses = array_merge($this->viewClasses, $viewClasses);
+
+        return $this;
+    }
+
+    /**
+     * Use the view classes defined on this controller to view
+     * selection based on content-type negotiation.
+     *
+     * @return string|null The chosen view class or null for no decision.
+     */
+    protected function chooseViewClass(): ?string
+    {
+        $possibleViewClasses = $this->viewClasses();
+        if (empty($possibleViewClasses)) {
+            return null;
+        }
+        // Controller or component has already made a view class decision.
+        // That decision should overwrite the framework behavior.
+        if ($this->viewBuilder()->getClassName() !== null) {
+            return null;
+        }
+
+        $typeMap = [];
+        foreach ($possibleViewClasses as $class) {
+            $viewContentType = $class::contentType();
+            if ($viewContentType && !isset($typeMap[$viewContentType])) {
+                $typeMap[$viewContentType] = $class;
+            }
+        }
+        $request = $this->getRequest();
+
+        // Prefer the _ext route parameter if it is defined.
+        $ext = $request->getParam('_ext');
+        if ($ext) {
+            $extTypes = (array)($this->response->getMimeType($ext) ?: []);
+            foreach ($extTypes as $extType) {
+                if (isset($typeMap[$extType])) {
+                    return $typeMap[$extType];
+                }
+            }
+
+            throw new NotFoundException();
+        }
+
+        // Use accept header based negotiation.
+        $contentType = new ContentTypeNegotiation();
+        $preferredType = $contentType->preferredType($request, array_keys($typeMap));
+        if ($preferredType) {
+            return $typeMap[$preferredType];
+        }
+
+        // Use the match-all view if available or null for no decision.
+        return $typeMap[View::TYPE_MATCH_ALL] ?? null;
     }
 
     /**
@@ -816,7 +927,7 @@ class Controller implements EventListenerInterface, EventDispatcherInterface
     /**
      * Handles pagination of records in Table objects.
      *
-     * Will load the referenced Table object, and have the PaginatorComponent
+     * Will load the referenced Table object, and have the paginator
      * paginate the query using the request date and settings defined in `$this->paginate`.
      *
      * This method will also make the PaginatorHelper available in the view.
@@ -845,13 +956,57 @@ class Controller implements EventListenerInterface, EventDispatcherInterface
             }
         }
 
-        $this->loadComponent('Paginator');
         if (empty($table)) {
             throw new RuntimeException('Unable to locate an object compatible with paginate.');
         }
+
         $settings += $this->paginate;
 
-        return $this->Paginator->paginate($table, $settings);
+        if (isset($this->Paginator)) {
+            return $this->Paginator->paginate($table, $settings);
+        }
+
+        if (isset($settings['paginator'])) {
+            $settings['className'] = $settings['paginator'];
+            deprecationWarning(
+                '`paginator` option is deprecated,'
+                . ' use `className` instead a specify a paginator name/FQCN.'
+            );
+        }
+
+        $paginator = $settings['className'] ?? NumericPaginator::class;
+        unset($settings['className']);
+        if (is_string($paginator)) {
+            $className = App::className($paginator, 'Datasource/Paging', 'Paginator');
+            if ($className === null) {
+                throw new InvalidArgumentException('Invalid paginator: ' . $paginator);
+            }
+            $paginator = new $className();
+        }
+        if (!$paginator instanceof PaginatorInterface) {
+            throw new InvalidArgumentException('Paginator must be an instance of ' . PaginatorInterface::class);
+        }
+
+        $results = null;
+        try {
+            $results = $paginator->paginate(
+                $table,
+                $this->request->getQueryParams(),
+                $settings
+            );
+        } catch (PageOutOfBoundsException $e) {
+            // Exception thrown below
+        } finally {
+            $paging = $paginator->getPagingParams() + (array)$this->request->getAttribute('paging', []);
+            $this->request = $this->request->withAttribute('paging', $paging);
+        }
+
+        if (isset($e)) {
+            throw new NotFoundException(null, null, $e);
+        }
+
+        /** @psalm-suppress NullableReturnStatement */
+        return $results;
     }
 
     /**

@@ -17,6 +17,8 @@ declare(strict_types=1);
 namespace Cake\View\Form;
 
 use Cake\Utility\Hash;
+use function Cake\Core\deprecationWarning;
+use function Cake\I18n\__d;
 
 /**
  * Provides a basic array based context provider for FormHelper.
@@ -73,7 +75,7 @@ class ArrayContext implements ContextInterface
     /**
      * Context data for this object.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_context;
 

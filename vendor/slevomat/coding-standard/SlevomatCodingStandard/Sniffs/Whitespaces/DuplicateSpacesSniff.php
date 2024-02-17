@@ -22,6 +22,7 @@ use const T_DOC_COMMENT_STAR;
 use const T_DOC_COMMENT_STRING;
 use const T_DOC_COMMENT_TAG;
 use const T_DOC_COMMENT_WHITESPACE;
+use const T_MATCH_ARROW;
 use const T_VARIABLE;
 use const T_WHITESPACE;
 
@@ -42,6 +43,9 @@ class DuplicateSpacesSniff implements Sniff
 	/** @var bool */
 	public $ignoreSpacesInParameters = false;
 
+	/** @var bool */
+	public $ignoreSpacesInMatch = false;
+
 	/**
 	 * @return array<int, (int|string)>
 	 */
@@ -56,7 +60,6 @@ class DuplicateSpacesSniff implements Sniff
 
 	/**
 	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
-	 * @param File $phpcsFile
 	 * @param int $whitespacePointer
 	 */
 	public function process(File $phpcsFile, $whitespacePointer): void
@@ -75,7 +78,7 @@ class DuplicateSpacesSniff implements Sniff
 
 		if ($tokens[$whitespacePointer]['code'] === T_WHITESPACE) {
 			if ($this->ignoreSpacesBeforeAssignment) {
-				$pointerAfter = TokenHelper::findNextExcluding($phpcsFile, T_WHITESPACE, $whitespacePointer + 1);
+				$pointerAfter = TokenHelper::findNextNonWhitespace($phpcsFile, $whitespacePointer + 1);
 				if (
 					$pointerAfter !== null
 					&& in_array($tokens[$pointerAfter]['code'], Tokens::$assignmentTokens, true)
@@ -85,11 +88,21 @@ class DuplicateSpacesSniff implements Sniff
 			}
 
 			if ($this->ignoreSpacesInParameters) {
-				$pointerAfter = TokenHelper::findNextExcluding($phpcsFile, T_WHITESPACE, $whitespacePointer + 1);
+				$pointerAfter = TokenHelper::findNextNonWhitespace($phpcsFile, $whitespacePointer + 1);
 				if (
 					$pointerAfter !== null
 					&& $tokens[$pointerAfter]['code'] === T_VARIABLE
 					&& ParameterHelper::isParameter($phpcsFile, $pointerAfter)
+				) {
+					return;
+				}
+			}
+
+			if ($this->ignoreSpacesInMatch) {
+				$pointerAfter = TokenHelper::findNextNonWhitespace($phpcsFile, $whitespacePointer + 1);
+				if (
+					$pointerAfter !== null
+					&& $tokens[$pointerAfter]['code'] === T_MATCH_ARROW
 				) {
 					return;
 				}
@@ -128,14 +141,14 @@ class DuplicateSpacesSniff implements Sniff
 		$fix = false;
 		foreach ($matches[0] as [$match, $offset]) {
 			$firstPointerOnLine = TokenHelper::findFirstNonWhitespaceOnLine($phpcsFile, $whitespacePointer - 1);
-			$indendation = IndentationHelper::getIndentation($phpcsFile, $firstPointerOnLine);
-			$indendationWithoutTabs = str_replace(
+			$indentation = IndentationHelper::getIndentation($phpcsFile, $firstPointerOnLine);
+			$indentationWithoutTabs = str_replace(
 				IndentationHelper::TAB_INDENT,
 				$tabWidth === 0 ? IndentationHelper::SPACES_INDENT : str_repeat(' ', $tabWidth),
-				$indendation
+				$indentation
 			);
 
-			$position = $tokens[$whitespacePointer]['column'] + $offset - strlen($indendation) + strlen($indendationWithoutTabs);
+			$position = $tokens[$whitespacePointer]['column'] + $offset - strlen($indentation) + strlen($indentationWithoutTabs);
 
 			$fixable = $phpcsFile->addFixableError(
 				sprintf('Duplicate spaces at position %d.', $position),

@@ -10,7 +10,7 @@ on:
 
 jobs:
   testsuite:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -54,9 +54,9 @@ jobs:
           composer install
         fi
 
-    - name: Configure PHPUnit matcher
+    - name: Setup problem matchers for PHPUnit
       if: matrix.php-version == '7.4'
-      uses: mheap/phpunit-matcher-action@master
+      run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
     - name: Run PHPUnit
       run: |
@@ -69,7 +69,7 @@ jobs:
 
   cs-stan:
     name: Coding Standard & Static Analysis
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v2

@@ -32,6 +32,7 @@ use IteratorAggregate;
  * PDOStatement.
  *
  * @property-read string $queryString
+ * @template-implements \IteratorAggregate<string, \Cake\Database\StatementInterface>
  */
 class StatementDecorator implements StatementInterface, Countable, IteratorAggregate
 {
@@ -70,6 +71,16 @@ class StatementDecorator implements StatementInterface, Countable, IteratorAggre
     {
         $this->_statement = $statement;
         $this->_driver = $driver;
+    }
+
+    /**
+     * Returns the connection driver.
+     *
+     * @return \Cake\Database\DriverInterface
+     */
+    protected function getDriver(): DriverInterface
+    {
+        return $this->_driver;
     }
 
     /**
@@ -318,7 +329,7 @@ class StatementDecorator implements StatementInterface, Countable, IteratorAggre
             return;
         }
 
-        $anonymousParams = is_int(key($params)) ? true : false;
+        $anonymousParams = is_int(key($params));
         $offset = 1;
         foreach ($params as $index => $value) {
             $type = $types[$index] ?? null;
@@ -326,7 +337,6 @@ class StatementDecorator implements StatementInterface, Countable, IteratorAggre
                 /** @psalm-suppress InvalidOperand */
                 $index += $offset;
             }
-            /** @psalm-suppress InvalidScalarArgument */
             $this->bindValue($index, $value, $type);
         }
     }

@@ -19,10 +19,15 @@ namespace Cake\Error\Middleware;
 use Cake\Core\App;
 use Cake\Core\Configure;
 use Cake\Core\InstanceConfigTrait;
+use Cake\Core\PluginApplicationInterface;
 use Cake\Error\ErrorHandler;
-use Cake\Error\ExceptionRenderer;
+use Cake\Error\ExceptionTrap;
+use Cake\Error\Renderer\WebExceptionRenderer;
+use Cake\Event\EventDispatcherTrait;
 use Cake\Http\Exception\RedirectException;
 use Cake\Http\Response;
+use Cake\Routing\Router;
+use Cake\Routing\RoutingApplicationInterface;
 use InvalidArgumentException;
 use Laminas\Diactoros\Response\RedirectResponse;
 use Psr\Http\Message\ResponseInterface;
@@ -30,6 +35,9 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
+use function Cake\Core\deprecationWarning;
+use function Cake\Core\getTypeName;
+use function Cake\Core\triggerWarning;
 
 /**
  * Error handling middleware.
@@ -40,32 +48,22 @@ use Throwable;
 class ErrorHandlerMiddleware implements MiddlewareInterface
 {
     use InstanceConfigTrait;
+    use EventDispatcherTrait;
 
     /**
      * Default configuration values.
      *
-     * Ignored if contructor is passed an ErrorHandler instance.
+     * Ignored if contructor is passed an ExceptionTrap instance.
      *
-     * - `log` Enable logging of exceptions.
-     * - `skipLog` List of exceptions to skip logging. Exceptions that
-     *   extend one of the listed exceptions will also not be logged. Example:
-     *
-     *   ```
-     *   'skipLog' => ['Cake\Error\NotFoundException', 'Cake\Error\UnauthorizedException']
-     *   ```
-     *
-     * - `trace` Should error logs include stack traces?
-     * - `exceptionRenderer` The renderer instance or class name to use or a callable factory
-     *   which returns a \Cake\Error\ExceptionRendererInterface instance.
-     *   Defaults to \Cake\Error\ExceptionRenderer
+     * Configuration keys and values are shared with `ExceptionTrap`.
+     * This class will pass its configuration onto the ExceptionTrap
+     * class if you are using the array style constructor.
      *
      * @var array<string, mixed>
+     * @see \Cake\Error\ExceptionTrap
      */
     protected $_defaultConfig = [
-        'skipLog' => [],
-        'log' => true,
-        'trace' => false,
-        'exceptionRenderer' => ExceptionRenderer::class,
+        'exceptionRenderer' => WebExceptionRenderer::class,
     ];
 
     /**
@@ -73,24 +71,41 @@ class ErrorHandlerMiddleware implements MiddlewareInterface
      *
      * @var \Cake\Error\ErrorHandler|null
      */
-    protected $errorHandler;
+    protected $errorHandler = null;
+
+    /**
+     * ExceptionTrap instance
+     *
+     * @var \Cake\Error\ExceptionTrap|null
+     */
+    protected $exceptionTrap = null;
+
+    /**
+     * @var \Cake\Routing\RoutingApplicationInterface|null
+     */
+    protected $app = null;
 
     /**
      * Constructor
      *
-     * @param \Cake\Error\ErrorHandler|array $errorHandler The error handler instance
+     * @param \Cake\Error\ErrorHandler|\Cake\Error\ExceptionTrap|array $errorHandler The error handler instance
      *  or config array.
+     * @param \Cake\Routing\RoutingApplicationInterface|null $app Application instance.
      * @throws \InvalidArgumentException
      */
-    public function __construct($errorHandler = [])
+    public function __construct($errorHandler = [], $app = null)
     {
         if (func_num_args() > 1) {
-            deprecationWarning(
-                'The signature of ErrorHandlerMiddleware::__construct() has changed. '
-                . 'Pass the config array as 1st argument instead.'
-            );
+            if (is_array($app)) {
+                deprecationWarning(
+                    'The signature of ErrorHandlerMiddleware::__construct() has changed. '
+                    . 'Pass the config array as 1st argument instead.'
+                );
 
-            $errorHandler = func_get_arg(1);
+                $errorHandler = func_get_arg(1);
+            } else {
+                $this->app = $app;
+            }
         }
 
         if (PHP_VERSION_ID >= 70400 && Configure::read('debug')) {
@@ -102,15 +117,23 @@ class ErrorHandlerMiddleware implements MiddlewareInterface
 
             return;
         }
+        if ($errorHandler instanceof ErrorHandler) {
+            deprecationWarning(
+                'Using an `ErrorHandler` is deprecated. You should migate to the `ExceptionTrap` sub-system instead.'
+            );
+            $this->errorHandler = $errorHandler;
 
-        if (!$errorHandler instanceof ErrorHandler) {
-            throw new InvalidArgumentException(sprintf(
-                '$errorHandler argument must be a config array or ErrorHandler instance. Got `%s` instead.',
-                getTypeName($errorHandler)
-            ));
+            return;
         }
+        if ($errorHandler instanceof ExceptionTrap) {
+            $this->exceptionTrap = $errorHandler;
 
-        $this->errorHandler = $errorHandler;
+            return;
+        }
+        throw new InvalidArgumentException(sprintf(
+            '$errorHandler argument must be a config array or ExceptionTrap instance. Got `%s` instead.',
+            getTypeName($errorHandler)
+        ));
     }
 
     /**
@@ -118,7 +141,7 @@ class ErrorHandlerMiddleware implements MiddlewareInterface
      *
      * @param \Psr\Http\Message\ServerRequestInterface $request The request.
      * @param \Psr\Http\Server\RequestHandlerInterface $handler The request handler.
-     * @return \Psr\Http\Message\ResponseInterface A response.
+     * @return \Psr\Http\Message\ResponseInterface A response
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
@@ -136,22 +159,48 @@ class ErrorHandlerMiddleware implements MiddlewareInterface
      *
      * @param \Throwable $exception The exception to handle.
      * @param \Psr\Http\Message\ServerRequestInterface $request The request.
-     * @return \Psr\Http\Message\ResponseInterface A response
+     * @return \Psr\Http\Message\ResponseInterface A response.
      */
     public function handleException(Throwable $exception, ServerRequestInterface $request): ResponseInterface
     {
-        $errorHandler = $this->getErrorHandler();
-        $renderer = $errorHandler->getRenderer($exception, $request);
+        $this->loadRoutes();
 
-        try {
-            $errorHandler->logException($exception, $request);
-            $response = $renderer->render();
-        } catch (Throwable $internalException) {
-            $errorHandler->logException($internalException, $request);
-            $response = $this->handleInternalError();
+        $response = null;
+        if ($this->errorHandler === null) {
+            $handler = $this->getExceptionTrap();
+            $handler->logException($exception, $request);
+
+            $event = $this->dispatchEvent(
+                'Exception.beforeRender',
+                ['exception' => $exception, 'request' => $request],
+                $handler
+            );
+
+            $exception = $event->getData('exception');
+            assert($exception instanceof Throwable);
+            $renderer = $handler->renderer($exception, $request);
+
+            $response = $event->getResult();
+        } else {
+            $handler = $this->getErrorHandler();
+            $handler->logException($exception, $request);
+
+            $renderer = $handler->getRenderer($exception, $request);
         }
 
-        return $response;
+        try {
+            if ($response === null) {
+                $response = $renderer->render();
+            }
+
+            return $response instanceof ResponseInterface
+                ? $response
+                : new Response(['body' => $response, 'status' => 500]);
+        } catch (Throwable $internalException) {
+            $handler->logException($internalException, $request);
+
+            return $this->handleInternalError();
+        }
     }
 
     /**
@@ -176,9 +225,10 @@ class ErrorHandlerMiddleware implements MiddlewareInterface
      */
     protected function handleInternalError(): ResponseInterface
     {
-        $response = new Response(['body' => 'An Internal Server Error Occurred']);
-
-        return $response->withStatus(500);
+        return new Response([
+            'body' => 'An Internal Server Error Occurred',
+            'status' => 500,
+        ]);
     }
 
     /**
@@ -195,5 +245,51 @@ class ErrorHandlerMiddleware implements MiddlewareInterface
         }
 
         return $this->errorHandler;
+    }
+
+    /**
+     * Get a exception trap instance
+     *
+     * @return \Cake\Error\ExceptionTrap The exception trap.
+     */
+    protected function getExceptionTrap(): ExceptionTrap
+    {
+        if ($this->exceptionTrap === null) {
+            /** @var class-string<\Cake\Error\ExceptionTrap> $className */
+            $className = App::className('ExceptionTrap', 'Error');
+            $this->exceptionTrap = new $className($this->getConfig());
+        }
+
+        return $this->exceptionTrap;
+    }
+
+    /**
+     * Ensure that the application's routes are loaded.
+     *
+     * @return void
+     */
+    protected function loadRoutes(): void
+    {
+        if (
+            !($this->app instanceof RoutingApplicationInterface)
+            || Router::routes()
+        ) {
+            return;
+        }
+
+        try {
+            $builder = Router::createRouteBuilder('/');
+
+            $this->app->routes($builder);
+            if ($this->app instanceof PluginApplicationInterface) {
+                $this->app->pluginRoutes($builder);
+            }
+        } catch (Throwable $e) {
+            triggerWarning(sprintf(
+                "Exception loading routes when rendering an error page: \n %s - %s",
+                get_class($e),
+                $e->getMessage()
+            ));
+        }
     }
 }

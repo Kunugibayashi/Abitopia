@@ -9,15 +9,17 @@ namespace Phinx\Console\Command;
 
 use DateTime;
 use Exception;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Throwable;
 
+#[AsCommand(name: 'migrate')]
 class Migrate extends AbstractCommand
 {
     /**
-     * @var string
+     * @var string|null
      */
     protected static $defaultName = 'migrate';
 
@@ -26,7 +28,7 @@ class Migrate extends AbstractCommand
      *
      * @return void
      */
-    protected function configure()
+    protected function configure(): void
     {
         parent::configure();
 
@@ -57,20 +59,21 @@ EOT
      * @param \Symfony\Component\Console\Output\OutputInterface $output Output
      * @return int integer 0 on success, or an error code.
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->bootstrap($input, $output);
 
         $version = $input->getOption('target');
+        /** @var string|null $environment */
         $environment = $input->getOption('environment');
         $date = $input->getOption('date');
         $fake = (bool)$input->getOption('fake');
 
         if ($environment === null) {
             $environment = $this->getConfig()->getDefaultEnvironment();
-            $output->writeln('<comment>warning</comment> no environment specified, defaulting to: ' . $environment);
+            $output->writeln('<comment>warning</comment> no environment specified, defaulting to: ' . $environment, $this->verbosityLevel);
         } else {
-            $output->writeln('<info>using environment</info> ' . $environment);
+            $output->writeln('<info>using environment</info> ' . $environment, $this->verbosityLevel);
         }
 
         if (!$this->getConfig()->hasEnvironment($environment)) {
@@ -81,15 +84,15 @@ EOT
 
         $envOptions = $this->getConfig()->getEnvironment($environment);
         if (isset($envOptions['adapter'])) {
-            $output->writeln('<info>using adapter</info> ' . $envOptions['adapter']);
+            $output->writeln('<info>using adapter</info> ' . $envOptions['adapter'], $this->verbosityLevel);
         }
 
         if (isset($envOptions['wrapper'])) {
-            $output->writeln('<info>using wrapper</info> ' . $envOptions['wrapper']);
+            $output->writeln('<info>using wrapper</info> ' . $envOptions['wrapper'], $this->verbosityLevel);
         }
 
         if (isset($envOptions['name'])) {
-            $output->writeln('<info>using database</info> ' . $envOptions['name']);
+            $output->writeln('<info>using database</info> ' . $envOptions['name'], $this->verbosityLevel);
         } else {
             $output->writeln('<error>Could not determine database name! Please specify a database name in your config file.</error>');
 
@@ -97,17 +100,17 @@ EOT
         }
 
         if (isset($envOptions['table_prefix'])) {
-            $output->writeln('<info>using table prefix</info> ' . $envOptions['table_prefix']);
+            $output->writeln('<info>using table prefix</info> ' . $envOptions['table_prefix'], $this->verbosityLevel);
         }
         if (isset($envOptions['table_suffix'])) {
-            $output->writeln('<info>using table suffix</info> ' . $envOptions['table_suffix']);
+            $output->writeln('<info>using table suffix</info> ' . $envOptions['table_suffix'], $this->verbosityLevel);
         }
 
         $versionOrder = $this->getConfig()->getVersionOrder();
-        $output->writeln('<info>ordering by</info> ' . $versionOrder . ' time');
+        $output->writeln('<info>ordering by</info> ' . $versionOrder . ' time', $this->verbosityLevel);
 
         if ($fake) {
-            $output->writeln('<comment>warning</comment> performing fake migrations');
+            $output->writeln('<comment>warning</comment> performing fake migrations', $this->verbosityLevel);
         }
 
         try {
@@ -116,9 +119,6 @@ EOT
             if ($date !== null) {
                 $this->getManager()->migrateToDateTime($environment, new DateTime($date), $fake);
             } else {
-                if ($version) {
-                    $version = (int)$version;
-                }
                 $this->getManager()->migrate($environment, $version, $fake);
             }
             $end = microtime(true);
@@ -132,8 +132,8 @@ EOT
             return self::CODE_ERROR;
         }
 
-        $output->writeln('');
-        $output->writeln('<comment>All Done. Took ' . sprintf('%.4fs', $end - $start) . '</comment>');
+        $output->writeln('', $this->verbosityLevel);
+        $output->writeln('<comment>All Done. Took ' . sprintf('%.4fs', $end - $start) . '</comment>', $this->verbosityLevel);
 
         return self::CODE_SUCCESS;
     }

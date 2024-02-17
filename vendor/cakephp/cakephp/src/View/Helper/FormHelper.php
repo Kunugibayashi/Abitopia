@@ -30,6 +30,10 @@ use Cake\View\View;
 use Cake\View\Widget\WidgetLocator;
 use InvalidArgumentException;
 use RuntimeException;
+use function Cake\Core\deprecationWarning;
+use function Cake\Core\h;
+use function Cake\I18n\__;
+use function Cake\I18n\__d;
 
 /**
  * Form helper library.
@@ -113,9 +117,9 @@ class FormHelper extends Helper
             // Wrapper content used to hide other content.
             'hiddenBlock' => '<div style="display:none;">{{content}}</div>',
             // Generic input element.
-            'input' => '<input type="{{type}}" name="{{name}}"{{attrs}}/>',
+            'input' => '<input type="{{type}}" name="{{name}}"{{attrs}}>',
             // Submit input element.
-            'inputSubmit' => '<input type="{{type}}"{{attrs}}/>',
+            'inputSubmit' => '<input type="{{type}}"{{attrs}}>',
             // Container element used by control().
             'inputContainer' => '<div class="input {{type}}{{required}}">{{content}}</div>',
             // Container element used by control() when a field has an error.
@@ -150,6 +154,8 @@ class FormHelper extends Helper
             'confirmJs' => '{{confirm}}',
             // selected class
             'selectedClass' => 'selected',
+            // required class
+            'requiredClass' => 'required',
         ],
         // set HTML5 validation message to custom required/empty messages
         'autoSetCustomValidity' => true,
@@ -506,9 +512,7 @@ class FormHelper extends Helper
             'action' => $request->getParam('action'),
         ];
 
-        $action = (array)$options['url'] + $actionDefaults;
-
-        return $action;
+        return (array)$options['url'] + $actionDefaults;
     }
 
     /**
@@ -618,7 +622,7 @@ class FormHelper extends Helper
 
         $tokenData = $this->formProtector->buildTokenData(
             $this->_lastAction,
-            $this->_View->getRequest()->getSession()->id()
+            $this->_getFormProtectorSessionId()
         );
         $tokenFields = array_merge($secureAttributes, [
             'value' => $tokenData['fields'],
@@ -636,6 +640,17 @@ class FormHelper extends Helper
         }
 
         return $this->formatTemplate('hiddenBlock', ['content' => $out]);
+    }
+
+    /**
+     * Get Session id for FormProtector
+     * Must be the same as in FormProtectionComponent
+     *
+     * @return string
+     */
+    protected function _getFormProtectorSessionId(): string
+    {
+        return $this->_View->getRequest()->getSession()->id();
     }
 
     /**
@@ -1028,7 +1043,7 @@ class FormHelper extends Helper
      * @param string $fieldName This should be "modelname.fieldname"
      * @param array<string, mixed> $options Each type of input takes different options.
      * @return string Completed form widget.
-     * @link https://book.cakephp.org/4/en/views/helpers/form.html#creating-form-inputs
+     * @link https://book.cakephp.org/4/en/views/helpers/form.html#creating-form-controls
      * @psalm-suppress InvalidReturnType
      * @psalm-suppress InvalidReturnStatement
      */
@@ -1135,6 +1150,7 @@ class FormHelper extends Helper
             'content' => $result,
             'error' => $error,
             'errorSuffix' => $errorSuffix,
+            'label' => $label,
             'options' => $options,
         ]);
 
@@ -1182,7 +1198,8 @@ class FormHelper extends Helper
         return $this->formatTemplate($inputContainerTemplate, [
             'content' => $options['content'],
             'error' => $options['error'],
-            'required' => $options['options']['required'] ? ' required' : '',
+            'label' => $options['label'] ?? '',
+            'required' => $options['options']['required'] ? ' ' . $this->templater()->get('requiredClass') : '',
             'type' => $options['options']['type'],
             'templateVars' => $options['options']['templateVars'] ?? [],
         ]);
@@ -1234,9 +1251,7 @@ class FormHelper extends Helper
             $options['type'] = $this->_inputType($fieldName, $options);
         }
 
-        $options = $this->_magicOptions($fieldName, $options, $needsMagicType);
-
-        return $options;
+        return $this->_magicOptions($fieldName, $options, $needsMagicType);
     }
 
     /**
@@ -1294,7 +1309,7 @@ class FormHelper extends Helper
      *
      * @param string $fieldName The name of the field to find options for.
      * @param array<string, mixed> $options Options list.
-     * @return array
+     * @return array<string, mixed>
      */
     protected function _optionsOptions(string $fieldName, array $options): array
     {
@@ -1480,8 +1495,8 @@ class FormHelper extends Helper
      *
      * - `value` - the value of the checkbox
      * - `checked` - boolean indicate that this checkbox is checked.
-     * - `hiddenField` - boolean to indicate if you want the results of checkbox() to include
-     *    a hidden input with a value of ''.
+     * - `hiddenField` - boolean|string. Set to false to disable a hidden input from
+     *    being generated. Passing a string will define the hidden input value.
      * - `disabled` - create a disabled input.
      * - `default` - Set the default value for the checkbox. This allows you to start checkboxes
      *    as checked, without having to check the POST data. A matching POST data value, will overwrite
@@ -1503,12 +1518,12 @@ class FormHelper extends Helper
         $options['value'] = $value;
 
         $output = '';
-        if ($options['hiddenField']) {
+        if ($options['hiddenField'] !== false && is_scalar($options['hiddenField'])) {
             $hiddenOptions = [
                 'name' => $options['name'],
                 'value' => $options['hiddenField'] !== true
                     && $options['hiddenField'] !== '_split'
-                    ? $options['hiddenField'] : '0',
+                    ? (string)$options['hiddenField'] : '0',
                 'form' => $options['form'] ?? null,
                 'secure' => false,
             ];
@@ -1537,8 +1552,9 @@ class FormHelper extends Helper
      * - `label` - Either `false` to disable label around the widget or an array of attributes for
      *    the label tag. `selected` will be added to any classes e.g. `'class' => 'myclass'` where widget
      *    is checked
-     * - `hiddenField` - boolean to indicate if you want the results of radio() to include
-     *    a hidden input with a value of ''. This is useful for creating radio sets that are non-continuous.
+     * - `hiddenField` - boolean|string. Set to false to not include a hidden input with a value of ''.
+     *    Can also be a string to set the value of the hidden input. This is useful for creating
+     *    radio sets that are non-continuous.
      * - `disabled` - Set to `true` or `disabled` to disable all the radio buttons. Use an array of
      *   values to disable specific radio buttons.
      * - `empty` - Set to `true` to create an input with the value '' as the first option. When `true`
@@ -1554,29 +1570,38 @@ class FormHelper extends Helper
     {
         $attributes['options'] = $options;
         $attributes['idPrefix'] = $this->_idPrefix;
+
+        $generatedHiddenId = false;
+        if (!isset($attributes['id'])) {
+            $attributes['id'] = true;
+            $generatedHiddenId = true;
+        }
         $attributes = $this->_initInputField($fieldName, $attributes);
 
         $hiddenField = $attributes['hiddenField'] ?? true;
         unset($attributes['hiddenField']);
 
-        $radio = $this->widget('radio', $attributes);
-
         $hidden = '';
-        if ($hiddenField) {
+        if ($hiddenField !== false && is_scalar($hiddenField)) {
             $hidden = $this->hidden($fieldName, [
-                'value' => $hiddenField === true ? '' : $hiddenField,
+                'value' => $hiddenField === true ? '' : (string)$hiddenField,
                 'form' => $attributes['form'] ?? null,
                 'name' => $attributes['name'],
+                'id' => $attributes['id'],
             ]);
         }
+        if ($generatedHiddenId) {
+            unset($attributes['id']);
+        }
+        $radio = $this->widget('radio', $attributes);
 
         return $hidden . $radio;
     }
 
     /**
      * Missing method handler - implements various simple input types. Is used to create inputs
-     * of various types. e.g. `$this->Form->text();` will create `<input type="text"/>` while
-     * `$this->Form->range();` will create `<input type="range"/>`
+     * of various types. e.g. `$this->Form->text();` will create `<input type="text">` while
+     * `$this->Form->range();` will create `<input type="range">`
      *
      * ### Usage
      *
@@ -1586,7 +1611,7 @@ class FormHelper extends Helper
      *
      * Will make an input like:
      *
-     * `<input type="search" id="UserQuery" name="User[query]" value="test"/>`
+     * `<input type="search" id="UserQuery" name="User[query]" value="test">`
      *
      * The first argument to an input type should always be the fieldname, in `Model.field` format.
      * The second argument should always be an array of attributes for the input.
@@ -1790,7 +1815,7 @@ class FormHelper extends Helper
      * @param array|string|null $url Cake-relative URL or array of URL parameters, or
      *   external URL (starts with http://)
      * @param array<string, mixed> $options Array of HTML attributes.
-     * @return string An `<a />` element.
+     * @return string An `<a>` element.
      * @link https://book.cakephp.org/4/en/views/helpers/form.html#creating-standalone-buttons-and-post-links
      */
     public function postLink(string $title, $url = null, array $options = []): string
@@ -1886,7 +1911,7 @@ class FormHelper extends Helper
     }
 
     /**
-     * Creates a submit button element. This method will generate `<input />` elements that
+     * Creates a submit button element. This method will generate `<input>` elements that
      * can be used to submit, and reset forms by using $options. image submits can be created by supplying an
      * image path for $caption.
      *
@@ -2111,6 +2136,13 @@ class FormHelper extends Helper
             'hiddenField' => true,
             'secure' => true,
         ];
+
+        $generatedHiddenId = false;
+        if (!isset($attributes['id'])) {
+            $attributes['id'] = true;
+            $generatedHiddenId = true;
+        }
+
         $attributes = $this->_initInputField($fieldName, $attributes);
         $attributes['options'] = $options;
         $attributes['idPrefix'] = $this->_idPrefix;
@@ -2122,10 +2154,15 @@ class FormHelper extends Helper
                 'value' => '',
                 'secure' => false,
                 'disabled' => $attributes['disabled'] === true || $attributes['disabled'] === 'disabled',
+                'id' => $attributes['id'],
             ];
             $hidden = $this->hidden($fieldName, $hiddenAttributes);
         }
         unset($attributes['hiddenField']);
+
+        if ($generatedHiddenId) {
+            unset($attributes['id']);
+        }
 
         return $hidden . $this->widget('multicheckbox', $attributes);
     }

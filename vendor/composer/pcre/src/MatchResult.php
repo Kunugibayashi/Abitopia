@@ -28,10 +28,10 @@ final class MatchResult
     public $matched;
 
     /**
-     * @param int $count
+     * @param 0|positive-int $count
      * @param array<string|null> $matches
      */
-    public function __construct($count, array $matches)
+    public function __construct(int $count, array $matches)
     {
         $this->matches = $matches;
         $this->matched = (bool) $count;

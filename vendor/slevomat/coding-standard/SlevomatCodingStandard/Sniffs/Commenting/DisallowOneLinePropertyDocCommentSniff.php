@@ -18,7 +18,7 @@ class DisallowOneLinePropertyDocCommentSniff implements Sniff
 	public const CODE_ONE_LINE_PROPERTY_COMMENT = 'OneLinePropertyComment';
 
 	/**
-	 * @return int[]
+	 * @return list<int>
 	 */
 	public function register(): array
 	{
@@ -27,7 +27,6 @@ class DisallowOneLinePropertyDocCommentSniff implements Sniff
 
 	/**
 	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
-	 * @param File $phpcsFile
 	 * @param int $propertyPointer
 	 */
 	public function process(File $phpcsFile, $propertyPointer): void

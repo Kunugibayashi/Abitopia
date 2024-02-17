@@ -15,6 +15,7 @@ declare(strict_types=1);
  */
 namespace Cake\Core;
 
+use Cake\Core\Exception\CakeException;
 use Cake\Core\Exception\MissingPluginException;
 use Countable;
 use Generator;
@@ -34,6 +35,8 @@ use Iterator;
  *
  * While its implementation supported nested iteration it does not
  * support using `continue` or `break` inside loops.
+ *
+ * @template-implements \Iterator<string, \Cake\Core\PluginInterface>
  */
 class PluginCollection implements Iterator, Countable
 {
@@ -115,7 +118,7 @@ class PluginCollection implements Iterator, Countable
      * This method is not part of the official public API as plugins with
      * no plugin class are being phased out.
      *
-     * @param string $name The plugin name to locate a path for. Will return '' when a plugin cannot be found.
+     * @param string $name The plugin name to locate a path for.
      * @return string
      * @throws \Cake\Core\Exception\MissingPluginException when a plugin path cannot be resolved.
      * @internal
@@ -232,21 +235,38 @@ class PluginCollection implements Iterator, Countable
      */
     public function create(string $name, array $config = []): PluginInterface
     {
+        if ($name === '') {
+            throw new CakeException('Cannot create a plugin with empty name');
+        }
+
         if (strpos($name, '\\') !== false) {
             /** @var \Cake\Core\PluginInterface */
             return new $name($config);
         }
 
         $config += ['name' => $name];
-        /** @var class-string<\Cake\Core\PluginInterface> $className */
-        $className = str_replace('/', '\\', $name) . '\\' . 'Plugin';
+        $namespace = str_replace('/', '\\', $name);
+
+        $className = $namespace . '\\' . 'Plugin';
+        // Check for [Vendor/]Foo/Plugin class
         if (!class_exists($className)) {
-            $className = BasePlugin::class;
-            if (empty($config['path'])) {
-                $config['path'] = $this->findPath($name);
+            $pos = strpos($name, '/');
+            if ($pos === false) {
+                $className = $namespace . '\\' . $name . 'Plugin';
+            } else {
+                $className = $namespace . '\\' . substr($name, $pos + 1) . 'Plugin';
+            }
+
+            // Check for [Vendor/]Foo/FooPlugin
+            if (!class_exists($className)) {
+                $className = BasePlugin::class;
+                if (empty($config['path'])) {
+                    $config['path'] = $this->findPath($name);
+                }
             }
         }
 
+        /** @var class-string<\Cake\Core\PluginInterface> $className */
         return new $className($config);
     }
 

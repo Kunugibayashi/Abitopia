@@ -29,6 +29,9 @@ use SplFixedArray;
  * This object is responsible for correctly nesting result keys reported from
  * the query, casting each field to the correct type and executing the extra
  * queries required for eager loading external associations.
+ *
+ * @template T of \Cake\Datasource\EntityInterface|array
+ * @implements \Cake\Datasource\ResultSetInterface<T>
  */
 class ResultSet implements ResultSetInterface
 {
@@ -51,7 +54,8 @@ class ResultSet implements ResultSetInterface
     /**
      * Last record fetched from the statement
      *
-     * @var object|array
+     * @var \Cake\Datasource\EntityInterface|array
+     * @psalm-var T
      */
     protected $_current;
 
@@ -73,7 +77,7 @@ class ResultSet implements ResultSetInterface
      * List of associations that should be placed under the `_matchingData`
      * result key.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_matchingMap = [];
 
@@ -88,7 +92,7 @@ class ResultSet implements ResultSetInterface
      * Map of fields that are fetched from the statement with
      * their type and the table they belong to
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_map = [];
 
@@ -96,7 +100,7 @@ class ResultSet implements ResultSetInterface
      * List of matching associations and the column keys to expect
      * from each of them.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_matchingMapColumns = [];
 
@@ -161,7 +165,7 @@ class ResultSet implements ResultSetInterface
     {
         $repository = $query->getRepository();
         $this->_statement = $statement;
-        $this->_driver = $query->getConnection()->getDriver();
+        $this->_driver = $query->getConnection()->getDriver($query->getConnectionRole());
         $this->_defaultTable = $repository;
         $this->_calculateAssociationMap($query);
         $this->_hydrate = $query->isHydrationEnabled();
@@ -182,7 +186,8 @@ class ResultSet implements ResultSetInterface
      *
      * Part of Iterator interface.
      *
-     * @return object|array
+     * @return \Cake\Datasource\EntityInterface|array
+     * @psalm-return T
      */
     #[\ReturnTypeWillChange]
     public function current()
@@ -276,7 +281,8 @@ class ResultSet implements ResultSetInterface
      *
      * This method will also close the underlying statement cursor.
      *
-     * @return object|array|null
+     * @return \Cake\Datasource\EntityInterface|array|null
+     * @psalm-return T|null
      */
     public function first()
     {
@@ -568,12 +574,17 @@ class ResultSet implements ResultSetInterface
      * Returns an array that can be used to describe the internal state of this
      * object.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function __debugInfo()
     {
+        $currentIndex = $this->_index;
+        // toArray() adjusts the current index, so we have to reset it
+        $items = $this->toArray();
+        $this->_index = $currentIndex;
+
         return [
-            'items' => $this->toArray(),
+            'items' => $items,
         ];
     }
 }

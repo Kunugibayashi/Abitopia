@@ -59,7 +59,6 @@ class QueryCompiler
      * The list of query clauses to traverse for generating an UPDATE statement
      *
      * @var array<string>
-     * @deprecated Not used.
      */
     protected $_updateParts = ['with', 'update', 'set', 'where', 'epilog'];
 
@@ -202,7 +201,7 @@ class QueryCompiler
         $distinct = $query->clause('distinct');
         $modifiers = $this->_buildModifierPart($query->clause('modifier'), $query, $binder);
 
-        $driver = $query->getConnection()->getDriver();
+        $driver = $query->getConnection()->getDriver($query->getConnectionRole());
         $quoteIdentifiers = $driver->isAutoQuotingEnabled() || $this->_quotedSelectAliases;
         $normalized = [];
         $parts = $this->_stringifyExpressions($parts, $binder);

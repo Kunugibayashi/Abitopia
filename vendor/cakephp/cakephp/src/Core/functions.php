@@ -11,26 +11,19 @@ declare(strict_types=1);
  *
  * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  * @link          https://cakephp.org CakePHP(tm) Project
- * @since         3.0.0
+ * @since         4.5.0
  * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
+// phpcs:disable PSR1.Files.SideEffects
+namespace Cake\Core;
 
-use Cake\Core\Configure;
-
-if (!defined('DS')) {
-    /**
-     * Defines DS as short form of DIRECTORY_SEPARATOR.
-     */
-    define('DS', DIRECTORY_SEPARATOR);
-}
-
-if (!function_exists('h')) {
+if (!function_exists('Cake\Core\h')) {
     /**
      * Convenience method for htmlspecialchars.
      *
      * @param mixed $text Text to wrap through htmlspecialchars. Also works with arrays, and objects.
      *    Arrays will be mapped and have all their elements escaped. Objects will be string cast if they
-     *    implement a `__toString` method. Otherwise the class name will be used.
+     *    implement a `__toString` method. Otherwise, the class name will be used.
      *    Other scalar types will be returned unchanged.
      * @param bool $double Encode existing html entities.
      * @param string|null $charset Character set to use when escaping.
@@ -66,10 +59,9 @@ if (!function_exists('h')) {
 
         return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, $charset ?: $defaultCharset, $double);
     }
-
 }
 
-if (!function_exists('pluginSplit')) {
+if (!function_exists('Cake\Core\pluginSplit')) {
     /**
      * Splits a dot syntax plugin name into its plugin and class name.
      * If $name does not have a dot, then index 0 will be null.
@@ -94,16 +86,15 @@ if (!function_exists('pluginSplit')) {
                 $parts[0] .= '.';
             }
 
-            /** @psalm-var array{string, string}*/
+            /** @psalm-var array{string, string} */
             return $parts;
         }
 
         return [$plugin, $name];
     }
-
 }
 
-if (!function_exists('namespaceSplit')) {
+if (!function_exists('Cake\Core\namespaceSplit')) {
     /**
      * Split the namespace from the classname.
      *
@@ -121,10 +112,9 @@ if (!function_exists('namespaceSplit')) {
 
         return [substr($class, 0, $pos), substr($class, $pos + 1)];
     }
-
 }
 
-if (!function_exists('pr')) {
+if (!function_exists('Cake\Core\pr')) {
     /**
      * print_r() convenience function.
      *
@@ -149,10 +139,9 @@ if (!function_exists('pr')) {
 
         return $var;
     }
-
 }
 
-if (!function_exists('pj')) {
+if (!function_exists('Cake\Core\pj')) {
     /**
      * JSON pretty print convenience function.
      *
@@ -177,10 +166,9 @@ if (!function_exists('pj')) {
 
         return $var;
     }
-
 }
 
-if (!function_exists('env')) {
+if (!function_exists('Cake\Core\env')) {
     /**
      * Gets an environment variable from available sources, and provides emulation
      * for unsupported or inconsistent environment variables (i.e. DOCUMENT_ROOT on
@@ -206,8 +194,10 @@ if (!function_exists('env')) {
             $key = 'SCRIPT_URL';
         }
 
+        /** @var string|null $val */
         $val = $_SERVER[$key] ?? $_ENV[$key] ?? null;
         if ($val == null && getenv($key) !== false) {
+            /** @var string|false $val */
             $val = getenv($key);
         }
 
@@ -240,10 +230,9 @@ if (!function_exists('env')) {
 
         return $default;
     }
-
 }
 
-if (!function_exists('triggerWarning')) {
+if (!function_exists('Cake\Core\triggerWarning')) {
     /**
      * Triggers an E_USER_WARNING.
      *
@@ -267,7 +256,7 @@ if (!function_exists('triggerWarning')) {
     }
 }
 
-if (!function_exists('deprecationWarning')) {
+if (!function_exists('Cake\Core\deprecationWarning')) {
     /**
      * Helper method for outputting deprecation warnings
      *
@@ -287,7 +276,16 @@ if (!function_exists('deprecationWarning')) {
             $frame = $trace[$stackFrame];
             $frame += ['file' => '[internal]', 'line' => '??'];
 
-            $relative = str_replace(DIRECTORY_SEPARATOR, '/', substr($frame['file'], strlen(ROOT) + 1));
+            // Assuming we're installed in vendor/cakephp/cakephp/src/Core/functions.php
+            $root = dirname(__DIR__, 5);
+            if (defined('ROOT')) {
+                $root = ROOT;
+            }
+            $relative = str_replace(
+                DIRECTORY_SEPARATOR,
+                '/',
+                substr($frame['file'], strlen($root) + 1)
+            );
             $patterns = (array)Configure::read('Error.ignoredDeprecationPaths');
             foreach ($patterns as $pattern) {
                 $pattern = str_replace(DIRECTORY_SEPARATOR, '/', $pattern);
@@ -297,8 +295,7 @@ if (!function_exists('deprecationWarning')) {
             }
 
             $message = sprintf(
-                "%s\n%s, line: %s\n" .
-                'You can disable all deprecation warnings by setting `Error.errorLevel` to ' .
+                "%s\n%s, line: %s\n" . 'You can disable all deprecation warnings by setting `Error.errorLevel` to ' .
                 '`E_ALL & ~E_USER_DEPRECATED`. Adding `%s` to `Error.ignoredDeprecationPaths` ' .
                 'in your `config/app.php` config will mute deprecations from that file only.',
                 $message,
@@ -322,7 +319,7 @@ if (!function_exists('deprecationWarning')) {
     }
 }
 
-if (!function_exists('getTypeName')) {
+if (!function_exists('Cake\Core\getTypeName')) {
     /**
      * Returns the objects class or var type of it's not an object
      *
@@ -333,4 +330,11 @@ if (!function_exists('getTypeName')) {
     {
         return is_object($var) ? get_class($var) : gettype($var);
     }
+}
+
+/**
+ * Include global functions.
+ */
+if (!getenv('CAKE_DISABLE_GLOBAL_FUNCS')) {
+    include 'functions_global.php';
 }

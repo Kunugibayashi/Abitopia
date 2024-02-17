@@ -2,14 +2,14 @@
 declare(strict_types=1);
 
 /**
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
+ * @license       https://www.opensource.org/licenses/mit-license.php MIT License
  */
 namespace Migrations\TestSuite;
 
@@ -92,13 +92,13 @@ class Migrator
 
             $options[$i] = $migrationSet;
             $connectionName = $migrationSet['connection'];
-            if (!in_array($connectionName, $connectionsList)) {
-                $connectionsList[] = ['name' => $connectionName, 'skip' => $skip];
+            if (!isset($connectionsList[$connectionName])) {
+                $connectionsList[$connectionName] = ['name' => $connectionName, 'skip' => $skip];
             }
 
             $migrations = new Migrations();
-            if (!in_array($connectionName, $connectionsToDrop) && $this->shouldDropTables($migrations, $migrationSet)) {
-                $connectionsToDrop[] = ['name' => $connectionName, 'skip' => $skip];
+            if (!isset($connectionsToDrop[$connectionName]) && $this->shouldDropTables($migrations, $migrationSet)) {
+                $connectionsToDrop[$connectionName] = ['name' => $connectionName, 'skip' => $skip];
             }
         }
 
@@ -110,9 +110,21 @@ class Migrator
         foreach ($options as $migrationSet) {
             $migrations = new Migrations();
 
-            if (!$migrations->migrate($migrationSet)) {
+            try {
+                if (!$migrations->migrate($migrationSet)) {
+                    throw new RuntimeException(
+                        "Unable to migrate fixtures for `{$migrationSet['connection']}`."
+                    );
+                }
+            } catch (\Exception $e) {
                 throw new RuntimeException(
-                    sprintf('Unable to migrate fixtures for `%s`.', $migrationSet['connection'])
+                    'Could not apply migrations for ' . json_encode($migrationSet) . "\n\n" .
+                    "Migrations failed to apply with message:\n\n" .
+                    $e->getMessage() . "\n\n" .
+                    'If you are using the `skip` option and running multiple sets of migrations ' .
+                    'on the same connection try calling `truncate()` before `runMany()` to avoid this.',
+                    0,
+                    $e
                 );
             }
         }
@@ -158,26 +170,46 @@ class Migrator
     {
         Log::write('debug', "Reading migrations status for {$options['connection']}...");
 
+        $messages = [
+            'down' => [],
+            'missing' => [],
+        ];
         foreach ($migrations->status($options) as $migration) {
-            if ($migration['status'] === 'up') {
-                Log::write('debug', 'One or more additional migrations detected.');
-
-                return true;
-            }
-            if ($migration['missing'] ?? false) {
-                Log::write('debug', 'One or more missing migrations detected.');
-
-                return true;
+            if ($migration['status'] === 'up' && ($migration['missing'] ?? false)) {
+                $messages['missing'][] = 'Applied but, missing Migration ' .
+                    "source={$migration['name']} id={$migration['id']}";
             }
             if ($migration['status'] === 'down') {
-                Log::write('debug', 'New migration(s) found.');
-
-                return true;
+                $messages['down'][] = "Migration to reverse. source={$migration['name']} id={$migration['id']}";
             }
         }
-        Log::write('debug', 'No migration changes detected');
+        $output = [];
+        $hasProblems = false;
+        $itemize = function ($item) {
+            return '- ' . $item;
+        };
+        if (!empty($messages['down'])) {
+            $hasProblems = true;
+            $output[] = 'Migrations needing to be reversed:';
+            $output = array_merge($output, array_map($itemize, $messages['down']));
+            $output[] = '';
+        }
+        if (!empty($messages['missing'])) {
+            $hasProblems = true;
+            $output[] = 'Applied but missing migrations:';
+            $output = array_merge($output, array_map($itemize, $messages['down']));
+            $output[] = '';
+        }
+        if ($output) {
+            $output = array_merge(
+                ['Your migration status some differences with the expected state.', ''],
+                $output,
+                ['Going to drop all tables in this source, and re-apply migrations.']
+            );
+            Log::write('debug', implode("\n", $output));
+        }
 
-        return false;
+        return $hasProblems;
     }
 
     /**

@@ -118,7 +118,7 @@ class SqliteSchemaDialect extends SchemaDialect
             return ['type' => TableSchema::TYPE_BOOLEAN, 'length' => null];
         }
 
-        if ($col === 'char' && $length === 36) {
+        if (($col === 'char' && $length === 36) || $col === 'uuid') {
             return ['type' => TableSchema::TYPE_UUID, 'length' => null];
         }
         if ($col === 'char') {
@@ -152,9 +152,30 @@ class SqliteSchemaDialect extends SchemaDialect
     }
 
     /**
-     * @inheritDoc
+     * Generate the SQL to list the tables and views.
+     *
+     * @param array<string, mixed> $config The connection configuration to use for
+     *    getting tables from.
+     * @return array An array of (sql, params) to execute.
      */
     public function listTablesSql(array $config): array
+    {
+        return [
+            'SELECT name FROM sqlite_master ' .
+            'WHERE (type="table" OR type="view") ' .
+            'AND name != "sqlite_sequence" ORDER BY name',
+            [],
+        ];
+    }
+
+    /**
+     * Generate the SQL to list the tables, excluding all views.
+     *
+     * @param array<string, mixed> $config The connection configuration to use for
+     *    getting tables from.
+     * @return array<mixed> An array of (sql, params) to execute.
+     */
+    public function listTablesWithoutViewsSql(array $config): array
     {
         return [
             'SELECT name FROM sqlite_master WHERE type="table" ' .
@@ -621,6 +642,8 @@ class SqliteSchemaDialect extends SchemaDialect
 }
 
 // phpcs:disable
-// Add backwards compatible alias.
-class_alias('Cake\Database\Schema\SqliteSchemaDialect', 'Cake\Database\Schema\SqliteSchema');
+class_alias(
+    'Cake\Database\Schema\SqliteSchemaDialect',
+    'Cake\Database\Schema\SqliteSchema'
+);
 // phpcs:enable

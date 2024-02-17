@@ -36,6 +36,7 @@ use const T_DOC_COMMENT;
 use const T_DOUBLE_CAST;
 use const T_DOUBLE_COLON;
 use const T_FALSE;
+use const T_FN_ARROW;
 use const T_INLINE_ELSE;
 use const T_INLINE_THEN;
 use const T_INT_CAST;
@@ -43,6 +44,7 @@ use const T_LNUMBER;
 use const T_LOGICAL_AND;
 use const T_LOGICAL_OR;
 use const T_LOGICAL_XOR;
+use const T_MATCH_ARROW;
 use const T_MINUS;
 use const T_NS_SEPARATOR;
 use const T_NULL;
@@ -73,7 +75,6 @@ class YodaHelper
 	private const DYNAMISM_FUNCTION_CALL = 998;
 
 	/**
-	 * @param File $phpcsFile
 	 * @param array<int, array<string, array<int, int|string>|int|string>> $leftSideTokens
 	 * @param array<int, array<string, array<int, int|string>|int|string>> $rightSideTokens
 	 */
@@ -87,7 +88,6 @@ class YodaHelper
 
 	/**
 	 * @param array<int, array<string, array<int, int|string>|int|string>> $tokens
-	 * @param int $comparisonTokenPointer
 	 * @return array<int, array<string, array<int, int|string>|int|string>>
 	 */
 	public static function getLeftSideTokens(array $tokens, int $comparisonTokenPointer): array
@@ -134,7 +134,6 @@ class YodaHelper
 
 	/**
 	 * @param array<int, array<string, array<int, int|string>|int|string>> $tokens
-	 * @param int $comparisonTokenPointer
 	 * @return array<int, array<string, array<int, int|string>|int|string>>
 	 */
 	public static function getRightSideTokens(array $tokens, int $comparisonTokenPointer): array
@@ -182,7 +181,6 @@ class YodaHelper
 	/**
 	 * @param array<int, array<string, array<int, int|string>|int|string>> $tokens
 	 * @param array<int, array<string, array<int, int|string>|int|string>> $sideTokens
-	 * @return int|null
 	 */
 	public static function getDynamismForTokens(array $tokens, array $sideTokens): ?int
 	{
@@ -273,7 +271,6 @@ class YodaHelper
 	}
 
 	/**
-	 * @param File $phpcsFile
 	 * @param array<int, array<string, array<int, int|string>|int|string>> $oldTokens
 	 * @param array<int, array<string, array<int, int|string>|int|string>> $newTokens
 	 */
@@ -286,15 +283,13 @@ class YodaHelper
 		/** @var int $lastOldPointer */
 		$lastOldPointer = key($oldTokens);
 
-		for ($i = $firstOldPointer; $i <= $lastOldPointer; $i++) {
-			$phpcsFile->fixer->replaceToken($i, '');
-		}
-
-		$phpcsFile->fixer->addContent($firstOldPointer, implode('', array_map(static function (array $token): string {
+		$content = implode('', array_map(static function (array $token): string {
 			/** @var string $content */
 			$content = $token['content'];
 			return $content;
-		}, $newTokens)));
+		}, $newTokens));
+
+		FixerHelper::change($phpcsFile, $firstOldPointer, $lastOldPointer, $content);
 	}
 
 	/**
@@ -349,9 +344,12 @@ class YodaHelper
 				T_RETURN => true,
 				T_COMMA => true,
 				T_CLOSE_CURLY_BRACKET => true,
+				T_MATCH_ARROW => true,
+				T_FN_ARROW => true,
 			];
 
 			$stopTokenCodes += array_fill_keys(array_keys(Tokens::$assignmentTokens), true);
+			$stopTokenCodes += array_fill_keys(array_keys(Tokens::$commentTokens), true);
 		}
 
 		return $stopTokenCodes;

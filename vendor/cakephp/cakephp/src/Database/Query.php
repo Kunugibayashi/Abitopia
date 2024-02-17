@@ -29,6 +29,8 @@ use Closure;
 use InvalidArgumentException;
 use IteratorAggregate;
 use RuntimeException;
+use Throwable;
+use function Cake\Core\deprecationWarning;
 
 /**
  * This class represents a Relational database SQL Query. A query can be of
@@ -61,6 +63,13 @@ class Query implements ExpressionInterface, IteratorAggregate
      * @var \Cake\Database\Connection
      */
     protected $_connection;
+
+    /**
+     * Connection role ('read' or 'write')
+     *
+     * @var string
+     */
+    protected $connectionRole = Connection::ROLE_WRITE;
 
     /**
      * Type of this query (select, insert, update, delete).
@@ -101,6 +110,7 @@ class Query implements ExpressionInterface, IteratorAggregate
      * The list of query clauses to traverse for generating a SELECT statement
      *
      * @var array<string>
+     * @deprecated 4.4.3 This property is unused.
      */
     protected $_selectParts = [
         'with', 'select', 'from', 'join', 'where', 'group', 'having', 'order', 'limit',
@@ -111,6 +121,7 @@ class Query implements ExpressionInterface, IteratorAggregate
      * The list of query clauses to traverse for generating an UPDATE statement
      *
      * @var array<string>
+     * @deprecated 4.4.3 This property is unused.
      */
     protected $_updateParts = ['with', 'update', 'set', 'where', 'epilog'];
 
@@ -118,6 +129,7 @@ class Query implements ExpressionInterface, IteratorAggregate
      * The list of query clauses to traverse for generating a DELETE statement
      *
      * @var array<string>
+     * @deprecated 4.4.3 This property is unused.
      */
     protected $_deleteParts = ['with', 'delete', 'modifier', 'from', 'where', 'epilog'];
 
@@ -125,6 +137,7 @@ class Query implements ExpressionInterface, IteratorAggregate
      * The list of query clauses to traverse for generating an INSERT statement
      *
      * @var array<string>
+     * @deprecated 4.4.3 This property is unused.
      */
     protected $_insertParts = ['with', 'insert', 'values', 'epilog'];
 
@@ -173,6 +186,7 @@ class Query implements ExpressionInterface, IteratorAggregate
      * are enabled.
      *
      * @var bool
+     * @deprecated 4.5.0 Results will always be buffered in 5.0.
      */
     protected $_useBufferedResults = true;
 
@@ -223,6 +237,16 @@ class Query implements ExpressionInterface, IteratorAggregate
     public function getConnection(): Connection
     {
         return $this->_connection;
+    }
+
+    /**
+     * Returns the connection role ('read' or 'write')
+     *
+     * @return string
+     */
+    public function getConnectionRole(): string
+    {
+        return $this->connectionRole;
     }
 
     /**
@@ -306,8 +330,9 @@ class Query implements ExpressionInterface, IteratorAggregate
             $binder = $this->getValueBinder();
             $binder->resetCount();
         }
+        $connection = $this->getConnection();
 
-        return $this->getConnection()->compileQuery($this, $binder);
+        return $connection->getDriver($this->getConnectionRole())->compileQuery($this, $binder)[1];
     }
 
     /**
@@ -423,7 +448,7 @@ class Query implements ExpressionInterface, IteratorAggregate
         }
 
         if ($cte instanceof Closure) {
-            $query = $this->getConnection()->newQuery();
+            $query = $this->getConnection()->selectQuery();
             $cte = $cte(new CommonTableExpression(), $query);
             if (!($cte instanceof CommonTableExpression)) {
                 throw new RuntimeException(
@@ -793,7 +818,7 @@ class Query implements ExpressionInterface, IteratorAggregate
      *
      * See `join()` for further details on conditions and types.
      *
-     * @param array<string>|string $table The table to join with
+     * @param array<string, mixed>|string $table The table to join with
      * @param \Cake\Database\ExpressionInterface|array|string $conditions The conditions
      * to use for joining.
      * @param array $types a list of types associated to the conditions used for converting
@@ -815,7 +840,7 @@ class Query implements ExpressionInterface, IteratorAggregate
      * The arguments of this method are identical to the `leftJoin()` shorthand, please refer
      * to that methods description for further details.
      *
-     * @param array<string>|string $table The table to join with
+     * @param array<string, mixed>|string $table The table to join with
      * @param \Cake\Database\ExpressionInterface|array|string $conditions The conditions
      * to use for joining.
      * @param array $types a list of types associated to the conditions used for converting
@@ -837,7 +862,7 @@ class Query implements ExpressionInterface, IteratorAggregate
      * The arguments of this method are identical to the `leftJoin()` shorthand, please refer
      * to that method's description for further details.
      *
-     * @param array|string $table The table to join with
+     * @param array<string, mixed>|string $table The table to join with
      * @param \Cake\Database\ExpressionInterface|array|string $conditions The conditions
      * to use for joining.
      * @param array<string, string> $types a list of types associated to the conditions used for converting
@@ -854,12 +879,11 @@ class Query implements ExpressionInterface, IteratorAggregate
     /**
      * Returns an array that can be passed to the join method describing a single join clause
      *
-     * @param array<string>|string $table The table to join with
+     * @param array<string, mixed>|string $table The table to join with
      * @param \Cake\Database\ExpressionInterface|array|string $conditions The conditions
      * to use for joining.
      * @param string $type the join type to use
      * @return array
-     * @psalm-suppress InvalidReturnType
      */
     protected function _makeJoin($table, $conditions, $type): array
     {
@@ -872,7 +896,6 @@ class Query implements ExpressionInterface, IteratorAggregate
 
         /**
          * @psalm-suppress InvalidArrayOffset
-         * @psalm-suppress InvalidReturnStatement
          */
         return [
             $alias => [
@@ -995,6 +1018,19 @@ class Query implements ExpressionInterface, IteratorAggregate
      *
      * If you use string conditions make sure that your values are correctly quoted.
      * The safest thing you can do is to never use string conditions.
+     *
+     * ### Using null-able values
+     *
+     * When using values that can be null you can use the 'IS' keyword to let the ORM generate the correct SQL based on the value's type
+     *
+     * ```
+     * $query->where([
+     *     'posted >=' => new DateTime('3 days ago'),
+     *     'category_id IS' => $category,
+     * ]);
+     * ```
+     *
+     * If $category is `null` - it will actually convert that into `category_id IS NULL` - if it's `4` it will convert it into `category_id = 4`
      *
      * @param \Cake\Database\ExpressionInterface|\Closure|array|string|null $conditions The conditions to filter on.
      * @param array<string, string> $types Associative array of type names used to bind values to query
@@ -1530,6 +1566,9 @@ class Query implements ExpressionInterface, IteratorAggregate
      */
     public function limit($limit)
     {
+        if (is_string($limit) && !is_numeric($limit)) {
+            throw new InvalidArgumentException('Invalid value for `limit()`');
+        }
         $this->_dirty();
         $this->_parts['limit'] = $limit;
 
@@ -1556,6 +1595,9 @@ class Query implements ExpressionInterface, IteratorAggregate
      */
     public function offset($offset)
     {
+        if (is_string($offset) && !is_numeric($offset)) {
+            throw new InvalidArgumentException('Invalid value for `offset()`');
+        }
         $this->_dirty();
         $this->_parts['offset'] = $offset;
 
@@ -1642,7 +1684,7 @@ class Query implements ExpressionInterface, IteratorAggregate
      * with Query::values().
      *
      * @param array $columns The columns to insert into.
-     * @param array<string, string> $types A map between columns & their datatypes.
+     * @param array<int|string, string> $types A map between columns & their datatypes.
      * @return $this
      * @throws \RuntimeException When there are 0 columns.
      */
@@ -1886,14 +1928,36 @@ class Query implements ExpressionInterface, IteratorAggregate
      * any format accepted by \Cake\Database\Expression\QueryExpression:
      *
      * ```
-     * $expression = $query->newExpr(); // Returns an empty expression object
-     * $expression = $query->newExpr('Table.column = Table2.column'); // Return a raw SQL expression
+     * $expression = $query->expr(); // Returns an empty expression object
+     * $expression = $query->expr('Table.column = Table2.column'); // Return a raw SQL expression
      * ```
      *
      * @param \Cake\Database\ExpressionInterface|array|string|null $rawExpression A string, array or anything you want wrapped in an expression object
      * @return \Cake\Database\Expression\QueryExpression
      */
     public function newExpr($rawExpression = null): QueryExpression
+    {
+        return $this->expr($rawExpression);
+    }
+
+    /**
+     * Returns a new QueryExpression object. This is a handy function when
+     * building complex queries using a fluent interface. You can also override
+     * this function in subclasses to use a more specialized QueryExpression class
+     * if required.
+     *
+     * You can optionally pass a single raw SQL string or an array or expressions in
+     * any format accepted by \Cake\Database\Expression\QueryExpression:
+     *
+     * ```
+     * $expression = $query->expr(); // Returns an empty expression object
+     * $expression = $query->expr('Table.column = Table2.column'); // Return a raw SQL expression
+     * ```
+     *
+     * @param \Cake\Database\ExpressionInterface|array|string|null $rawExpression A string, array or anything you want wrapped in an expression object
+     * @return \Cake\Database\Expression\QueryExpression
+     */
+    public function expr($rawExpression = null): QueryExpression
     {
         $expression = new QueryExpression([], $this->getTypeMap());
 
@@ -2151,9 +2215,15 @@ class Query implements ExpressionInterface, IteratorAggregate
      *
      * @param bool $enable Whether to enable buffering
      * @return $this
+     * @deprecated 4.5.0 Results will always be buffered in 5.0.
      */
     public function enableBufferedResults(bool $enable = true)
     {
+        if (!$enable) {
+            deprecationWarning(
+                '4.5.0 enableBufferedResults() is deprecated. Results will always be buffered in 5.0.'
+            );
+        }
         $this->_dirty();
         $this->_useBufferedResults = $enable;
 
@@ -2167,6 +2237,7 @@ class Query implements ExpressionInterface, IteratorAggregate
      * remembered for future iterations.
      *
      * @return $this
+     * @deprecated 4.5.0 Results will always be buffered in 5.0.
      */
     public function disableBufferedResults()
     {
@@ -2187,6 +2258,7 @@ class Query implements ExpressionInterface, IteratorAggregate
      * remembered for future iterations.
      *
      * @return bool
+     * @deprecated 4.5.0 Results will always be buffered in 5.0.
      */
     public function isBufferedResultsEnabled(): bool
     {
@@ -2281,7 +2353,7 @@ class Query implements ExpressionInterface, IteratorAggregate
     protected function _decorateStatement(StatementInterface $statement)
     {
         $typeMap = $this->getSelectTypeMap();
-        $driver = $this->getConnection()->getDriver();
+        $driver = $this->getConnection()->getDriver($this->connectionRole);
 
         if ($this->typeCastEnabled && $typeMap->toArray()) {
             $statement = new CallbackStatement($statement, $driver, new FieldTypeConverter($typeMap, $driver));
@@ -2372,7 +2444,6 @@ class Query implements ExpressionInterface, IteratorAggregate
                             }
                         }
                     } elseif ($piece instanceof ExpressionInterface) {
-                        /** @psalm-suppress PossiblyUndefinedMethod */
                         $this->_parts[$name][$i] = clone $piece;
                     }
                 }
@@ -2411,7 +2482,7 @@ class Query implements ExpressionInterface, IteratorAggregate
             );
             $sql = $this->sql();
             $params = $this->getValueBinder()->bindings();
-        } catch (RuntimeException $e) {
+        } catch (Throwable $e) {
             $sql = 'SQL could not be generated for this query as it is incomplete.';
             $params = [];
         } finally {
@@ -2426,5 +2497,20 @@ class Query implements ExpressionInterface, IteratorAggregate
             'decorators' => count($this->_resultDecorators),
             'executed' => $this->_iterator ? true : false,
         ];
+    }
+
+    /**
+     * Helper for Query deprecation methods.
+     *
+     * @param string $method The method that is invalid.
+     * @param string $message An additional message.
+     * @return void
+     * @internal
+     */
+    protected function _deprecatedMethod($method, $message = '')
+    {
+        $class = static::class;
+        $text = "As of 4.5.0 calling {$method}() on {$class} is deprecated. " . $message;
+        deprecationWarning($text);
     }
 }

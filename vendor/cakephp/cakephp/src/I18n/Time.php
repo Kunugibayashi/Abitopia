@@ -20,6 +20,7 @@ use Cake\Chronos\MutableDateTime;
 use DateTimeInterface;
 use DateTimeZone;
 use IntlDateFormatter;
+use function Cake\Core\deprecationWarning;
 
 /**
  * Extends the built-in DateTime class to provide handy methods and locale-aware
@@ -37,7 +38,7 @@ class Time extends MutableDateTime implements I18nDateTimeInterface
      *
      * The format should be either the formatting constants from IntlDateFormatter as
      * described in (https://secure.php.net/manual/en/class.intldateformatter.php) or a pattern
-     * as specified in (http://www.icu-project.org/apiref/icu4c/classSimpleDateFormat.html#details)
+     * as specified in (https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/classSimpleDateFormat.html#details)
      *
      * It is possible to provide an array of 2 constants. In this case, the first position
      * will be used for formatting the date part of the object and the second position
@@ -53,7 +54,7 @@ class Time extends MutableDateTime implements I18nDateTimeInterface
      *
      * The format should be either the formatting constants from IntlDateFormatter as
      * described in (https://secure.php.net/manual/en/class.intldateformatter.php) or a pattern
-     * as specified in (http://www.icu-project.org/apiref/icu4c/classSimpleDateFormat.html#details)
+     * as specified in (https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/classSimpleDateFormat.html#details)
      *
      * It is possible to provide an array of 2 constants. In this case, the first position
      * will be used for formatting the date part of the object and the second position
@@ -69,7 +70,7 @@ class Time extends MutableDateTime implements I18nDateTimeInterface
      *
      * The format should be either the formatting constants from IntlDateFormatter as
      * described in (https://secure.php.net/manual/en/class.intldateformatter.php) or a pattern
-     * as specified in (http://www.icu-project.org/apiref/icu4c/classSimpleDateFormat.html#details)
+     * as specified in (https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/classSimpleDateFormat.html#details)
      *
      * It is possible to provide an array of 2 constants. In this case, the first position
      * will be used for formatting the date part of the object and the second position

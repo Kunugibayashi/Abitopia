@@ -17,8 +17,9 @@ namespace Cake\TestSuite;
 
 use Cake\Controller\Controller;
 use Cake\Core\Configure;
+use Cake\Core\TestSuite\ContainerStubTrait;
 use Cake\Database\Exception\DatabaseException;
-use Cake\Error\ExceptionRenderer;
+use Cake\Error\Renderer\WebExceptionRenderer;
 use Cake\Event\EventInterface;
 use Cake\Event\EventManager;
 use Cake\Form\FormProtector;
@@ -553,9 +554,9 @@ trait IntegrationTestTrait
     {
         $class = Configure::read('Error.exceptionRenderer');
         if (empty($class) || !class_exists($class)) {
-            $class = ExceptionRenderer::class;
+            $class = WebExceptionRenderer::class;
         }
-        /** @var \Cake\Error\ExceptionRenderer $instance */
+        /** @var \Cake\Error\Renderer\WebExceptionRenderer $instance */
         $instance = new $class($exception);
         $this->_response = $instance->render();
     }
@@ -588,7 +589,7 @@ trait IntegrationTestTrait
             'QUERY_STRING' => $query,
             'REQUEST_URI' => $url,
         ];
-        if (!empty($hostInfo['ssl'])) {
+        if (!empty($hostInfo['https'])) {
             $env['HTTPS'] = 'on';
         }
         if (isset($hostInfo['host'])) {
@@ -627,9 +628,8 @@ trait IntegrationTestTrait
 
         $props['cookies'] = $this->_cookie;
         $session->write($this->_session);
-        $props = Hash::merge($props, $this->_request);
 
-        return $props;
+        return Hash::merge($props, $this->_request);
     }
 
     /**
@@ -728,7 +728,7 @@ trait IntegrationTestTrait
             $hostData['host'] = $uri->getHost();
         }
         if ($uri->getScheme()) {
-            $hostData['ssl'] = $uri->getScheme() === 'https';
+            $hostData['https'] = $uri->getScheme() === 'https';
         }
 
         return [$path, $query, $hostData];
@@ -1249,6 +1249,22 @@ trait IntegrationTestTrait
     }
 
     /**
+     * Asserts that a cookie is set.
+     *
+     * Useful when you're working with cookies that have obfuscated values
+     * but the cookie being set is important.
+     *
+     * @param string $name The cookie name.
+     * @param string $message The failure message that will be appended to the generated message.
+     * @return void
+     */
+    public function assertCookieIsSet(string $name, string $message = ''): void
+    {
+        $verboseMessage = $this->extractVerboseMessage($message);
+        $this->assertThat($name, new CookieSet($this->_response), $verboseMessage);
+    }
+
+    /**
      * Asserts a cookie has not been set in the response
      *
      * @param string $cookie The cookie name to check
@@ -1320,6 +1336,11 @@ trait IntegrationTestTrait
         $verboseMessage = $this->extractVerboseMessage($message);
         $this->assertThat(null, new FileSent($this->_response), $verboseMessage);
         $this->assertThat($expected, new FileSentAs($this->_response), $verboseMessage);
+
+        if (!$this->_response) {
+            return;
+        }
+        $this->_response->getBody()->close();
     }
 
     /**
@@ -1352,10 +1373,26 @@ trait IntegrationTestTrait
      */
     protected function extractExceptionMessage(Exception $exception): string
     {
-        return PHP_EOL .
-            sprintf('Possibly related to %s: "%s" ', get_class($exception), $exception->getMessage()) .
-            PHP_EOL .
-            $exception->getTraceAsString();
+        $exceptions = [$exception];
+        $previous = $exception->getPrevious();
+        while ($previous != null) {
+            $exceptions[] = $previous;
+            $previous = $previous->getPrevious();
+        }
+        $message = PHP_EOL;
+        foreach ($exceptions as $i => $error) {
+            if ($i == 0) {
+                $message .= sprintf('Possibly related to %s: "%s"', get_class($error), $error->getMessage());
+                $message .= PHP_EOL;
+            } else {
+                $message .= sprintf('Caused by %s: "%s"', get_class($error), $error->getMessage());
+                $message .= PHP_EOL;
+            }
+            $message .= $error->getTraceAsString();
+            $message .= PHP_EOL;
+        }
+
+        return $message;
     }
 
     /**
@@ -1363,6 +1400,7 @@ trait IntegrationTestTrait
      */
     protected function getSession(): TestSession
     {
+        /** @psalm-suppress InvalidScalarArgument */
         return new TestSession($_SESSION);
     }
 }

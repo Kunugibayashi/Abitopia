@@ -22,6 +22,8 @@ use Cake\Routing\Router;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use Throwable;
+use function Cake\Core\deprecationWarning;
+use function Cake\Core\getTypeName;
 
 /**
  * Base error handler that provides logic common to the CLI + web
@@ -88,6 +90,12 @@ abstract class BaseErrorHandler
      */
     public function register(): void
     {
+        deprecationWarning(
+            'Use of `BaseErrorHandler` and subclasses are deprecated. ' .
+            'Upgrade to the new `ErrorTrap` and `ExceptionTrap` subsystem. ' .
+            'See https://book.cakephp.org/4/en/appendices/4-4-migration-guide.html'
+        );
+
         $level = $this->_config['errorLevel'] ?? -1;
         error_reporting($level);
         set_error_handler([$this, 'handleError'], $level);
@@ -329,6 +337,11 @@ abstract class BaseErrorHandler
     {
         if (empty($this->_config['log'])) {
             return false;
+        }
+        foreach ($this->_config['skipLog'] as $class) {
+            if ($exception instanceof $class) {
+                return false;
+            }
         }
 
         return $this->getLogger()->log($exception, $request ?? Router::getRequest());

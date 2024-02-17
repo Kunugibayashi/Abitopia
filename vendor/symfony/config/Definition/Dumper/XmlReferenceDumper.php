@@ -25,7 +25,7 @@ use Symfony\Component\Config\Definition\PrototypedArrayNode;
  */
 class XmlReferenceDumper
 {
-    private $reference;
+    private ?string $reference = null;
 
     public function dump(ConfigurationInterface $configuration, string $namespace = null)
     {
@@ -147,7 +147,7 @@ class XmlReferenceDumper
                 }
 
                 if ($child instanceof BaseNode && $example = $child->getExample()) {
-                    $comments[] = 'Example: '.$example;
+                    $comments[] = 'Example: '.(\is_array($example) ? implode(', ', $example) : $example);
                 }
 
                 if ($child->isRequired()) {
@@ -268,10 +268,8 @@ class XmlReferenceDumper
 
     /**
      * Renders the string conversion of the value.
-     *
-     * @param mixed $value
      */
-    private function writeValue($value): string
+    private function writeValue(mixed $value): string
     {
         if ('%%%%not_defined%%%%' === $value) {
             return '';

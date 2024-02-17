@@ -5,9 +5,10 @@ namespace SlevomatCodingStandard\Sniffs\Classes;
 use PHP_CodeSniffer\Files\File;
 use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Util\Tokens;
-use SlevomatCodingStandard\Helpers\Annotation\VariableAnnotation;
+use PHPStan\PhpDocParser\Ast\PhpDoc\VarTagValueNode;
 use SlevomatCodingStandard\Helpers\AnnotationHelper;
 use SlevomatCodingStandard\Helpers\DocCommentHelper;
+use SlevomatCodingStandard\Helpers\FixerHelper;
 use SlevomatCodingStandard\Helpers\FunctionHelper;
 use SlevomatCodingStandard\Helpers\PropertyHelper;
 use SlevomatCodingStandard\Helpers\SniffSettingsHelper;
@@ -37,10 +38,10 @@ use const T_INC;
 use const T_OBJECT_OPERATOR;
 use const T_OPEN_CURLY_BRACKET;
 use const T_OPEN_PARENTHESIS;
+use const T_READONLY;
 use const T_SEMICOLON;
 use const T_SWITCH;
 use const T_VARIABLE;
-use const T_WHITESPACE;
 
 class RequireConstructorPropertyPromotionSniff implements Sniff
 {
@@ -60,7 +61,6 @@ class RequireConstructorPropertyPromotionSniff implements Sniff
 
 	/**
 	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
-	 * @param File $phpcsFile
 	 * @param int $functionPointer
 	 */
 	public function process(File $phpcsFile, $functionPointer): void
@@ -158,7 +158,7 @@ class RequireConstructorPropertyPromotionSniff implements Sniff
 					continue;
 				}
 
-				if ($this->isParameterModifiedBeforeAssigment($phpcsFile, $functionPointer, $parameterName, $assignmentPointer)) {
+				if ($this->isParameterModifiedBeforeAssignment($phpcsFile, $functionPointer, $parameterName, $assignmentPointer)) {
 					continue;
 				}
 
@@ -172,15 +172,23 @@ class RequireConstructorPropertyPromotionSniff implements Sniff
 					continue;
 				}
 
-				$visibilityPointer = TokenHelper::findPrevious($phpcsFile, Tokens::$scopeModifiers, $propertyPointer - 1);
-				$visibility = $tokens[$visibilityPointer]['content'];
-
 				$propertyDocCommentOpenerPointer = DocCommentHelper::findDocCommentOpenPointer($phpcsFile, $propertyPointer);
 				$pointerBeforeProperty = TokenHelper::findFirstTokenOnLine(
 					$phpcsFile,
 					$propertyDocCommentOpenerPointer ?? $propertyPointer
 				);
 				$propertyEndPointer = TokenHelper::findNext($phpcsFile, T_SEMICOLON, $propertyPointer + 1);
+
+				$visibilityPointer = TokenHelper::findPrevious(
+					$phpcsFile,
+					Tokens::$scopeModifiers,
+					$propertyPointer - 1,
+					$pointerBeforeProperty
+				);
+				$visibility = $tokens[$visibilityPointer]['content'];
+
+				$readonlyPointer = TokenHelper::findPrevious($phpcsFile, T_READONLY, $propertyPointer - 1, $pointerBeforeProperty);
+				$isReadonly = $readonlyPointer !== null;
 
 				$propertyEqualPointer = TokenHelper::findNext($phpcsFile, T_EQUAL, $propertyPointer + 1, $propertyEndPointer);
 				$propertyDefaultValue = $propertyEqualPointer !== null
@@ -190,7 +198,7 @@ class RequireConstructorPropertyPromotionSniff implements Sniff
 				$propertyEndPointer = TokenHelper::findNext($phpcsFile, T_SEMICOLON, $propertyPointer + 1);
 				$pointerAfterProperty = TokenHelper::findFirstTokenOnLine(
 					$phpcsFile,
-					TokenHelper::findNextExcluding($phpcsFile, T_WHITESPACE, $propertyEndPointer + 1)
+					TokenHelper::findNextNonWhitespace($phpcsFile, $propertyEndPointer + 1)
 				);
 
 				$pointerBeforeParameterStart = TokenHelper::findPrevious($phpcsFile, [T_COMMA, T_OPEN_PARENTHESIS], $parameterPointer - 1);
@@ -204,8 +212,10 @@ class RequireConstructorPropertyPromotionSniff implements Sniff
 
 				$phpcsFile->fixer->beginChangeset();
 
-				for ($i = $pointerBeforeProperty; $i < $pointerAfterProperty; $i++) {
-					$phpcsFile->fixer->replaceToken($i, '');
+				FixerHelper::removeBetweenIncluding($phpcsFile, $pointerBeforeProperty, $pointerAfterProperty - 1);
+
+				if ($isReadonly) {
+					$phpcsFile->fixer->addContentBefore($parameterStartPointer, 'readonly ');
 				}
 
 				$phpcsFile->fixer->addContentBefore($parameterStartPointer, sprintf('%s ', $visibility));
@@ -214,9 +224,7 @@ class RequireConstructorPropertyPromotionSniff implements Sniff
 					$phpcsFile->fixer->addContent($parameterPointer, sprintf(' = %s', $propertyDefaultValue));
 				}
 
-				for ($i = $pointerBeforeAssignment; $i <= $pointerAfterAssignment; $i++) {
-					$phpcsFile->fixer->replaceToken($i, '');
-				}
+				FixerHelper::removeBetweenIncluding($phpcsFile, $pointerBeforeAssignment, $pointerAfterAssignment);
 
 				$phpcsFile->fixer->endChangeset();
 			}
@@ -272,9 +280,7 @@ class RequireConstructorPropertyPromotionSniff implements Sniff
 	}
 
 	/**
-	 * @param File $phpcsFile
-	 * @param int $functionPointer
-	 * @return int[]
+	 * @return list<int>
 	 */
 	private function getParameterPointers(File $phpcsFile, int $functionPointer): array
 	{
@@ -288,9 +294,7 @@ class RequireConstructorPropertyPromotionSniff implements Sniff
 	}
 
 	/**
-	 * @param File $phpcsFile
-	 * @param int $classPointer
-	 * @return int[]
+	 * @return list<int>
 	 */
 	private function getPropertyPointers(File $phpcsFile, int $classPointer): array
 	{
@@ -315,16 +319,14 @@ class RequireConstructorPropertyPromotionSniff implements Sniff
 			return true;
 		}
 
-		foreach (AnnotationHelper::getAnnotations($phpcsFile, $propertyPointer) as $annotationType => $annotations) {
-			if ($annotationType !== '@var') {
+		foreach (AnnotationHelper::getAnnotations($phpcsFile, $propertyPointer) as $annotation) {
+			$annotationValue = $annotation->getValue();
+			if (!$annotationValue instanceof VarTagValueNode) {
 				return true;
 			}
 
-			/** @var VariableAnnotation $annotation */
-			foreach ($annotations as $annotation) {
-				if ($annotation->hasDescription()) {
-					return true;
-				}
+			if ($annotationValue->description !== '') {
+				return true;
 			}
 		}
 
@@ -357,16 +359,16 @@ class RequireConstructorPropertyPromotionSniff implements Sniff
 		return $parameterTypeHint->getTypeHint() === $propertyTypeHint->getTypeHint();
 	}
 
-	private function isParameterModifiedBeforeAssigment(
+	private function isParameterModifiedBeforeAssignment(
 		File $phpcsFile,
 		int $functionPointer,
 		string $parameterName,
-		int $assigmentPointer
+		int $assignmentPointer
 	): bool
 	{
 		$tokens = $phpcsFile->getTokens();
 
-		for ($i = $assigmentPointer - 1; $i > $tokens[$functionPointer]['scope_opener']; $i--) {
+		for ($i = $assignmentPointer - 1; $i > $tokens[$functionPointer]['scope_opener']; $i--) {
 			if ($tokens[$i]['code'] !== T_VARIABLE) {
 				continue;
 			}

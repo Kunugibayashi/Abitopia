@@ -10,17 +10,16 @@ namespace Phinx\Console\Command;
 use InvalidArgumentException;
 use Phinx\Migration\Manager\Environment;
 use Phinx\Util\Util;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-/**
- * @author Leonid Kuzmin <lndkuzmin@gmail.com>
- */
+#[AsCommand(name: 'test')]
 class Test extends AbstractCommand
 {
     /**
-     * @var string
+     * @var string|null
      */
     protected static $defaultName = 'test';
 
@@ -29,7 +28,7 @@ class Test extends AbstractCommand
      *
      * @return void
      */
-    protected function configure()
+    protected function configure(): void
     {
         parent::configure();
 
@@ -56,7 +55,7 @@ EOT
      * @throws \InvalidArgumentException
      * @return int 0 on success
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->loadConfig($input, $output);
         $this->loadManager($input, $output);
@@ -82,7 +81,7 @@ EOT
                 ));
             }
 
-            $output->writeln(sprintf('<info>validating environment</info> %s', $envName));
+            $output->writeln(sprintf('<info>validating environment</info> %s', $envName), $this->verbosityLevel);
             $environment = new Environment(
                 $envName,
                 $this->getConfig()->getEnvironment($envName)
@@ -91,7 +90,7 @@ EOT
             $environment->getAdapter()->connect();
         }
 
-        $output->writeln('<info>success!</info>');
+        $output->writeln('<info>success!</info>', $this->verbosityLevel);
 
         return self::CODE_SUCCESS;
     }

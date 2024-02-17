@@ -17,6 +17,7 @@ declare(strict_types=1);
 namespace Cake\I18n;
 
 use NumberFormatter;
+use function Cake\Core\deprecationWarning;
 
 /**
  * Number helper library.
@@ -85,7 +86,7 @@ class Number
      *
      * - `locale`: The locale name to use for formatting the number, e.g. fr_FR
      *
-     * @param string|float $value A floating point number.
+     * @param string|float|int $value A floating point number.
      * @param int $precision The precision of the returned number.
      * @param array<string, mixed> $options Additional options
      * @return string Formatted float.
@@ -95,13 +96,13 @@ class Number
     {
         $formatter = static::formatter(['precision' => $precision, 'places' => $precision] + $options);
 
-        return $formatter->format($value);
+        return $formatter->format((float)$value);
     }
 
     /**
      * Returns a formatted-for-humans file size.
      *
-     * @param string|int $size Size in bytes
+     * @param string|float|int $size Size in bytes
      * @return string Human readable size
      * @link https://book.cakephp.org/4/en/core-libraries/number.html#interacting-with-human-readable-values
      */
@@ -131,7 +132,7 @@ class Number
      * - `multiply`: Multiply the input value by 100 for decimal percentages.
      * - `locale`: The locale name to use for formatting the number, e.g. fr_FR
      *
-     * @param string|float $value A floating point number
+     * @param string|float|int $value A floating point number
      * @param int $precision The precision of the returned number
      * @param array<string, mixed> $options Options
      * @return string Percentage string
@@ -159,7 +160,7 @@ class Number
      * - `before` - The string to place before whole numbers, e.g. '['
      * - `after` - The string to place after decimal numbers, e.g. ']'
      *
-     * @param string|float $value A floating point number.
+     * @param string|int|float $value A floating point number.
      * @param array<string, mixed> $options An array with options.
      * @return string Formatted number
      */

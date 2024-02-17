@@ -19,6 +19,8 @@ use Cake\Console\CommandCollection;
 use Cake\Core\BasePlugin;
 use Cake\Core\Configure;
 use Cake\Core\PluginApplicationInterface;
+use Cake\Error\PhpError;
+use Cake\Event\EventInterface;
 use Cake\Event\EventManager;
 use Cake\Http\MiddlewareQueue;
 use DebugKit\Command\BenchmarkCommand;
@@ -31,7 +33,7 @@ use DebugKit\Panel\DeprecationsPanel;
 class Plugin extends BasePlugin
 {
     /**
-     * @var \DebugKit\ToolbarService
+     * @var \DebugKit\ToolbarService|null
      */
     protected $service;
 
@@ -45,12 +47,11 @@ class Plugin extends BasePlugin
     {
         $service = new ToolbarService(EventManager::instance(), (array)Configure::read('DebugKit'));
 
-        if (!$service->isEnabled() || php_sapi_name() === 'cli' || php_sapi_name() === 'phpdbg') {
+        if (!$service->isEnabled()) {
             return;
         }
 
         $this->service = $service;
-
         $this->setDeprecationHandler($service);
 
         // will load `config/bootstrap.php`.
@@ -65,6 +66,7 @@ class Plugin extends BasePlugin
      */
     public function middleware(MiddlewareQueue $middlewareQueue): MiddlewareQueue
     {
+        // Only insert middleware if Toolbar Service is available (not in phpunit run)
         if ($this->service) {
             $middlewareQueue->insertAt(0, new DebugKitMiddleware($this->service));
         }
@@ -92,22 +94,30 @@ class Plugin extends BasePlugin
     public function setDeprecationHandler($service)
     {
         if (!empty($service->getConfig('panels')['DebugKit.Deprecations'])) {
-            $previousHandler = set_error_handler(
-                function ($code, $message, $file, $line, $context = null) use (&$previousHandler) {
-                    if ($code == E_USER_DEPRECATED || $code == E_DEPRECATED) {
-                        DeprecationsPanel::addDeprecatedError(compact('code', 'message', 'file', 'line', 'context'));
-
-                        return;
-                    }
-                    if ($previousHandler) {
-                        $context['_trace_frame_offset'] = 1;
-
-                        return $previousHandler($code, $message, $file, $line, $context);
-                    }
-
-                    return false;
+            EventManager::instance()->on('Error.beforeRender', function (EventInterface $event, PhpError $error) {
+                $code = $error->getCode();
+                if ($code !== E_USER_DEPRECATED && $code !== E_DEPRECATED) {
+                    return;
                 }
-            );
+                $file = $error->getFile();
+                $line = $error->getLine();
+
+                // Extract the line/file from the message as deprecationWarning
+                // will calculate the application frame when generating the message.
+                preg_match('/\\n([^\n,]+?), line: (\d+)\\n/', $error->getMessage(), $matches);
+                if ($matches) {
+                    $file = $matches[1];
+                    $line = $matches[2];
+                }
+
+                DeprecationsPanel::addDeprecatedError([
+                    'code' => $code,
+                    'message' => $error->getMessage(),
+                    'file' => $file,
+                    'line' => $line,
+                ]);
+                $event->stopPropagation();
+            });
         }
     }
 }

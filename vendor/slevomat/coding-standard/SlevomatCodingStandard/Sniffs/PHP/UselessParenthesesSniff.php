@@ -5,6 +5,7 @@ namespace SlevomatCodingStandard\Sniffs\PHP;
 use PHP_CodeSniffer\Files\File;
 use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Util\Tokens;
+use SlevomatCodingStandard\Helpers\FixerHelper;
 use SlevomatCodingStandard\Helpers\IdentificatorHelper;
 use SlevomatCodingStandard\Helpers\TokenHelper;
 use function array_key_exists;
@@ -44,6 +45,7 @@ use const T_LIST;
 use const T_LNUMBER;
 use const T_LOGICAL_AND;
 use const T_LOGICAL_OR;
+use const T_LOGICAL_XOR;
 use const T_MATCH;
 use const T_MINUS;
 use const T_MODULUS;
@@ -110,7 +112,6 @@ class UselessParenthesesSniff implements Sniff
 
 	/**
 	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
-	 * @param File $phpcsFile
 	 * @param int $parenthesisOpenerPointer
 	 */
 	public function process(File $phpcsFile, $parenthesisOpenerPointer): void
@@ -118,6 +119,10 @@ class UselessParenthesesSniff implements Sniff
 		$tokens = $phpcsFile->getTokens();
 
 		if (array_key_exists('parenthesis_owner', $tokens[$parenthesisOpenerPointer])) {
+			return;
+		}
+
+		if (!array_key_exists('parenthesis_closer', $tokens[$parenthesisOpenerPointer])) {
 			return;
 		}
 
@@ -134,8 +139,10 @@ class UselessParenthesesSniff implements Sniff
 				T_FN,
 				T_USE,
 				T_ANON_CLASS,
+				T_NEW,
 				T_SELF,
 				T_STATIC,
+				T_PARENT,
 				T_EXIT,
 				T_CLOSE_PARENTHESIS,
 				T_EVAL,
@@ -212,7 +219,7 @@ class UselessParenthesesSniff implements Sniff
 
 		if (TokenHelper::findNext(
 			$phpcsFile,
-			[T_LOGICAL_AND, T_LOGICAL_OR],
+			[T_LOGICAL_AND, T_LOGICAL_OR, T_LOGICAL_XOR],
 			$parenthesisOpenerPointer + 1,
 			$parenthesisCloserPointer
 		) !== null) {
@@ -269,12 +276,10 @@ class UselessParenthesesSniff implements Sniff
 		}
 
 		$phpcsFile->fixer->beginChangeset();
-		for ($i = $parenthesisOpenerPointer; $i < $contentStartPointer; $i++) {
-			$phpcsFile->fixer->replaceToken($i, '');
-		}
-		for ($i = $contentEndPointer + 1; $i <= $parenthesisCloserPointer; $i++) {
-			$phpcsFile->fixer->replaceToken($i, '');
-		}
+
+		FixerHelper::removeBetweenIncluding($phpcsFile, $parenthesisOpenerPointer, $contentStartPointer - 1);
+		FixerHelper::removeBetweenIncluding($phpcsFile, $contentEndPointer + 1, $parenthesisCloserPointer);
+
 		$phpcsFile->fixer->endChangeset();
 	}
 
@@ -305,12 +310,10 @@ class UselessParenthesesSniff implements Sniff
 		$contentEndPointer = TokenHelper::findPreviousEffective($phpcsFile, $tokens[$parenthesisOpenerPointer]['parenthesis_closer'] - 1);
 
 		$phpcsFile->fixer->beginChangeset();
-		for ($i = $parenthesisOpenerPointer; $i < $contentStartPointer; $i++) {
-			$phpcsFile->fixer->replaceToken($i, '');
-		}
-		for ($i = $contentEndPointer + 1; $i <= $tokens[$parenthesisOpenerPointer]['parenthesis_closer']; $i++) {
-			$phpcsFile->fixer->replaceToken($i, '');
-		}
+
+		FixerHelper::removeBetweenIncluding($phpcsFile, $parenthesisOpenerPointer, $contentStartPointer - 1);
+		FixerHelper::removeBetweenIncluding($phpcsFile, $contentEndPointer + 1, $tokens[$parenthesisOpenerPointer]['parenthesis_closer']);
+
 		$phpcsFile->fixer->endChangeset();
 	}
 
@@ -387,7 +390,7 @@ class UselessParenthesesSniff implements Sniff
 			} while (true);
 		} else {
 			$nextPointer = TokenHelper::findNext($phpcsFile, T_OPEN_PARENTHESIS, $notBooleanNotOperatorPointer + 1);
-			if ($nextPointer === null) {
+			if ($nextPointer === null || !isset($tokens[$nextPointer]['parenthesis_closer'])) {
 				return;
 			}
 
@@ -407,12 +410,10 @@ class UselessParenthesesSniff implements Sniff
 		}
 
 		$phpcsFile->fixer->beginChangeset();
-		for ($i = $parenthesisOpenerPointer; $i < $contentStartPointer; $i++) {
-			$phpcsFile->fixer->replaceToken($i, '');
-		}
-		for ($i = $contentEndPointer + 1; $i <= $tokens[$parenthesisOpenerPointer]['parenthesis_closer']; $i++) {
-			$phpcsFile->fixer->replaceToken($i, '');
-		}
+
+		FixerHelper::removeBetweenIncluding($phpcsFile, $parenthesisOpenerPointer, $contentStartPointer - 1);
+		FixerHelper::removeBetweenIncluding($phpcsFile, $contentEndPointer + 1, $tokens[$parenthesisOpenerPointer]['parenthesis_closer']);
+
 		$phpcsFile->fixer->endChangeset();
 	}
 
@@ -439,12 +440,10 @@ class UselessParenthesesSniff implements Sniff
 		}
 
 		$phpcsFile->fixer->beginChangeset();
-		for ($i = $parenthesisOpenerPointer; $i < $stringPointer; $i++) {
-			$phpcsFile->fixer->replaceToken($i, '');
-		}
-		for ($i = $stringPointer + 1; $i <= $tokens[$parenthesisOpenerPointer]['parenthesis_closer']; $i++) {
-			$phpcsFile->fixer->replaceToken($i, '');
-		}
+
+		FixerHelper::removeBetweenIncluding($phpcsFile, $parenthesisOpenerPointer, $stringPointer - 1);
+		FixerHelper::removeBetweenIncluding($phpcsFile, $stringPointer + 1, $tokens[$parenthesisOpenerPointer]['parenthesis_closer']);
+
 		$phpcsFile->fixer->endChangeset();
 	}
 
@@ -570,12 +569,10 @@ class UselessParenthesesSniff implements Sniff
 		$contentEndPointer = TokenHelper::findPreviousEffective($phpcsFile, $tokens[$parenthesisOpenerPointer]['parenthesis_closer'] - 1);
 
 		$phpcsFile->fixer->beginChangeset();
-		for ($i = $parenthesisOpenerPointer; $i < $contentStartPointer; $i++) {
-			$phpcsFile->fixer->replaceToken($i, '');
-		}
-		for ($i = $contentEndPointer + 1; $i <= $tokens[$parenthesisOpenerPointer]['parenthesis_closer']; $i++) {
-			$phpcsFile->fixer->replaceToken($i, '');
-		}
+
+		FixerHelper::removeBetweenIncluding($phpcsFile, $parenthesisOpenerPointer, $contentStartPointer - 1);
+		FixerHelper::removeBetweenIncluding($phpcsFile, $contentEndPointer + 1, $tokens[$parenthesisOpenerPointer]['parenthesis_closer']);
+
 		$phpcsFile->fixer->endChangeset();
 	}
 

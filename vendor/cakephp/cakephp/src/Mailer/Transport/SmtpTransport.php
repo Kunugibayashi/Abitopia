@@ -16,18 +16,30 @@ declare(strict_types=1);
  */
 namespace Cake\Mailer\Transport;
 
+use Cake\Core\Exception\CakeException;
 use Cake\Mailer\AbstractTransport;
 use Cake\Mailer\Message;
 use Cake\Network\Exception\SocketException;
 use Cake\Network\Socket;
 use Exception;
 use RuntimeException;
+use function Cake\Core\env;
 
 /**
  * Send mail using SMTP protocol
  */
 class SmtpTransport extends AbstractTransport
 {
+    public const AUTH_PLAIN = 'PLAIN';
+    public const AUTH_LOGIN = 'LOGIN';
+    public const AUTH_XOAUTH2 = 'XOAUTH2';
+
+    public const SUPPORTED_AUTH_TYPES = [
+        self::AUTH_PLAIN,
+        self::AUTH_LOGIN,
+        self::AUTH_XOAUTH2,
+    ];
+
     /**
      * Default config for this class
      *
@@ -42,6 +54,7 @@ class SmtpTransport extends AbstractTransport
         'client' => null,
         'tls' => false,
         'keepAlive' => false,
+        'authType' => null,
     ];
 
     /**
@@ -54,7 +67,7 @@ class SmtpTransport extends AbstractTransport
     /**
      * Content of email to return
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $_content = [];
 
@@ -64,6 +77,13 @@ class SmtpTransport extends AbstractTransport
      * @var array
      */
     protected $_lastResponse = [];
+
+    /**
+     * Authentication type.
+     *
+     * @var string|null
+     */
+    protected $authType = null;
 
     /**
      * Destructor
@@ -169,9 +189,8 @@ class SmtpTransport extends AbstractTransport
      * Send mail
      *
      * @param \Cake\Mailer\Message $message Message instance
-     * @return array
+     * @return array{headers: string, message: string}
      * @throws \Cake\Network\Exception\SocketException
-     * @psalm-return array{headers: string, message: string}
      */
     public function send(Message $message): array
     {
@@ -212,6 +231,53 @@ class SmtpTransport extends AbstractTransport
             }
         }
         $this->_lastResponse = array_merge($this->_lastResponse, $response);
+    }
+
+    /**
+     * Parses the last response line and extract the preferred authentication type.
+     *
+     * @return void
+     */
+    protected function _parseAuthType(): void
+    {
+        $authType = $this->getConfig('authType');
+        if ($authType !== null) {
+            if (!in_array($authType, self::SUPPORTED_AUTH_TYPES)) {
+                throw new CakeException(
+                    'Unsupported auth type. Available types are: ' . implode(', ', self::SUPPORTED_AUTH_TYPES)
+                );
+            }
+
+            $this->authType = $authType;
+
+            return;
+        }
+
+        if (!isset($this->_config['username'], $this->_config['password'])) {
+            return;
+        }
+
+        $auth = '';
+        foreach ($this->_lastResponse as $line) {
+            if (strlen($line['message']) === 0 || substr($line['message'], 0, 5) === 'AUTH ') {
+                $auth = $line['message'];
+                break;
+            }
+        }
+
+        if ($auth === '') {
+            return;
+        }
+
+        foreach (self::SUPPORTED_AUTH_TYPES as $type) {
+            if (strpos($auth, $type) !== false) {
+                $this->authType = $type;
+
+                return;
+            }
+        }
+
+        throw new CakeException('Unsupported auth type: ' . substr($auth, 5));
     }
 
     /**
@@ -265,6 +331,8 @@ class SmtpTransport extends AbstractTransport
                 throw new SocketException('SMTP server did not accept the connection.', null, $e2);
             }
         }
+
+        $this->_parseAuthType();
     }
 
     /**
@@ -282,12 +350,27 @@ class SmtpTransport extends AbstractTransport
         $username = $this->_config['username'];
         $password = $this->_config['password'];
 
-        $replyCode = $this->_authPlain($username, $password);
-        if ($replyCode === '235') {
-            return;
-        }
+        switch ($this->authType) {
+            case self::AUTH_PLAIN:
+                $this->_authPlain($username, $password);
+                break;
 
-        $this->_authLogin($username, $password);
+            case self::AUTH_LOGIN:
+                $this->_authLogin($username, $password);
+                break;
+
+            case self::AUTH_XOAUTH2:
+                $this->_authXoauth2($username, $password);
+                break;
+
+            default:
+                $replyCode = $this->_authPlain($username, $password);
+                if ($replyCode === '235') {
+                    break;
+                }
+
+                $this->_authLogin($username, $password);
+        }
     }
 
     /**
@@ -336,6 +419,26 @@ class SmtpTransport extends AbstractTransport
                 'AUTH command not recognized or not implemented, SMTP server may not require authentication.'
             );
         }
+    }
+
+    /**
+     * Authenticate using AUTH XOAUTH2 mechanism.
+     *
+     * @param string $username Username.
+     * @param string $token Token.
+     * @return void
+     * @see https://learn.microsoft.com/en-us/exchange/client-developer/legacy-protocols/how-to-authenticate-an-imap-pop-smtp-application-by-using-oauth#smtp-protocol-exchange
+     * @see https://developers.google.com/gmail/imap/xoauth2-protocol#smtp_protocol_exchange
+     */
+    protected function _authXoauth2(string $username, string $token): void
+    {
+        $authString = base64_encode(sprintf(
+            "user=%s\1auth=Bearer %s\1\1",
+            $username,
+            $token
+        ));
+
+        $this->_smtpSend('AUTH XOAUTH2 ' . $authString, '235');
     }
 
     /**
@@ -415,7 +518,7 @@ class SmtpTransport extends AbstractTransport
     /**
      * Send emails
      *
-     * @param \Cake\Mailer\Message $message Message message
+     * @param \Cake\Mailer\Message $message Message instance
      * @throws \Cake\Network\Exception\SocketException
      * @return void
      */
@@ -433,7 +536,7 @@ class SmtpTransport extends AbstractTransport
     /**
      * Send Data
      *
-     * @param \Cake\Mailer\Message $message Message message
+     * @param \Cake\Mailer\Message $message Message instance
      * @return void
      * @throws \Cake\Network\Exception\SocketException
      */
@@ -467,6 +570,7 @@ class SmtpTransport extends AbstractTransport
     {
         $this->_smtpSend('QUIT', false);
         $this->_socket()->disconnect();
+        $this->authType = null;
     }
 
     /**

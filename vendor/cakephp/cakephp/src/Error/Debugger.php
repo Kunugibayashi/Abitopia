@@ -31,6 +31,8 @@ use Cake\Error\Debug\ReferenceNode;
 use Cake\Error\Debug\ScalarNode;
 use Cake\Error\Debug\SpecialNode;
 use Cake\Error\Debug\TextFormatter;
+use Cake\Error\Renderer\HtmlErrorRenderer;
+use Cake\Error\Renderer\TextErrorRenderer;
 use Cake\Log\Log;
 use Cake\Utility\Hash;
 use Cake\Utility\Security;
@@ -42,6 +44,10 @@ use ReflectionObject;
 use ReflectionProperty;
 use RuntimeException;
 use Throwable;
+use function Cake\Core\deprecationWarning;
+use function Cake\Core\getTypeName;
+use function Cake\Core\h;
+use function Cake\Core\pr;
 
 /**
  * Provide custom logging and error handling.
@@ -81,6 +87,7 @@ class Debugger
      */
     protected $_templates = [
         'log' => [
+            // These templates are not actually used, as Debugger::log() is called instead.
             'trace' => '{:reference} - {:path}, line {:line}',
             'error' => '{:error} ({:code}): {:description} in [{:file}, line {:line}]',
         ],
@@ -108,6 +115,21 @@ class Debugger
             'trace' => "Trace:\n{:trace}\n",
             'context' => "Context:\n{:context}\n",
         ],
+    ];
+
+    /**
+     * Mapping for error renderers.
+     *
+     * Error renderers are replacing output formatting with
+     * an object based system. Having Debugger handle and render errors
+     * will be deprecated and the new ErrorTrap system should be used instead.
+     *
+     * @var array<string, class-string>
+     */
+    protected $renderers = [
+        'txt' => TextErrorRenderer::class,
+        // The html alias currently uses no JS and will be deprecated.
+        'js' => HtmlErrorRenderer::class,
     ];
 
     /**
@@ -355,6 +377,50 @@ class Debugger
     }
 
     /**
+     * Get the frames from $exception that are not present in $parent
+     *
+     * @param \Throwable $exception The exception to get frames from.
+     * @param ?\Throwable $parent The parent exception to compare frames with.
+     * @return array An array of frame structures.
+     */
+    public static function getUniqueFrames(Throwable $exception, ?Throwable $parent): array
+    {
+        if ($parent === null) {
+            return $exception->getTrace();
+        }
+        $parentFrames = $parent->getTrace();
+        $frames = $exception->getTrace();
+
+        $parentCount = count($parentFrames) - 1;
+        $frameCount = count($frames) - 1;
+
+        // Reverse loop through both traces removing frames that
+        // are the same.
+        for ($i = $frameCount, $p = $parentCount; $i >= 0 && $p >= 0; $p--) {
+            $parentTail = $parentFrames[$p];
+            $tail = $frames[$i];
+
+            // Frames without file/line are never equal to another frame.
+            $isEqual = (
+                (
+                    isset($tail['file']) &&
+                    isset($tail['line']) &&
+                    isset($parentTail['file']) &&
+                    isset($parentTail['line'])
+                ) &&
+                ($tail['file'] === $parentTail['file']) &&
+                ($tail['line'] === $parentTail['line'])
+            );
+            if ($isEqual) {
+                unset($frames[$i]);
+                $i--;
+            }
+        }
+
+        return $frames;
+    }
+
+    /**
      * Outputs a stack trace based on the supplied options.
      *
      * ### Options
@@ -372,7 +438,11 @@ class Debugger
      */
     public static function trace(array $options = [])
     {
-        return Debugger::formatTrace(debug_backtrace(), $options);
+        // Remove the frame for Debugger::trace()
+        $backtrace = debug_backtrace();
+        array_shift($backtrace);
+
+        return Debugger::formatTrace($backtrace, $options);
     }
 
     /**
@@ -408,62 +478,58 @@ class Debugger
         ];
         $options = Hash::merge($defaults, $options);
 
-        $count = count($backtrace);
+        $count = count($backtrace) + 1;
         $back = [];
 
-        $_trace = [
-            'line' => '??',
-            'file' => '[internal]',
-            'class' => null,
-            'function' => '[main]',
-        ];
-
         for ($i = $options['start']; $i < $count && $i < $options['depth']; $i++) {
-            $trace = $backtrace[$i] + ['file' => '[internal]', 'line' => '??'];
-            $signature = $reference = '[main]';
+            $frame = ['file' => '[main]', 'line' => ''];
+            if (isset($backtrace[$i])) {
+                $frame = $backtrace[$i] + ['file' => '[internal]', 'line' => '??'];
+            }
 
-            if (isset($backtrace[$i + 1])) {
-                $next = $backtrace[$i + 1] + $_trace;
-                $signature = $reference = $next['function'];
-
-                if (!empty($next['class'])) {
-                    $signature = $next['class'] . '::' . $next['function'];
-                    $reference = $signature . '(';
-                    if ($options['args'] && isset($next['args'])) {
-                        $args = [];
-                        foreach ($next['args'] as $arg) {
-                            $args[] = Debugger::exportVar($arg);
-                        }
-                        $reference .= implode(', ', $args);
+            $signature = $reference = $frame['file'];
+            if (!empty($frame['class'])) {
+                $signature = $frame['class'] . $frame['type'] . $frame['function'];
+                $reference = $signature . '(';
+                if ($options['args'] && isset($frame['args'])) {
+                    $args = [];
+                    foreach ($frame['args'] as $arg) {
+                        $args[] = Debugger::exportVar($arg);
                     }
-                    $reference .= ')';
+                    $reference .= implode(', ', $args);
                 }
+                $reference .= ')';
             }
             if (in_array($signature, $options['exclude'], true)) {
                 continue;
             }
-            if ($options['format'] === 'points' && $trace['file'] !== '[internal]') {
-                $back[] = ['file' => $trace['file'], 'line' => $trace['line']];
+            if ($options['format'] === 'points') {
+                $back[] = ['file' => $frame['file'], 'line' => $frame['line'], 'reference' => $reference];
             } elseif ($options['format'] === 'array') {
-                $back[] = $trace;
-            } else {
-                if (isset($self->_templates[$options['format']]['traceLine'])) {
-                    $tpl = $self->_templates[$options['format']]['traceLine'];
-                } else {
-                    $tpl = $self->_templates['base']['traceLine'];
+                if (!$options['args']) {
+                    unset($frame['args']);
                 }
-                $trace['path'] = static::trimPath($trace['file']);
-                $trace['reference'] = $reference;
-                unset($trace['object'], $trace['args']);
-                $back[] = Text::insert($tpl, $trace, ['before' => '{:', 'after' => '}']);
+                $back[] = $frame;
+            } else {
+                $tpl = $self->_templates[$options['format']]['traceLine'] ?? $self->_templates['base']['traceLine'];
+                if ($frame['file'] == '[main]') {
+                    $back[] = '[main]';
+                } else {
+                    $frame['path'] = static::trimPath($frame['file']);
+                    $frame['reference'] = $reference;
+                    unset($frame['object'], $frame['args']);
+                    $back[] = Text::insert($tpl, $frame, ['before' => '{:', 'after' => '}']);
+                }
             }
         }
-
         if ($options['format'] === 'array' || $options['format'] === 'points') {
             return $back;
         }
 
-        /** @psalm-suppress InvalidArgument */
+        /**
+         * @psalm-suppress InvalidArgument
+         * @phpstan-ignore-next-line
+         */
         return implode("\n", $back);
     }
 
@@ -551,9 +617,6 @@ class Debugger
      */
     protected static function _highlight(string $str): string
     {
-        if (function_exists('hphp_log') || function_exists('hphp_gettid')) {
-            return htmlentities($str);
-        }
         $added = false;
         if (strpos($str, '<?php') === false) {
             $added = true;
@@ -562,7 +625,7 @@ class Debugger
         $highlight = highlight_string($str, true);
         if ($added) {
             $highlight = str_replace(
-                ['&lt;?php&nbsp;<br/>', '&lt;?php&nbsp;<br />'],
+                ['&lt;?php&nbsp;<br/>', '&lt;?php&nbsp;<br />', '&lt;?php '],
                 '',
                 $highlight
             );
@@ -758,7 +821,7 @@ class Debugger
         if ($remaining > 0) {
             if (method_exists($var, '__debugInfo')) {
                 try {
-                    foreach ($var->__debugInfo() as $key => $val) {
+                    foreach ((array)$var->__debugInfo() as $key => $val) {
                         $node->addProperty(new PropertyNode("'{$key}'", null, static::export($val, $context)));
                     }
 
@@ -817,9 +880,12 @@ class Debugger
      * Get the output format for Debugger error rendering.
      *
      * @return string Returns the current format when getting.
+     * @deprecated 4.4.0 Update your application so use ErrorTrap instead.
      */
     public static function getOutputFormat(): string
     {
+        deprecationWarning('Debugger::getOutputFormat() is deprecated.');
+
         return Debugger::getInstance()->_outputFormat;
     }
 
@@ -829,9 +895,11 @@ class Debugger
      * @param string $format The format you want errors to be output as.
      * @return void
      * @throws \InvalidArgumentException When choosing a format that doesn't exist.
+     * @deprecated 4.4.0 Update your application so use ErrorTrap instead.
      */
     public static function setOutputFormat(string $format): void
     {
+        deprecationWarning('Debugger::setOutputFormat() is deprecated.');
         $self = Debugger::getInstance();
 
         if (!isset($self->_templates[$format])) {
@@ -882,9 +950,11 @@ class Debugger
      *    straight HTML output, or 'txt' for unformatted text.
      * @param array $strings Template strings, or a callback to be used for the output format.
      * @return array The resulting format string set.
+     * @deprecated 4.4.0 Update your application so use ErrorTrap instead.
      */
     public static function addFormat(string $format, array $strings): array
     {
+        deprecationWarning('Debugger::addFormat() is deprecated.');
         $self = Debugger::getInstance();
         if (isset($self->_templates[$format])) {
             if (isset($strings['links'])) {
@@ -898,8 +968,29 @@ class Debugger
         } else {
             $self->_templates[$format] = $strings;
         }
+        unset($self->renderers[$format]);
 
         return $self->_templates[$format];
+    }
+
+    /**
+     * Add a renderer to the current instance.
+     *
+     * @param string $name The alias for the the renderer.
+     * @param class-string<\Cake\Error\ErrorRendererInterface> $class The classname of the renderer to use.
+     * @return void
+     * @deprecated 4.4.0 Update your application so use ErrorTrap instead.
+     */
+    public static function addRenderer(string $name, string $class): void
+    {
+        deprecationWarning('Debugger::addRenderer() is deprecated.');
+        if (!in_array(ErrorRendererInterface::class, class_implements($class))) {
+            throw new InvalidArgumentException(
+                'Invalid renderer class. $class must implement ' . ErrorRendererInterface::class
+            );
+        }
+        $self = Debugger::getInstance();
+        $self->renderers[$name] = $class;
     }
 
     /**
@@ -907,6 +998,7 @@ class Debugger
      *
      * @param array $data Data to output.
      * @return void
+     * @deprecated 4.4.0 Update your application so use ErrorTrap instead.
      */
     public function outputError(array $data): void
     {
@@ -921,6 +1013,17 @@ class Debugger
             'start' => 2,
         ];
         $data += $defaults;
+
+        $outputFormat = $this->_outputFormat;
+        if (isset($this->renderers[$outputFormat])) {
+            /** @var array $trace */
+            $trace = static::trace(['start' => $data['start'], 'format' => 'points']);
+            $error = new PhpError($data['code'], $data['description'], $data['file'], $data['line'], $trace);
+            $renderer = new $this->renderers[$outputFormat]();
+            echo $renderer->render($error, Configure::read('debug'));
+
+            return;
+        }
 
         $files = static::trace(['start' => $data['start'], 'format' => 'points']);
         $code = '';
@@ -956,7 +1059,7 @@ class Debugger
 
         $data['trace'] = $trace;
         $data['id'] = 'cakeErr' . uniqid();
-        $tpl = $this->_templates[$this->_outputFormat] + $this->_templates['base'];
+        $tpl = $this->_templates[$outputFormat] + $this->_templates['base'];
 
         if (isset($tpl['links'])) {
             foreach ($tpl['links'] as $key => $val) {
@@ -1055,7 +1158,7 @@ class Debugger
      *
      * - HTML escape the message.
      * - Convert `bool` into `<code>bool</code>`
-     * - Convert newlines into `<br />`
+     * - Convert newlines into `<br>`
      *
      * @param string $message The string message to format.
      * @return string Formatted message.
@@ -1064,9 +1167,8 @@ class Debugger
     {
         $message = h($message);
         $message = preg_replace('/`([^`]+)`/', '<code>$1</code>', $message);
-        $message = nl2br($message);
 
-        return $message;
+        return nl2br($message);
     }
 
     /**

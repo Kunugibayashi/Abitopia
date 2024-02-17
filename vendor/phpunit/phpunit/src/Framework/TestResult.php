@@ -738,9 +738,11 @@ final class TestResult implements Countable
                 sprintf(
                     '%s in %s:%s',
                     $e->getMessage(),
-                    $frame['file'],
-                    $frame['line']
-                )
+                    $frame['file'] ?? $e->getFile(),
+                    $frame['line'] ?? $e->getLine()
+                ),
+                0,
+                $e
             );
         } catch (Warning $e) {
             $warning = true;
@@ -875,7 +877,7 @@ final class TestResult implements Countable
             } catch (ReflectionException $e) {
                 throw new Exception(
                     $e->getMessage(),
-                    (int) $e->getCode(),
+                    $e->getCode(),
                     $e
                 );
             }
@@ -890,7 +892,7 @@ final class TestResult implements Countable
                 } catch (ReflectionException $e) {
                     throw new Exception(
                         $e->getMessage(),
-                        (int) $e->getCode(),
+                        $e->getCode(),
                         $e
                     );
                 }

@@ -5,6 +5,7 @@ namespace SlevomatCodingStandard\Sniffs\Classes;
 use PHP_CodeSniffer\Files\File;
 use PHP_CodeSniffer\Sniffs\Sniff;
 use SlevomatCodingStandard\Helpers\ClassHelper;
+use SlevomatCodingStandard\Helpers\FixerHelper;
 use SlevomatCodingStandard\Helpers\FunctionHelper;
 use SlevomatCodingStandard\Helpers\SniffSettingsHelper;
 use SlevomatCodingStandard\Helpers\TokenHelper;
@@ -42,7 +43,6 @@ class ModernClassNameReferenceSniff implements Sniff
 
 	/**
 	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
-	 * @param File $phpcsFile
 	 * @param int $pointer
 	 */
 	public function process(File $phpcsFile, $pointer): void
@@ -169,10 +169,9 @@ class ModernClassNameReferenceSniff implements Sniff
 		if ($tokens[$functionPointer - 1]['code'] === T_NS_SEPARATOR) {
 			$phpcsFile->fixer->replaceToken($functionPointer - 1, '');
 		}
-		$phpcsFile->fixer->replaceToken($functionPointer, $fixedContent);
-		for ($i = $functionPointer + 1; $i <= $tokens[$openParenthesisPointer]['parenthesis_closer']; $i++) {
-			$phpcsFile->fixer->replaceToken($i, '');
-		}
+
+		FixerHelper::change($phpcsFile, $functionPointer, $tokens[$openParenthesisPointer]['parenthesis_closer'], $fixedContent);
+
 		$phpcsFile->fixer->endChangeset();
 	}
 

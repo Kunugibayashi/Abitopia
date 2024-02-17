@@ -32,6 +32,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use ReflectionClass;
 use ReflectionFunction;
 use ReflectionNamedType;
+use function Cake\Core\deprecationWarning;
 
 /**
  * Factory method for building controllers for request.
@@ -79,10 +80,9 @@ class ControllerFactory implements ControllerFactoryInterface, RequestHandlerInt
             throw $this->missingController($request);
         }
 
-        // If the controller has a container definition
-        // add the request as a service.
+        // Get the controller from the container if defined.
+        // The request is in the container by default.
         if ($this->container->has($className)) {
-            $this->container->add(ServerRequest::class, $request);
             $controller = $this->container->get($className);
         } else {
             $controller = $reflection->newInstance($request);
@@ -106,7 +106,7 @@ class ControllerFactory implements ControllerFactoryInterface, RequestHandlerInt
         $middlewares = $controller->getMiddleware();
 
         if ($middlewares) {
-            $middlewareQueue = new MiddlewareQueue($middlewares);
+            $middlewareQueue = new MiddlewareQueue($middlewares, $this->container);
             $runner = new Runner();
 
             return $runner->run($middlewareQueue, $controller->getRequest(), $this);
@@ -160,22 +160,19 @@ class ControllerFactory implements ControllerFactoryInterface, RequestHandlerInt
         $function = new ReflectionFunction($action);
         foreach ($function->getParameters() as $parameter) {
             $type = $parameter->getType();
-            if ($type && !$type instanceof ReflectionNamedType) {
-                // Only single types are supported
-                throw new InvalidParameterException([
-                    'template' => 'unsupported_type',
-                    'parameter' => $parameter->getName(),
-                    'controller' => $this->controller->getName(),
-                    'action' => $this->controller->getRequest()->getParam('action'),
-                    'prefix' => $this->controller->getRequest()->getParam('prefix'),
-                    'plugin' => $this->controller->getRequest()->getParam('plugin'),
-                ]);
-            }
 
             // Check for dependency injection for classes
             if ($type instanceof ReflectionNamedType && !$type->isBuiltin()) {
-                if ($this->container->has($type->getName())) {
-                    $resolved[] = $this->container->get($type->getName());
+                $typeName = $type->getName();
+                if ($this->container->has($typeName)) {
+                    $resolved[] = $this->container->get($typeName);
+                    continue;
+                }
+
+                // Use passedParams as a source of typed dependencies.
+                // The accepted types for passedParams was never defined and userland code relies on that.
+                if ($passedParams && is_object($passedParams[0]) && $passedParams[0] instanceof $typeName) {
+                    $resolved[] = array_shift($passedParams);
                     continue;
                 }
 
@@ -189,6 +186,7 @@ class ControllerFactory implements ControllerFactoryInterface, RequestHandlerInt
                 throw new InvalidParameterException([
                     'template' => 'missing_dependency',
                     'parameter' => $parameter->getName(),
+                    'type' => $typeName,
                     'controller' => $this->controller->getName(),
                     'action' => $this->controller->getRequest()->getParam('action'),
                     'prefix' => $this->controller->getRequest()->getParam('prefix'),
@@ -199,7 +197,7 @@ class ControllerFactory implements ControllerFactoryInterface, RequestHandlerInt
             // Use any passed params as positional arguments
             if ($passedParams) {
                 $argument = array_shift($passedParams);
-                if ($type instanceof ReflectionNamedType) {
+                if (is_string($argument) && $type instanceof ReflectionNamedType) {
                     $typedArgument = $this->coerceStringToType($argument, $type);
 
                     if ($typedArgument === null) {
@@ -260,11 +258,11 @@ class ControllerFactory implements ControllerFactoryInterface, RequestHandlerInt
             case 'float':
                 return is_numeric($argument) ? (float)$argument : null;
             case 'int':
-                return ctype_digit($argument) ? (int)$argument : null;
+                return filter_var($argument, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
             case 'bool':
                 return $argument === '0' ? false : ($argument === '1' ? true : null);
             case 'array':
-                return explode(',', $argument);
+                return $argument === '' ? [] : explode(',', $argument);
         }
 
         return null;
@@ -338,10 +336,18 @@ class ControllerFactory implements ControllerFactoryInterface, RequestHandlerInt
     protected function missingController(ServerRequest $request)
     {
         return new MissingControllerException([
-            'class' => $request->getParam('controller'),
+            'controller' => $request->getParam('controller'),
             'plugin' => $request->getParam('plugin'),
             'prefix' => $request->getParam('prefix'),
             '_ext' => $request->getParam('_ext'),
+            'class' => $request->getParam('controller'), // Deprecated: Will be removed in 4.5. Use `controller` instead.
         ]);
     }
 }
+
+// phpcs:disable
+class_alias(
+    'Cake\Controller\ControllerFactory',
+    'Cake\Http\ControllerFactory'
+);
+// phpcs:enable

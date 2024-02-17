@@ -13,6 +13,7 @@ use Phinx\Config\ConfigInterface;
 use Phinx\Db\Adapter\AdapterInterface;
 use Phinx\Migration\Manager;
 use Phinx\Util\Util;
+use RuntimeException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -34,9 +35,14 @@ abstract class AbstractCommand extends Command
     public const FORMAT_DEFAULT = 'php';
 
     /**
-     * The location of the default migration template.
+     * The location of the default change migration template.
      */
-    protected const DEFAULT_MIGRATION_TEMPLATE = '/../../Migration/Migration.template.php.dist';
+    protected const DEFAULT_CHANGE_MIGRATION_TEMPLATE = '/../../Migration/Migration.change.template.php.dist';
+
+    /**
+     * The location of the default up/down migration template.
+     */
+    protected const DEFAULT_UP_DOWN_MIGRATION_TEMPLATE = '/../../Migration/Migration.up_down.template.php.dist';
 
     /**
      * The location of the default seed template.
@@ -44,7 +50,7 @@ abstract class AbstractCommand extends Command
     protected const DEFAULT_SEED_TEMPLATE = '/../../Seed/Seed.template.php.dist';
 
     /**
-     * @var \Phinx\Config\ConfigInterface
+     * @var \Phinx\Config\ConfigInterface|null
      */
     protected $config;
 
@@ -57,6 +63,11 @@ abstract class AbstractCommand extends Command
      * @var \Phinx\Migration\Manager
      */
     protected $manager;
+
+    /**
+     * @var int
+     */
+    protected $verbosityLevel = OutputInterface::OUTPUT_NORMAL | OutputInterface::VERBOSITY_NORMAL;
 
     /**
      * Exit code for when command executes successfully
@@ -92,10 +103,11 @@ abstract class AbstractCommand extends Command
      *
      * @return void
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this->addOption('--configuration', '-c', InputOption::VALUE_REQUIRED, 'The configuration file to load');
         $this->addOption('--parser', '-p', InputOption::VALUE_REQUIRED, 'Parser used to read the config file. Defaults to YAML');
+        $this->addOption('--no-info', null, InputOption::VALUE_NONE, 'Hides all debug information');
     }
 
     /**
@@ -105,11 +117,13 @@ abstract class AbstractCommand extends Command
      * @param \Symfony\Component\Console\Output\OutputInterface $output Output
      * @return void
      */
-    public function bootstrap(InputInterface $input, OutputInterface $output)
+    public function bootstrap(InputInterface $input, OutputInterface $output): void
     {
-        /** @var \Phinx\Config\ConfigInterface|null $config */
-        $config = $this->getConfig();
-        if (!$config) {
+        if ($input->hasParameterOption('--no-info')) {
+            $this->verbosityLevel = OutputInterface::VERBOSITY_VERBOSE;
+        }
+
+        if (!$this->hasConfig()) {
             $this->loadConfig($input, $output);
         }
 
@@ -117,26 +131,26 @@ abstract class AbstractCommand extends Command
 
         $bootstrap = $this->getConfig()->getBootstrapFile();
         if ($bootstrap) {
-            $output->writeln('<info>using bootstrap</info> ' . Util::relativePath($bootstrap) . ' ');
+            $output->writeln('<info>using bootstrap</info> ' . Util::relativePath($bootstrap) . ' ', $this->verbosityLevel);
             Util::loadPhpFile($bootstrap, $input, $output, $this);
         }
 
         // report the paths
         $paths = $this->getConfig()->getMigrationPaths();
 
-        $output->writeln('<info>using migration paths</info> ');
+        $output->writeln('<info>using migration paths</info> ', $this->verbosityLevel);
 
         foreach (Util::globAll($paths) as $path) {
-            $output->writeln('<info> - ' . realpath($path) . '</info>');
+            $output->writeln('<info> - ' . realpath($path) . '</info>', $this->verbosityLevel);
         }
 
         try {
             $paths = $this->getConfig()->getSeedPaths();
 
-            $output->writeln('<info>using seed paths</info> ');
+            $output->writeln('<info>using seed paths</info> ', $this->verbosityLevel);
 
             foreach (Util::globAll($paths) as $path) {
-                $output->writeln('<info> - ' . realpath($path) . '</info>');
+                $output->writeln('<info> - ' . realpath($path) . '</info>', $this->verbosityLevel);
             }
         } catch (UnexpectedValueException $e) {
             // do nothing as seeds are optional
@@ -157,12 +171,24 @@ abstract class AbstractCommand extends Command
     }
 
     /**
+     * @return bool
+     */
+    public function hasConfig(): bool
+    {
+        return $this->config !== null;
+    }
+
+    /**
      * Gets the config.
      *
      * @return \Phinx\Config\ConfigInterface
      */
-    public function getConfig()
+    public function getConfig(): ConfigInterface
     {
+        if ($this->config === null) {
+            throw new RuntimeException('No config set yet');
+        }
+
         return $this->config;
     }
 
@@ -184,7 +210,7 @@ abstract class AbstractCommand extends Command
      *
      * @return \Phinx\Db\Adapter\AdapterInterface
      */
-    public function getAdapter()
+    public function getAdapter(): AdapterInterface
     {
         return $this->adapter;
     }
@@ -207,7 +233,7 @@ abstract class AbstractCommand extends Command
      *
      * @return \Phinx\Migration\Manager|null
      */
-    public function getManager()
+    public function getManager(): ?Manager
     {
         return $this->manager;
     }
@@ -218,9 +244,9 @@ abstract class AbstractCommand extends Command
      * @param \Symfony\Component\Console\Input\InputInterface $input Input
      * @return string
      */
-    protected function locateConfigFile(InputInterface $input)
+    protected function locateConfigFile(InputInterface $input): string
     {
-        $configFile = $input->getOption('configuration');
+        $configFile = $input->hasOption('configuration') ? $input->getOption('configuration') : null;
 
         $useDefault = false;
 
@@ -260,11 +286,12 @@ abstract class AbstractCommand extends Command
      * @throws \InvalidArgumentException
      * @return void
      */
-    protected function loadConfig(InputInterface $input, OutputInterface $output)
+    protected function loadConfig(InputInterface $input, OutputInterface $output): void
     {
         $configFilePath = $this->locateConfigFile($input);
-        $output->writeln('<info>using config file</info> ' . Util::relativePath($configFilePath));
+        $output->writeln('<info>using config file</info> ' . Util::relativePath($configFilePath), $this->verbosityLevel);
 
+        /** @var string|null $parser */
         $parser = $input->getOption('parser');
 
         // If no parser is specified try to determine the correct one from the file extension.  Defaults to YAML
@@ -301,7 +328,7 @@ abstract class AbstractCommand extends Command
                 throw new InvalidArgumentException(sprintf('\'%s\' is not a valid parser.', $parser));
         }
 
-        $output->writeln('<info>using config parser</info> ' . $parser);
+        $output->writeln('<info>using config parser</info> ' . $parser, $this->verbosityLevel);
 
         $this->setConfig($config);
     }
@@ -313,10 +340,11 @@ abstract class AbstractCommand extends Command
      * @param \Symfony\Component\Console\Output\OutputInterface $output Output
      * @return void
      */
-    protected function loadManager(InputInterface $input, OutputInterface $output)
+    protected function loadManager(InputInterface $input, OutputInterface $output): void
     {
         if ($this->getManager() === null) {
             $manager = new Manager($this->getConfig(), $input, $output);
+            $manager->setVerbosityLevel($this->verbosityLevel);
             $container = $this->getConfig()->getContainer();
             if ($container !== null) {
                 $manager->setContainer($container);
@@ -336,7 +364,7 @@ abstract class AbstractCommand extends Command
      * @throws \InvalidArgumentException
      * @return void
      */
-    protected function verifyMigrationDirectory($path)
+    protected function verifyMigrationDirectory(string $path): void
     {
         if (!is_dir($path)) {
             throw new InvalidArgumentException(sprintf(
@@ -360,7 +388,7 @@ abstract class AbstractCommand extends Command
      * @throws \InvalidArgumentException
      * @return void
      */
-    protected function verifySeedDirectory($path)
+    protected function verifySeedDirectory(string $path): void
     {
         if (!is_dir($path)) {
             throw new InvalidArgumentException(sprintf(
@@ -382,9 +410,9 @@ abstract class AbstractCommand extends Command
      *
      * @return string
      */
-    protected function getMigrationTemplateFilename()
+    protected function getMigrationTemplateFilename(string $style): string
     {
-        return __DIR__ . self::DEFAULT_MIGRATION_TEMPLATE;
+        return $style === Config::TEMPLATE_STYLE_CHANGE ? __DIR__ . self::DEFAULT_CHANGE_MIGRATION_TEMPLATE : __DIR__ . self::DEFAULT_UP_DOWN_MIGRATION_TEMPLATE;
     }
 
     /**
@@ -392,7 +420,7 @@ abstract class AbstractCommand extends Command
      *
      * @return string
      */
-    protected function getSeedTemplateFilename()
+    protected function getSeedTemplateFilename(): string
     {
         return __DIR__ . self::DEFAULT_SEED_TEMPLATE;
     }

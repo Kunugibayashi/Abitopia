@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Bake\View\Helper;
 
+use Bake\CodeGen\ImportHelper;
 use Bake\Utility\Model\AssociationFilter;
 use Brick\VarExporter\VarExporter;
 use Cake\Core\Configure;
@@ -23,7 +24,7 @@ class BakeHelper extends Helper
     /**
      * Default configuration.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_defaultConfig = [];
 
@@ -39,7 +40,7 @@ class BakeHelper extends Helper
      *
      * @param string $name the name of the property
      * @param array $value the array of values
-     * @param array $options extra options to be passed to the element
+     * @param array<string,mixed> $options extra options to be passed to the element
      * @return string
      */
     public function arrayProperty(string $name, array $value = [], array $options = []): string
@@ -63,7 +64,7 @@ class BakeHelper extends Helper
      * Returns an array converted into a formatted multiline string
      *
      * @param array $list array of items to be stringified
-     * @param array $options options to use
+     * @param array<string, mixed> $options options to use
      * @return string
      * @deprecated 2.5.0 Use BakeHelper::exportVar() instead.
      */
@@ -136,6 +137,7 @@ class BakeHelper extends Helper
      * @param int $indentLevel Identation level.
      * @param int $options VarExporter option flags
      * @return string
+     * @throws \Brick\VarExporter\ExportException
      * @see https://github.com/brick/varexporter#options
      */
     public function exportVar($var, int $indentLevel = 0, int $options = 0): string
@@ -236,7 +238,7 @@ class BakeHelper extends Helper
      * @param \Cake\Datasource\SchemaInterface $schema Schema instance.
      * @param \Cake\ORM\Table|null $modelObject Model object.
      * @param string|int $takeFields Take fields.
-     * @param array $filterTypes Filter field types.
+     * @param array<string> $filterTypes Filter field types.
      * @return array
      */
     public function filterFields(
@@ -244,7 +246,7 @@ class BakeHelper extends Helper
         SchemaInterface $schema,
         ?Table $modelObject = null,
         $takeFields = 0,
-        $filterTypes = ['binary']
+        array $filterTypes = ['binary']
     ): array {
         $fields = collection($fields)
             ->filter(function ($field) use ($schema, $filterTypes) {
@@ -453,6 +455,115 @@ class BakeHelper extends Helper
 
             return $v;
         }, $args);
+    }
+
+    /**
+     * Generates block of use statements from imports.
+     *
+     * @param array<string|int, string> $imports Class imports
+     * @return string
+     */
+    public function getClassUses(array $imports): string
+    {
+        $uses = [];
+
+        $imports = ImportHelper::normalize($imports);
+        asort($imports, SORT_STRING | SORT_FLAG_CASE);
+        foreach ($imports as $alias => $type) {
+            $uses[] = 'use ' . $this->getUseType($alias, $type) . ';';
+        }
+
+        return implode("\n", $uses);
+    }
+
+    /**
+     * Generates block of suse statements from function imports.
+     *
+     * @param array<string|int, string> $imports Function imports
+     * @return string
+     */
+    public function getFunctionUses(array $imports): string
+    {
+        $uses = [];
+
+        $imports = ImportHelper::normalize($imports);
+        asort($imports, SORT_STRING | SORT_FLAG_CASE);
+        foreach ($imports as $alias => $type) {
+            $uses[] = 'use function ' . $this->getUseType($alias, $type) . ';';
+        }
+
+        return implode("\n", $uses);
+    }
+
+    /**
+     * Generates block of use statements from const imports.
+     *
+     * @param array<string|int, string> $imports constImports
+     * @return string
+     */
+    public function getConstUses(array $imports): string
+    {
+        $uses = [];
+
+        $imports = ImportHelper::normalize($imports);
+        asort($imports, SORT_STRING | SORT_FLAG_CASE);
+        foreach ($imports as $alias => $type) {
+            $uses[] = 'use const ' . $this->getUseType($alias, $type) . ';';
+        }
+
+        return implode("\n", $uses);
+    }
+
+    /**
+     * Gets use type string from name and alias.
+     *
+     * @param string $alias Import alias
+     * @param string $name Import name
+     * @return string
+     */
+    protected function getUseType(string $alias, string $name): string
+    {
+        if ($name == $alias || substr($name, -strlen("\\{$alias}")) === "\\{$alias}") {
+            return $name;
+        }
+
+        return "{$name} as {$alias}";
+    }
+
+    /**
+     * Concats strings together.
+     *
+     * @param string $delimiter Delimiter to separate strings
+     * @param array<array<string>|string> $strings Strings to concatenate
+     * @param string $prefix Code to prepend if final output is not empty
+     * @param string $suffix Code to append if final output is not empty
+     * @return string
+     */
+    public function concat(
+        string $delimiter,
+        array $strings,
+        string $prefix = '',
+        string $suffix = ''
+    ): string {
+        $output = implode(
+            $delimiter,
+            array_map(function ($string) use ($delimiter) {
+                if (is_string($string)) {
+                    return $string;
+                }
+
+                return implode($delimiter, array_filter($string));
+            }, array_filter($strings))
+        );
+
+        if ($prefix && !empty($output)) {
+            $output = $prefix . $output;
+        }
+        if ($suffix && !empty($output)) {
+            $output .= $suffix;
+        }
+
+        return $output;
     }
 
     /**

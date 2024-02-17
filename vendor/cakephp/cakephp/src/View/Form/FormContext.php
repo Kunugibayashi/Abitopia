@@ -16,7 +16,10 @@ declare(strict_types=1);
  */
 namespace Cake\View\Form;
 
+use Cake\Core\Exception\CakeException;
+use Cake\Form\Form;
 use Cake\Utility\Hash;
+use function Cake\Core\deprecationWarning;
 
 /**
  * Provides a context provider for {@link \Cake\Form\Form} instances.
@@ -34,16 +37,30 @@ class FormContext implements ContextInterface
     protected $_form;
 
     /**
+     * Validator name.
+     *
+     * @var string|null
+     */
+    protected $_validator = null;
+
+    /**
      * Constructor.
      *
      * @param array $context Context info.
+     *
+     * Keys:
+     *
+     * - `entity` The Form class instance this context is operating on. **(required)**
+     * - `validator` Optional name of the validation method to call on the Form object.
      */
     public function __construct(array $context)
     {
-        $context += [
-            'entity' => null,
-        ];
+        if (!isset($context['entity']) || !$context['entity'] instanceof Form) {
+            throw new CakeException('`$context[\'entity\']` must be an instance of Cake\Form\Form');
+        }
+
         $this->_form = $context['entity'];
+        $this->_validator = $context['validator'] ?? null;
     }
 
     /**
@@ -126,7 +143,7 @@ class FormContext implements ContextInterface
      */
     public function isRequired(string $field): ?bool
     {
-        $validator = $this->_form->getValidator();
+        $validator = $this->_form->getValidator($this->_validator);
         if (!$validator->hasField($field)) {
             return null;
         }
@@ -144,7 +161,7 @@ class FormContext implements ContextInterface
     {
         $parts = explode('.', $field);
 
-        $validator = $this->_form->getValidator();
+        $validator = $this->_form->getValidator($this->_validator);
         $fieldName = array_pop($parts);
         if (!$validator->hasField($fieldName)) {
             return null;
@@ -163,7 +180,7 @@ class FormContext implements ContextInterface
      */
     public function getMaxLength(string $field): ?int
     {
-        $validator = $this->_form->getValidator();
+        $validator = $this->_form->getValidator($this->_validator);
         if (!$validator->hasField($field)) {
             return null;
         }

@@ -4,6 +4,7 @@ namespace SlevomatCodingStandard\Sniffs\PHP;
 
 use PHP_CodeSniffer\Files\File;
 use PHP_CodeSniffer\Sniffs\Sniff;
+use SlevomatCodingStandard\Helpers\FixerHelper;
 use SlevomatCodingStandard\Helpers\NamespaceHelper;
 use SlevomatCodingStandard\Helpers\ReferencedNameHelper;
 use SlevomatCodingStandard\Helpers\TokenHelper;
@@ -48,7 +49,7 @@ class ForbiddenClassesSniff implements Sniff
 	/** @var array<string, (string|null)> */
 	public $forbiddenTraits = [];
 
-	/** @var array<string> */
+	/** @var list<string> */
 	private static $keywordReferences = ['self', 'parent', 'static'];
 
 	/**
@@ -84,7 +85,6 @@ class ForbiddenClassesSniff implements Sniff
 
 	/**
 	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
-	 * @param File $phpcsFile
 	 * @param int $tokenPointer
 	 */
 	public function process(File $phpcsFile, $tokenPointer): void
@@ -138,11 +138,8 @@ class ForbiddenClassesSniff implements Sniff
 	}
 
 	/**
-	 * @param File $phpcsFile
-	 * @param int $tokenPointer
-	 * @param array{fullyQualifiedName: string, startPointer: int|null, endPointer: int|null}[] $references
+	 * @param list<array{fullyQualifiedName: string, startPointer: int|null, endPointer: int|null}> $references
 	 * @param array<string, (string|null)> $forbiddenNames
-	 * @param bool $isFixable
 	 */
 	private function checkReferences(
 		File $phpcsFile,
@@ -202,10 +199,9 @@ class ForbiddenClassesSniff implements Sniff
 				}
 
 				$phpcsFile->fixer->beginChangeset();
-				$phpcsFile->fixer->replaceToken($reference['startPointer'], $alternative);
-				for ($i = $reference['startPointer'] + 1; $i <= $reference['endPointer']; $i++) {
-					$phpcsFile->fixer->replaceToken($i, '');
-				}
+
+				FixerHelper::change($phpcsFile, $reference['startPointer'], $reference['endPointer'], $alternative);
+
 				$phpcsFile->fixer->endChangeset();
 			}
 		}
@@ -213,7 +209,6 @@ class ForbiddenClassesSniff implements Sniff
 
 	/**
 	 * @param array<string, array<int, int|string>|int|string> $token
-	 * @return bool
 	 */
 	private function isTraitsConflictResolutionToken(array $token): bool
 	{
@@ -221,10 +216,7 @@ class ForbiddenClassesSniff implements Sniff
 	}
 
 	/**
-	 * @param File $phpcsFile
-	 * @param int $startPointer
-	 * @param int $endPointer
-	 * @return array{fullyQualifiedName: string, startPointer: int|null, endPointer: int|null}[]
+	 * @return list<array{fullyQualifiedName: string, startPointer: int|null, endPointer: int|null}>
 	 */
 	private function getAllReferences(File $phpcsFile, int $startPointer, int $endPointer): array
 	{

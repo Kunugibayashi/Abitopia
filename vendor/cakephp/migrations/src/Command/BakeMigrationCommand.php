@@ -2,21 +2,22 @@
 declare(strict_types=1);
 
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
+ * @license       https://www.opensource.org/licenses/mit-license.php MIT License
  */
 namespace Migrations\Command;
 
 use Cake\Console\Arguments;
 use Cake\Console\ConsoleIo;
+use Cake\Console\ConsoleOptionParser;
 use Cake\Core\Configure;
 use Cake\Event\Event;
 use Cake\Event\EventManager;
@@ -117,11 +118,92 @@ class BakeMigrationCommand extends BakeSimpleMigrationCommand
     }
 
     /**
+     * Gets the option parser instance and configures it.
+     *
+     * @return \Cake\Console\ConsoleOptionParser
+     */
+    public function getOptionParser(): ConsoleOptionParser
+    {
+        $parser = parent::getOptionParser();
+        $text = <<<'TEXT'
+Create a blank or generated migration. Using the name of the migration
+Operations and table names will be inferred.
+
+<info>Examples</info>
+
+<warning>bin/cake bake migration CreateUsers</warning>
+
+This command will generate a migration that creates
+a table named users.
+
+<warning>bin/cake bake migration DropGroups</warning>
+This command will generate a migration that drops
+the groups table.
+
+<warning>bin/cake bake migration AlterUsers</warning>
+This command will generate a migration that alters the users table.
+
+<warning>bin/cake bake migration AddFieldToUsers role:string</warning>
+This command will generate a migration that adds a 'role' field
+with a 'string' type to the users table. Migrations that operate
+on columns can use the <info>Column Grammar</info> to describe
+the column in detail.
+
+<warning>bin/cake bake migration AlterFieldOnUsers role</warning>
+These commands will generate a migration that will alter the 'role'
+field on the users table.
+
+<warning>bin/cake bake migration RemoveFieldsFromUsers role</warning>
+<warning>bin/cake bake migration RemoveRoleFromUsers</warning>
+These commands will generate a migration that will remove the 'role'
+field on the users table.
+
+<info>Column Grammar</info>
+
+When describing columns you can use the following syntax:
+
+<warning>{name}:{primary}{type}{nullable}[{length}]:{index}</warning>
+
+All sections other than name are optional.
+
+* The types are the abstract database column types in CakePHP.
+* The <warning>?</warning> value indicates if a column is nullable.
+  e.x. <warning>role:string?</warning>.
+* Length option must be enclosed in <warning>[]</warning>, for example: <warning>name:string[100]</warning>.
+* The <warning>index</warning> attribute can define the column as having a unique
+  key with <warning>unique</warning> or a primary key with <warning>primary</warning>.
+
+<info>Examples</info>
+
+<warning>bin/cake bake migration AddOrgIdToProjects org_id:int</warning>
+Create a migration that adds a column (<warning>org_id INT</warning>) to the <warning>projects</warning>
+table.
+
+<warning>bin/cake bake migration AddOrgIdToProjects org_id:int?</warning>
+Create a migration that adds a nullable column (<warning>org_id INT NULL</warning>) to the <warning>projects</warning>
+table.
+
+<warning>bin/cake bake migration AddNameToProjects name:string[128]</warning>
+Create a migration that adds (<warning>name VARCHAR(128)</warning>) to the <warning>projects</warning>
+table.
+
+<warning>bin/cake bake migration AddSlugToProjects name:string[128]:unique</warning>
+Create a migration that adds (<warning>name VARCHAR(128)</warning> and a <warning>UNIQUE<.warning index)
+to the <warning>projects</warning> table.
+
+TEXT;
+
+        $parser->setDescription($text);
+
+        return $parser;
+    }
+
+    /**
      * Detects the action and table from the name of a migration
      *
      * @param string $name Name of migration
      * @return array
-     **/
+     */
     public function detectAction($name)
     {
         if (preg_match('/^(Create|Drop)(.*)/', $name, $matches)) {

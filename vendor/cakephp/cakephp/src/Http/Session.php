@@ -17,10 +17,13 @@ declare(strict_types=1);
 namespace Cake\Http;
 
 use Cake\Core\App;
+use Cake\Core\Exception\CakeException;
+use Cake\Error\Debugger;
 use Cake\Utility\Hash;
 use InvalidArgumentException;
 use RuntimeException;
 use SessionHandlerInterface;
+use function Cake\Core\env;
 
 /**
  * This class is a wrapper for the native PHP session functions. It provides
@@ -64,6 +67,13 @@ class Session
      * @var bool
      */
     protected $_isCLI = false;
+
+    /**
+     * Info about where the headers were sent.
+     *
+     * @var array{filename: string, line: int}|null
+     */
+    protected $headerSentInfo = null;
 
     /**
      * Returns a new instance of a session after building a configuration bundle for it.
@@ -263,22 +273,16 @@ class Session
         if ($class instanceof SessionHandlerInterface) {
             return $this->setEngine($class);
         }
-        $className = App::className($class, 'Http/Session');
 
-        if (!$className) {
+        /** @var class-string<\SessionHandlerInterface>|null $className */
+        $className = App::className($class, 'Http/Session');
+        if ($className === null) {
             throw new InvalidArgumentException(
                 sprintf('The class "%s" does not exist and cannot be used as a session engine', $class)
             );
         }
 
-        $handler = new $className($options);
-        if (!($handler instanceof SessionHandlerInterface)) {
-            throw new InvalidArgumentException(
-                'The chosen SessionHandler does not implement SessionHandlerInterface, it cannot be used as an engine.'
-            );
-        }
-
-        return $this->setEngine($handler);
+        return $this->setEngine(new $className($options));
     }
 
     /**
@@ -348,7 +352,10 @@ class Session
             throw new RuntimeException('Session was already started');
         }
 
-        if (ini_get('session.use_cookies') && headers_sent()) {
+        $filename = $line = null;
+        if (ini_get('session.use_cookies') && headers_sent($filename, $line)) {
+            $this->headerSentInfo = ['filename' => $filename, 'line' => $line];
+
             return false;
         }
 
@@ -481,6 +488,7 @@ class Session
         }
         $value = $this->read($name);
         if ($value !== null) {
+            /** @psalm-suppress InvalidScalarArgument */
             $this->_overwrite($_SESSION, Hash::remove($_SESSION, $name));
         }
 
@@ -496,8 +504,18 @@ class Session
      */
     public function write($name, $value = null): void
     {
-        if (!$this->started()) {
-            $this->start();
+        $started = $this->started() || $this->start();
+        if (!$started) {
+            $message = 'Could not start the session';
+            if ($this->headerSentInfo !== null) {
+                $message .= sprintf(
+                    ', headers already sent in file `%s` on line `%s`',
+                    Debugger::trimPath($this->headerSentInfo['filename']),
+                    $this->headerSentInfo['line']
+                );
+            }
+
+            throw new CakeException($message);
         }
 
         if (!is_array($name)) {
@@ -509,7 +527,6 @@ class Session
             $data = Hash::insert($data, $key, $val);
         }
 
-        /** @psalm-suppress PossiblyNullArgument */
         $this->_overwrite($_SESSION, $data);
     }
 
@@ -545,6 +562,7 @@ class Session
     public function delete(string $name): void
     {
         if ($this->check($name)) {
+            /** @psalm-suppress InvalidScalarArgument */
             $this->_overwrite($_SESSION, Hash::remove($_SESSION, $name));
         }
     }
@@ -558,13 +576,12 @@ class Session
      */
     protected function _overwrite(array &$old, array $new): void
     {
-        if (!empty($old)) {
-            foreach ($old as $key => $var) {
-                if (!isset($new[$key])) {
-                    unset($old[$key]);
-                }
+        foreach ($old as $key => $var) {
+            if (!isset($new[$key])) {
+                unset($old[$key]);
             }
         }
+
         foreach ($new as $key => $var) {
             $old[$key] = $var;
         }

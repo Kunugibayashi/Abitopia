@@ -27,6 +27,8 @@ use const T_DECLARE;
 use const T_DOUBLE_COLON;
 use const T_DOUBLE_QUOTED_STRING;
 use const T_ELLIPSIS;
+use const T_ENUM;
+use const T_ENUM_CASE;
 use const T_EXTENDS;
 use const T_FUNCTION;
 use const T_GOTO;
@@ -45,6 +47,7 @@ use const T_OPEN_TAG;
 use const T_PARAM_NAME;
 use const T_STRING;
 use const T_TRAIT;
+use const T_TYPE_INTERSECTION;
 use const T_TYPE_UNION;
 use const T_USE;
 use const T_VARIABLE;
@@ -56,9 +59,7 @@ class ReferencedNameHelper
 {
 
 	/**
-	 * @param File $phpcsFile
-	 * @param int $openTagPointer
-	 * @return ReferencedName[]
+	 * @return list<ReferencedName>
 	 */
 	public static function getAllReferencedNames(File $phpcsFile, int $openTagPointer): array
 	{
@@ -70,9 +71,7 @@ class ReferencedNameHelper
 	}
 
 	/**
-	 * @param File $phpcsFile
-	 * @param int $openTagPointer
-	 * @return ReferencedName[]
+	 * @return list<ReferencedName>
 	 */
 	public static function getAllReferencedNamesInAttributes(File $phpcsFile, int $openTagPointer): array
 	{
@@ -124,9 +123,7 @@ class ReferencedNameHelper
 	}
 
 	/**
-	 * @param File $phpcsFile
-	 * @param int $openTagPointer
-	 * @return ReferencedName[]
+	 * @return list<ReferencedName>
 	 */
 	private static function createAllReferencedNames(File $phpcsFile, int $openTagPointer): array
 	{
@@ -135,6 +132,7 @@ class ReferencedNameHelper
 		$beginSearchAtPointer = $openTagPointer + 1;
 		$nameTokenCodes = TokenHelper::getNameTokenCodes();
 		$nameTokenCodes[] = T_DOUBLE_QUOTED_STRING;
+		$nameTokenCodes[] = T_HEREDOC;
 
 		$tokens = $phpcsFile->getTokens();
 		while (true) {
@@ -146,17 +144,18 @@ class ReferencedNameHelper
 			// Find referenced names inside double quotes string
 			if (self::isNeedParsedContent($tokens[$nameStartPointer]['code'])) {
 				$content = $tokens[$nameStartPointer]['content'];
-				if (self::isNeedParsedContent($tokens[$nameStartPointer - 1]['code'])) {
-					$content = '"' . $content;
+				$currentPointer = $nameStartPointer + 1;
+				while (self::isNeedParsedContent($tokens[$currentPointer]['code'])) {
+					$content .= $tokens[$currentPointer]['content'];
+					$currentPointer++;
 				}
-				if (self::isNeedParsedContent($tokens[$nameStartPointer + 1]['code'])) {
-					$content .= '"';
-				}
+
 				$names = self::getReferencedNamesFromString($content);
 				foreach ($names as $name) {
 					$referencedNames[] = new ReferencedName($name, $nameStartPointer, $nameStartPointer, ReferencedName::TYPE_CLASS);
 				}
-				$beginSearchAtPointer = $nameStartPointer + 1;
+
+				$beginSearchAtPointer = $currentPointer;
 				continue;
 			}
 
@@ -210,6 +209,13 @@ class ReferencedNameHelper
 		if (
 			$tokens[$previousTokenBeforeStartPointer]['code'] === T_TYPE_UNION
 			|| $tokens[$nextTokenAfterEndPointer]['code'] === T_TYPE_UNION
+		) {
+			return ReferencedName::TYPE_CLASS;
+		}
+
+		if (
+			$tokens[$previousTokenBeforeStartPointer]['code'] === T_TYPE_INTERSECTION
+			|| $tokens[$nextTokenAfterEndPointer]['code'] === T_TYPE_INTERSECTION
 		) {
 			return ReferencedName::TYPE_CLASS;
 		}
@@ -322,10 +328,11 @@ class ReferencedNameHelper
 			T_NULLSAFE_OBJECT_OPERATOR,
 			T_NAMESPACE,
 			T_CONST,
+			T_ENUM_CASE,
 		];
 
 		if ($previousToken['code'] === T_USE) {
-			$classPointer = TokenHelper::findPrevious($phpcsFile, [T_CLASS, T_TRAIT, T_ANON_CLASS], $startPointer - 1);
+			$classPointer = TokenHelper::findPrevious($phpcsFile, [T_CLASS, T_TRAIT, T_ANON_CLASS, T_ENUM], $startPointer - 1);
 			if ($classPointer !== null) {
 				$classToken = $tokens[$classPointer];
 				return $startPointer > $classToken['scope_opener'] && $startPointer < $classToken['scope_closer'];
@@ -381,17 +388,15 @@ class ReferencedNameHelper
 		$endPointer = self::getReferencedNameEndPointer($phpcsFile, $startPointer);
 		$referencedName = self::getReferenceName($phpcsFile, $startPointer, $endPointer);
 
-		if (TypeHintHelper::isSimpleTypeHint($referencedName)) {
+		if (TypeHintHelper::isSimpleTypeHint($referencedName) || $referencedName === 'object') {
 			return $tokens[$nextPointer]['code'] === T_OPEN_PARENTHESIS;
 		}
 
-		return $referencedName !== 'object';
+		return true;
 	}
 
 	/**
-	 * @param File $phpcsFile
-	 * @param int $openTagPointer
-	 * @return ReferencedName[]
+	 * @return list<ReferencedName>
 	 */
 	private static function createAllReferencedNamesInAttributes(File $phpcsFile, int $openTagPointer): array
 	{
@@ -461,7 +466,6 @@ class ReferencedNameHelper
 
 	/**
 	 * @param int|string $code
-	 * @return bool
 	 */
 	private static function isNeedParsedContent($code): bool
 	{
@@ -469,8 +473,7 @@ class ReferencedNameHelper
 	}
 
 	/**
-	 * @param string $content
-	 * @return string[]
+	 * @return list<string>
 	 */
 	private static function getReferencedNamesFromString(string $content): array
 	{

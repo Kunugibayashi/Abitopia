@@ -5,6 +5,7 @@ namespace SlevomatCodingStandard\Sniffs\ControlStructures;
 use PHP_CodeSniffer\Files\File;
 use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Util\Tokens;
+use SlevomatCodingStandard\Helpers\FixerHelper;
 use SlevomatCodingStandard\Helpers\IdentificatorHelper;
 use SlevomatCodingStandard\Helpers\SniffSettingsHelper;
 use SlevomatCodingStandard\Helpers\TokenHelper;
@@ -32,7 +33,6 @@ class RequireNullCoalesceEqualOperatorSniff implements Sniff
 
 	/**
 	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
-	 * @param File $phpcsFile
 	 * @param int $equalPointer
 	 */
 	public function process(File $phpcsFile, $equalPointer): void
@@ -90,10 +90,9 @@ class RequireNullCoalesceEqualOperatorSniff implements Sniff
 		}
 
 		$phpcsFile->fixer->beginChangeset();
-		$phpcsFile->fixer->replaceToken($equalPointer, '??=');
-		for ($i = $equalPointer + 1; $i <= $nullCoalescePointer; $i++) {
-			$phpcsFile->fixer->replaceToken($i, '');
-		}
+
+		FixerHelper::change($phpcsFile, $equalPointer, $nullCoalescePointer, '??=');
+
 		$phpcsFile->fixer->endChangeset();
 	}
 

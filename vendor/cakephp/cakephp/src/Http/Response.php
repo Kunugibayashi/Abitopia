@@ -29,6 +29,9 @@ use Laminas\Diactoros\Stream;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 use SplFileInfo;
+use function Cake\Core\deprecationWarning;
+use function Cake\Core\env;
+use function Cake\I18n\__d;
 
 /**
  * Responses contain the response text, status and headers of a HTTP response.
@@ -401,7 +404,7 @@ class Response implements ResponseInterface
      * Holds all the cache directives that will be converted
      * into headers when sending the request
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_cacheDirectives = [];
 
@@ -660,7 +663,7 @@ class Response implements ResponseInterface
      * status code.
      *
      * @link https://tools.ietf.org/html/rfc7231#section-6
-     * @link http://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
+     * @link https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
      * @return string Reason phrase; must return an empty string if none present.
      */
     public function getReasonPhrase(): string
@@ -989,10 +992,15 @@ class Response implements ResponseInterface
      *
      * *Warning* This method mutates the response in-place and should be avoided.
      *
+     * @deprecated 4.4.0 Use `withNotModified()` instead.
      * @return void
      */
     public function notModified(): void
     {
+        deprecationWarning(
+            'The `notModified()` method is deprecated. ' .
+            'Use `withNotModified() instead, and remember immutability of with* methods.'
+        );
         $this->_createStream();
         $this->_setStatus(304);
 
@@ -1192,19 +1200,16 @@ class Response implements ResponseInterface
     /**
      * Checks whether a response has not been modified according to the 'If-None-Match'
      * (Etags) and 'If-Modified-Since' (last modification date) request
-     * headers. If the response is detected to be not modified, it
-     * is marked as so accordingly so the client can be informed of that.
+     * headers.
      *
-     * In order to mark a response as not modified, you need to set at least
-     * the Last-Modified etag response header before calling this method. Otherwise
-     * a comparison will not be possible.
-     *
-     * *Warning* This method mutates the response in-place and should be avoided.
+     * In order to interact with this method you must mark responses as not modified.
+     * You need to set at least one of the `Last-Modified` or `Etag` response headers
+     * before calling this method. Otherwise, a comparison will not be possible.
      *
      * @param \Cake\Http\ServerRequest $request Request object
-     * @return bool Whether the response was marked as not modified or not.
+     * @return bool Whether the response is 'modified' based on cache headers.
      */
-    public function checkNotModified(ServerRequest $request): bool
+    public function isNotModified(ServerRequest $request): bool
     {
         $etags = preg_split('/\s*,\s*/', $request->getHeaderLine('If-None-Match'), 0, PREG_SPLIT_NO_EMPTY);
         $responseTag = $this->getHeaderLine('Etag');
@@ -1221,12 +1226,39 @@ class Response implements ResponseInterface
         if ($etagMatches === null && $timeMatches === null) {
             return false;
         }
-        $notModified = $etagMatches !== false && $timeMatches !== false;
-        if ($notModified) {
+
+        return $etagMatches !== false && $timeMatches !== false;
+    }
+
+    /**
+     * Checks whether a response has not been modified according to the 'If-None-Match'
+     * (Etags) and 'If-Modified-Since' (last modification date) request
+     * headers. If the response is detected to be not modified, it
+     * is marked as so accordingly so the client can be informed of that.
+     *
+     * In order to mark a response as not modified, you need to set at least
+     * the Last-Modified etag response header before calling this method. Otherwise
+     * a comparison will not be possible.
+     *
+     * *Warning* This method mutates the response in-place and should be avoided.
+     *
+     * @param \Cake\Http\ServerRequest $request Request object
+     * @return bool Whether the response was marked as not modified or not.
+     * @deprecated 4.4.0 Use `isNotModified()` and `withNotModified()` instead.
+     */
+    public function checkNotModified(ServerRequest $request): bool
+    {
+        deprecationWarning(
+            'The `checkNotModified()` method is deprecated. ' .
+            'Use `isNotModified() instead and `withNoModified()` instead.'
+        );
+        if ($this->isNotModified($request)) {
             $this->notModified();
+
+            return true;
         }
 
-        return $notModified;
+        return false;
     }
 
     /**
@@ -1310,7 +1342,7 @@ class Response implements ResponseInterface
      *
      * Returns an associative array of cookie name => cookie data.
      *
-     * @return array
+     * @return array<string, array>
      */
     public function getCookies(): array
     {
@@ -1351,36 +1383,6 @@ class Response implements ResponseInterface
     /**
      * Get a CorsBuilder instance for defining CORS headers.
      *
-     * This method allow multiple ways to setup the domains, see the examples
-     *
-     * ### Full URI
-     * ```
-     * cors($request, 'https://www.cakephp.org');
-     * ```
-     *
-     * ### URI with wildcard
-     * ```
-     * cors($request, 'https://*.cakephp.org');
-     * ```
-     *
-     * ### Ignoring the requested protocol
-     * ```
-     * cors($request, 'www.cakephp.org');
-     * ```
-     *
-     * ### Any URI
-     * ```
-     * cors($request, '*');
-     * ```
-     *
-     * ### Allowed list of URIs
-     * ```
-     * cors($request, ['http://www.cakephp.org', '*.google.com', 'https://myproject.github.io']);
-     * ```
-     *
-     * *Note* The `$allowedDomains`, `$allowedMethods`, `$allowedHeaders` parameters are deprecated.
-     * Instead the builder object should be used.
-     *
      * @param \Cake\Http\ServerRequest $request Request object
      * @return \Cake\Http\CorsBuilder A builder object the provides a fluent interface for defining
      *   additional CORS headers.
@@ -1388,9 +1390,9 @@ class Response implements ResponseInterface
     public function cors(ServerRequest $request): CorsBuilder
     {
         $origin = $request->getHeaderLine('Origin');
-        $ssl = $request->is('ssl');
+        $https = $request->is('https');
 
-        return new CorsBuilder($this, $origin, $ssl);
+        return new CorsBuilder($this, $origin, $https);
     }
 
     /**

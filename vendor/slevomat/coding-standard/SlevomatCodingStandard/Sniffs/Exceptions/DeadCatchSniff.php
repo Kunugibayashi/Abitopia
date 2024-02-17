@@ -26,7 +26,6 @@ class DeadCatchSniff implements Sniff
 
 	/**
 	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
-	 * @param File $phpcsFile
 	 * @param int $catchPointer
 	 */
 	public function process(File $phpcsFile, $catchPointer): void
@@ -34,9 +33,9 @@ class DeadCatchSniff implements Sniff
 		$tokens = $phpcsFile->getTokens();
 
 		$catchToken = $tokens[$catchPointer];
-		$catchedTypes = CatchHelper::findCatchedTypesInCatch($phpcsFile, $catchToken);
+		$caughtTypes = CatchHelper::findCaughtTypesInCatch($phpcsFile, $catchToken);
 
-		if (!in_array('\\Throwable', $catchedTypes, true)) {
+		if (!in_array('\\Throwable', $caughtTypes, true)) {
 			return;
 		}
 

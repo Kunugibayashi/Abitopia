@@ -25,6 +25,7 @@ use JsonSerializable;
  *
  * @property mixed $id Alias for commonly used primary key.
  * @method bool[] getAccessible() Accessible configuration for this entity.
+ * @template-extends \ArrayAccess<string, mixed>
  */
 interface EntityInterface extends ArrayAccess, JsonSerializable
 {
@@ -216,7 +217,7 @@ interface EntityInterface extends ArrayAccess, JsonSerializable
 
     /**
      * Returns whether this entity contains a field named $field
-     * regardless of if it is empty.
+     * and is not set to null.
      *
      * @param array<string>|string $field The field to check.
      * @return bool

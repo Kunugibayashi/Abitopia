@@ -17,19 +17,24 @@ declare(strict_types=1);
 namespace Cake\Routing\Middleware;
 
 use Cake\Cache\Cache;
+use Cake\Cache\Exception\InvalidArgumentException;
+use Cake\Core\ContainerApplicationInterface;
 use Cake\Core\PluginApplicationInterface;
 use Cake\Http\Exception\RedirectException;
 use Cake\Http\MiddlewareQueue;
 use Cake\Http\Runner;
+use Cake\Routing\Exception\FailedRouteCacheException;
 use Cake\Routing\Exception\RedirectException as DeprecatedRedirectException;
 use Cake\Routing\RouteCollection;
 use Cake\Routing\Router;
 use Cake\Routing\RoutingApplicationInterface;
+use Exception;
 use Laminas\Diactoros\Response\RedirectResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use function Cake\Core\deprecationWarning;
 
 /**
  * Applies routing rules to the request and creates the controller
@@ -67,6 +72,13 @@ class RoutingMiddleware implements MiddlewareInterface
      */
     public function __construct(RoutingApplicationInterface $app, ?string $cacheConfig = null)
     {
+        if ($cacheConfig !== null) {
+            deprecationWarning(
+                'Use of routing cache is deprecated and will be removed in 5.0. ' .
+                'Upgrade to the new `CakeDC/CachedRouting` plugin. ' .
+                'See https://github.com/CakeDC/cakephp-cached-routing'
+            );
+        }
         $this->app = $app;
         $this->cacheConfig = $cacheConfig;
     }
@@ -94,9 +106,21 @@ class RoutingMiddleware implements MiddlewareInterface
     protected function buildRouteCollection(): RouteCollection
     {
         if (Cache::enabled() && $this->cacheConfig !== null) {
-            return Cache::remember(static::ROUTE_COLLECTION_CACHE_KEY, function () {
-                return $this->prepareRouteCollection();
-            }, $this->cacheConfig);
+            try {
+                return Cache::remember(static::ROUTE_COLLECTION_CACHE_KEY, function () {
+                    return $this->prepareRouteCollection();
+                }, $this->cacheConfig);
+            } catch (InvalidArgumentException $e) {
+                throw $e;
+            } catch (Exception $e) {
+                throw new FailedRouteCacheException(
+                    'Unable to cache route collection. Cached routes must be serializable. Check for route-specific
+                    middleware or other unserializable settings in your routes. The original exception message can
+                    show what type of object failed to serialize.',
+                    null,
+                    $e
+                );
+            }
         }
 
         return $this->prepareRouteCollection();
@@ -139,8 +163,11 @@ class RoutingMiddleware implements MiddlewareInterface
                 $params = Router::parseRequest($request) + $params;
                 if (isset($params['_middleware'])) {
                     $middleware = $params['_middleware'];
-                    unset($params['_middleware']);
                 }
+                $route = $params['_route'];
+                unset($params['_middleware'], $params['_route']);
+
+                $request = $request->withAttribute('route', $route);
                 /** @var \Cake\Http\ServerRequest $request */
                 $request = $request->withAttribute('params', $params);
                 Router::setRequest($request);
@@ -148,7 +175,8 @@ class RoutingMiddleware implements MiddlewareInterface
         } catch (RedirectException $e) {
             return new RedirectResponse(
                 $e->getMessage(),
-                $e->getCode()
+                $e->getCode(),
+                $e->getHeaders()
             );
         } catch (DeprecatedRedirectException $e) {
             return new RedirectResponse(
@@ -161,7 +189,10 @@ class RoutingMiddleware implements MiddlewareInterface
             return $handler->handle($request);
         }
 
-        $middleware = new MiddlewareQueue($matching);
+        $container = $this->app instanceof ContainerApplicationInterface
+            ? $this->app->getContainer()
+            : null;
+        $middleware = new MiddlewareQueue($matching, $container);
         $runner = new Runner();
 
         return $runner->run($middleware, $request, $handler);

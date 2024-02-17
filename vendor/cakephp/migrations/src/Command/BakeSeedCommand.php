@@ -2,16 +2,16 @@
 declare(strict_types=1);
 
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
+ * @license       https://www.opensource.org/licenses/mit-license.php MIT License
  */
 namespace Migrations\Command;
 
@@ -72,7 +72,7 @@ class BakeSeedCommand extends SimpleBakeCommand
     public function getPath(Arguments $args): string
     {
         $path = ROOT . DS . $this->pathFragment;
-        if (isset($this->plugin)) {
+        if ($this->plugin) {
             $path = $this->_pluginPath($this->plugin) . $this->pathFragment;
         }
 
@@ -101,8 +101,7 @@ class BakeSeedCommand extends SimpleBakeCommand
             $namespace = $this->_pluginNamespace($this->plugin);
         }
 
-        /** @psalm-suppress PossiblyNullArgument */
-        $table = Inflector::tableize($arguments->getArgumentAt(0));
+        $table = Inflector::tableize((string)$arguments->getArgumentAt(0));
         if ($arguments->hasOption('table')) {
             /** @var string $table */
             $table = $arguments->getOption('table');
@@ -117,19 +116,24 @@ class BakeSeedCommand extends SimpleBakeCommand
             if ($fields !== '*') {
                 $fields = explode(',', $fields);
             }
+            $model = $this->getTableLocator()->get('BakeSeed', [
+                'table' => $table,
+                'connection' => ConnectionManager::get($this->connection),
+            ]);
 
-            $connection = ConnectionManager::get($this->connection);
-
-            $query = $connection->newQuery()
-                ->from($table)
-                ->select($fields);
+            $query = $model->find('all')
+                ->enableHydration(false);
 
             if ($limit) {
                 $query->limit($limit);
             }
+            if ($fields !== '*') {
+                $query->select($fields);
+            }
 
             /** @var array $records */
-            $records = $connection->execute($query->sql())->fetchAll('assoc');
+            $records = $query->disableResultsCasting()->toArray();
+
             $records = $this->prettifyArray($records);
         }
 

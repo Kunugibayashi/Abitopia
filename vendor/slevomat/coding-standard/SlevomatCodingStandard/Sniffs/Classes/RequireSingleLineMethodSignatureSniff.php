@@ -4,6 +4,7 @@ namespace SlevomatCodingStandard\Sniffs\Classes;
 
 use Exception;
 use PHP_CodeSniffer\Files\File;
+use SlevomatCodingStandard\Helpers\FixerHelper;
 use SlevomatCodingStandard\Helpers\FunctionHelper;
 use SlevomatCodingStandard\Helpers\SniffSettingsHelper;
 use function count;
@@ -19,25 +20,26 @@ class RequireSingleLineMethodSignatureSniff extends AbstractMethodSignature
 	/** @var int */
 	public $maxLineLength = 120;
 
-	/** @var string[] */
+	/** @var list<string> */
 	public $includedMethodPatterns = [];
 
-	/** @var string[]|null */
+	/** @var list<string>|null */
 	public $includedMethodNormalizedPatterns;
 
-	/** @var string[] */
+	/** @var list<string> */
 	public $excludedMethodPatterns = [];
 
-	/** @var string[]|null */
+	/** @var list<string>|null */
 	public $excludedMethodNormalizedPatterns;
 
 	/**
 	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
-	 * @param File $phpcsFile
 	 * @param int $methodPointer
 	 */
 	public function process(File $phpcsFile, $methodPointer): void
 	{
+		$this->maxLineLength = SniffSettingsHelper::normalizeInteger($this->maxLineLength);
+
 		if (!FunctionHelper::isMethod($phpcsFile, $methodPointer)) {
 			return;
 		}
@@ -68,8 +70,7 @@ class RequireSingleLineMethodSignatureSniff extends AbstractMethodSignature
 			return;
 		}
 
-		$maxLineLength = SniffSettingsHelper::normalizeInteger($this->maxLineLength);
-		if ($maxLineLength !== 0 && strlen($signatureWithoutTabIndentation) > $maxLineLength) {
+		if ($this->maxLineLength !== 0 && strlen($signatureWithoutTabIndentation) > $this->maxLineLength) {
 			return;
 		}
 
@@ -81,19 +82,13 @@ class RequireSingleLineMethodSignatureSniff extends AbstractMethodSignature
 
 		$phpcsFile->fixer->beginChangeset();
 
-		$phpcsFile->fixer->replaceToken($signatureStartPointer, $signature);
-
-		for ($i = $signatureStartPointer + 1; $i <= $signatureEndPointer; $i++) {
-			$phpcsFile->fixer->replaceToken($i, '');
-		}
+		FixerHelper::change($phpcsFile, $signatureStartPointer, $signatureEndPointer, $signature);
 
 		$phpcsFile->fixer->endChangeset();
 	}
 
 	/**
-	 * @param string $methodName
-	 * @param string[] $normalizedPatterns
-	 * @return bool
+	 * @param list<string> $normalizedPatterns
 	 */
 	private function isMethodNameInPatterns(string $methodName, array $normalizedPatterns): bool
 	{
@@ -111,7 +106,7 @@ class RequireSingleLineMethodSignatureSniff extends AbstractMethodSignature
 	}
 
 	/**
-	 * @return string[]
+	 * @return list<string>
 	 */
 	private function getIncludedMethodNormalizedPatterns(): array
 	{
@@ -122,7 +117,7 @@ class RequireSingleLineMethodSignatureSniff extends AbstractMethodSignature
 	}
 
 	/**
-	 * @return string[]
+	 * @return list<string>
 	 */
 	private function getExcludedMethodNormalizedPatterns(): array
 	{

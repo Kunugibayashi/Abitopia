@@ -16,16 +16,12 @@ class TypeHelper
 	 * Validates type name according to the allowed characters in type names + namespaces
 	 *
 	 * @link http://php.net/manual/en/language.oop5.basic.php
-	 * @param string $typeName
-	 * @return bool
 	 */
 	public static function isTypeName(string $typeName): bool
 	{
-		$matches = [];
 		$result = preg_match(
 			'~^\\\\?([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)(\\\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*$~',
-			$typeName,
-			$matches
+			$typeName
 		);
 		if ($result === false) {
 			// @codeCoverageIgnoreStart
@@ -33,7 +29,7 @@ class TypeHelper
 			// @codeCoverageIgnoreEnd
 		}
 
-		return $result !== 0 && $matches !== null;
+		return $result !== 0;
 	}
 
 }

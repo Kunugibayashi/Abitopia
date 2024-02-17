@@ -21,6 +21,7 @@ use Cake\Console\Exception\StopException;
 use Cake\Utility\Inflector;
 use InvalidArgumentException;
 use RuntimeException;
+use function Cake\Core\getTypeName;
 
 /**
  * Base class for console commands.
@@ -66,6 +67,16 @@ abstract class BaseCommand implements CommandInterface
     }
 
     /**
+     * Get the command description.
+     *
+     * @return string
+     */
+    public static function getDescription(): string
+    {
+        return '';
+    }
+
+    /**
      * Get the root command name.
      *
      * @return string
@@ -91,9 +102,8 @@ abstract class BaseCommand implements CommandInterface
         $pos = strrpos(static::class, '\\');
         /** @psalm-suppress PossiblyFalseOperand */
         $name = substr(static::class, $pos + 1, -7);
-        $name = Inflector::underscore($name);
 
-        return $name;
+        return Inflector::underscore($name);
     }
 
     /**
@@ -109,6 +119,7 @@ abstract class BaseCommand implements CommandInterface
         [$root, $name] = explode(' ', $this->name, 2);
         $parser = new ConsoleOptionParser($name);
         $parser->setRootName($root);
+        $parser->setDescription(static::getDescription());
 
         $parser = $this->buildOptionParser($parser);
         if ($parser->subcommands()) {
@@ -153,7 +164,7 @@ abstract class BaseCommand implements CommandInterface
 
         $parser = $this->getOptionParser();
         try {
-            [$options, $arguments] = $parser->parse($argv);
+            [$options, $arguments] = $parser->parse($argv, $io);
             $args = new Arguments(
                 $arguments,
                 $options,
@@ -228,11 +239,12 @@ abstract class BaseCommand implements CommandInterface
     abstract public function execute(Arguments $args, ConsoleIo $io);
 
     /**
-     * Halt the the current process with a StopException.
+     * Halt the current process with a StopException.
      *
      * @param int $code The exit code to use.
      * @throws \Cake\Console\Exception\StopException
      * @return void
+     * @psalm-return never-return
      */
     public function abort(int $code = self::CODE_ERROR): void
     {

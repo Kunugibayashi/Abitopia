@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace Cake\Http;
 
 use Cake\Console\CommandCollection;
+use Cake\Controller\ComponentRegistry;
 use Cake\Controller\ControllerFactory;
 use Cake\Core\ConsoleApplicationInterface;
 use Cake\Core\Container;
@@ -294,7 +295,7 @@ abstract class BaseApplication implements
     /**
      * Invoke the application.
      *
-     * - Convert the PSR response into CakePHP equivalents.
+     * - Add the request to the container, enabling its injection into other services.
      * - Create the controller that will handle this request.
      * - Invoke the controller.
      *
@@ -304,8 +305,12 @@ abstract class BaseApplication implements
     public function handle(
         ServerRequestInterface $request
     ): ResponseInterface {
+        $container = $this->getContainer();
+        $container->add(ServerRequest::class, $request);
+        $container->add(ContainerInterface::class, $container);
+
         if ($this->controllerFactory === null) {
-            $this->controllerFactory = new ControllerFactory($this->getContainer());
+            $this->controllerFactory = new ControllerFactory($container);
         }
 
         if (Router::getRequest() !== $request) {
@@ -313,6 +318,9 @@ abstract class BaseApplication implements
         }
 
         $controller = $this->controllerFactory->create($request);
+
+        // This is needed for auto-wiring. Should be removed in 5.x
+        $container->add(ComponentRegistry::class, $controller->components());
 
         return $this->controllerFactory->invoke($controller);
     }

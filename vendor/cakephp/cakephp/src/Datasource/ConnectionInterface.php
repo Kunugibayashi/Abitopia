@@ -30,8 +30,6 @@ use Psr\SimpleCache\CacheInterface;
  *   already created tables. {@see \Cake\Database\Connnection::supportsDynamicConstraints()}
  * @method \Cake\Database\Schema\Collection getSchemaCollection() Gets a Schema\Collection object for this connection.
  *    {@see \Cake\Database\Connnection::getSchemaCollection()}
- * @method \Cake\Database\Query newQuery() Create a new Query instance for this connection.
- *    {@see \Cake\Database\Connnection::newQuery()}
  * @method \Cake\Database\StatementInterface prepare($sql) Prepares a SQL statement to be executed.
  *    {@see \Cake\Database\Connnection::prepare()}
  * @method \Cake\Database\StatementInterface execute($query, $params = [], array $types = []) Executes a query using
@@ -42,6 +40,16 @@ use Psr\SimpleCache\CacheInterface;
  */
 interface ConnectionInterface extends LoggerAwareInterface
 {
+    /**
+     * @var string
+     */
+    public const ROLE_WRITE = 'write';
+
+    /**
+     * @var string
+     */
+    public const ROLE_READ = 'read';
+
     /**
      * Gets the current logger object.
      *
@@ -74,7 +82,7 @@ interface ConnectionInterface extends LoggerAwareInterface
     /**
      * Get the configuration data used to create the connection.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function config(): array;
 
@@ -82,7 +90,7 @@ interface ConnectionInterface extends LoggerAwareInterface
      * Executes a callable function inside a transaction, if any exception occurs
      * while executing the passed callable, the transaction will be rolled back
      * If the result of the callable function is `false`, the transaction will
-     * also be rolled back. Otherwise the transaction is committed after executing
+     * also be rolled back. Otherwise, the transaction is committed after executing
      * the callback.
      *
      * The callback will receive the connection instance as its first argument.

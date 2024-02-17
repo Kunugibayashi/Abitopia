@@ -19,7 +19,6 @@ class SniffSettingsHelper
 
 	/**
 	 * @param string|int $settings
-	 * @return int
 	 */
 	public static function normalizeInteger($settings): int
 	{
@@ -27,8 +26,16 @@ class SniffSettingsHelper
 	}
 
 	/**
-	 * @param string[] $settings
-	 * @return string[]
+	 * @param string|int|null $settings
+	 */
+	public static function normalizeNullableInteger($settings): ?int
+	{
+		return $settings !== null ? (int) trim((string) $settings) : null;
+	}
+
+	/**
+	 * @param list<string> $settings
+	 * @return list<string>
 	 */
 	public static function normalizeArray(array $settings): array
 	{

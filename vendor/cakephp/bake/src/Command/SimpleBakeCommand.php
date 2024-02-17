@@ -2,21 +2,20 @@
 declare(strict_types=1);
 
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         2.0.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://www.opensource.org/licenses/mit-license.php MIT License
  */
 namespace Bake\Command;
 
-use Bake\Utility\TemplateRenderer;
 use Cake\Console\Arguments;
 use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOptionParser;
@@ -81,8 +80,6 @@ abstract class SimpleBakeCommand extends BakeCommand
         if (empty($name)) {
             $io->err('You must provide a name to bake a ' . $this->name());
             $this->abort();
-
-            return null;
         }
         $name = $this->_getName($name);
         $name = Inflector::camelize($name);
@@ -102,13 +99,13 @@ abstract class SimpleBakeCommand extends BakeCommand
      */
     protected function bake(string $name, Arguments $args, ConsoleIo $io): void
     {
-        $renderer = new TemplateRenderer($args->getOption('theme'));
-        $renderer->set('name', $name);
-        $renderer->set($this->templateData($args));
-        $contents = $renderer->generate($this->template());
+        $contents = $this->createTemplateRenderer()
+            ->set('name', $name)
+            ->set($this->templateData($args))
+            ->generate($this->template());
 
         $filename = $this->getPath($args) . $this->fileName($name);
-        $io->createFile($filename, $contents, (bool)$args->getOption('force'));
+        $io->createFile($filename, $contents, $this->force);
 
         $emptyFile = $this->getPath($args) . '.gitkeep';
         $this->deleteEmptyFile($emptyFile, $io);

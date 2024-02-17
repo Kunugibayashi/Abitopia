@@ -7,6 +7,7 @@ use PHP_CodeSniffer\Files\File;
 use PHP_CodeSniffer\Files\LocalFile;
 use PHP_CodeSniffer\Runner;
 use PHP_CodeSniffer\Sniffs\Sniff;
+use PHP_CodeSniffer\Util\Common;
 use ReflectionClass;
 use function array_map;
 use function array_merge;
@@ -29,11 +30,9 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
 {
 
 	/**
-	 * @param string $filePath
-	 * @param (string|int|bool|array<int|string, (string|int|bool|null)>)[] $sniffProperties
-	 * @param string[] $codesToCheck
-	 * @param string[] $cliArgs
-	 * @return File
+	 * @param array<string, string|int|bool|array<int|string, (string|int|bool|null)>> $sniffProperties
+	 * @param list<string> $codesToCheck
+	 * @param list<string> $cliArgs
 	 */
 	protected static function checkFile(string $filePath, array $sniffProperties = [], array $codesToCheck = [], array $cliArgs = []): File
 	{
@@ -48,7 +47,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
 			$codeSniffer->ruleset->ruleset[self::getSniffName()]['properties'] = $sniffProperties;
 		}
 
-		$sniffClassName = self::getSniffClassName();
+		$sniffClassName = static::getSniffClassName();
 		/** @var Sniff $sniff */
 		$sniff = new $sniffClassName();
 
@@ -78,6 +77,12 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
 		self::assertEmpty($errors, sprintf('No errors expected, but %d errors found.', count($errors)));
 	}
 
+	protected static function assertNoSniffWarningInFile(File $phpcsFile): void
+	{
+		$warnings = $phpcsFile->getWarnings();
+		self::assertEmpty($warnings, sprintf('No warnings expected, but %d warnings found.', count($warnings)));
+	}
+
 	protected static function assertSniffError(File $phpcsFile, int $line, string $code, ?string $message = null): void
 	{
 		$errors = $phpcsFile->getErrors();
@@ -89,6 +94,31 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
 			self::hasError($errors[$line], $sniffCode, $message),
 			sprintf(
 				'Expected error %s%s, but none found on line %d.%sErrors found on line %d:%s%s%s',
+				$sniffCode,
+				$message !== null
+					? sprintf(' with message "%s"', $message)
+					: '',
+				$line,
+				PHP_EOL . PHP_EOL,
+				$line,
+				PHP_EOL,
+				self::getFormattedErrors($errors[$line]),
+				PHP_EOL
+			)
+		);
+	}
+
+	protected static function assertSniffWarning(File $phpcsFile, int $line, string $code, ?string $message = null): void
+	{
+		$errors = $phpcsFile->getWarnings();
+		self::assertTrue(isset($errors[$line]), sprintf('Expected warning on line %s, but none found.', $line));
+
+		$sniffCode = sprintf('%s.%s', self::getSniffName(), $code);
+
+		self::assertTrue(
+			self::hasError($errors[$line], $sniffCode, $message),
+			sprintf(
+				'Expected warning %s%s, but none found on line %d.%sWarnings found on line %d:%s%s%s',
 				$sniffCode,
 				$message !== null
 					? sprintf(' with message "%s"', $message)
@@ -125,27 +155,10 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
 		self::assertStringEqualsFile(preg_replace('~(\\.php)$~', '.fixed\\1', $phpcsFile->getFilename()), $phpcsFile->fixer->getContents());
 	}
 
-	private static function getSniffName(): string
-	{
-		return preg_replace(
-			[
-				'~\\\~',
-				'~\.Sniffs~',
-				'~Sniff$~',
-			],
-			[
-				'.',
-				'',
-				'',
-			],
-			self::getSniffClassName()
-		);
-	}
-
 	/**
 	 * @return class-string
 	 */
-	private static function getSniffClassName(): string
+	protected static function getSniffClassName(): string
 	{
 		/** @var class-string $sniffClassName */
 		$sniffClassName = substr(static::class, 0, -strlen('Test'));
@@ -153,20 +166,22 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
 		return $sniffClassName;
 	}
 
+	protected static function getSniffName(): string
+	{
+		return Common::getSniffCode(static::getSniffClassName());
+	}
+
 	private static function getSniffClassReflection(): ReflectionClass
 	{
 		static $reflections = [];
 
-		$className = self::getSniffClassName();
+		$className = static::getSniffClassName();
 
 		return $reflections[$className] ?? $reflections[$className] = new ReflectionClass($className);
 	}
 
 	/**
-	 * @param (string|int)[][][] $errorsOnLine
-	 * @param string $sniffCode
-	 * @param string|null $message
-	 * @return bool
+	 * @param list<list<array{source: string, message: string}>> $errorsOnLine
 	 */
 	private static function hasError(array $errorsOnLine, string $sniffCode, ?string $message): bool
 	{
@@ -196,7 +211,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
 	}
 
 	/**
-	 * @param (string|int|bool)[][][] $errors
+	 * @param list<list<array{source: string, message: string}>> $errors
 	 */
 	private static function getFormattedErrors(array $errors): string
 	{

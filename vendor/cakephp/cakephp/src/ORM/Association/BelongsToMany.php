@@ -36,6 +36,7 @@ use SplObjectStorage;
  * that contains the association fields between the source and the target table.
  *
  * An example of a BelongsToMany association would be Article belongs to many Tags.
+ * In this example 'Article' is the source table and 'Tags' is the target table.
  */
 class BelongsToMany extends Association
 {
@@ -426,6 +427,7 @@ class BelongsToMany extends Association
 
         if (!$junction->hasAssociation($sAlias)) {
             $junction->belongsTo($sAlias, [
+                'bindingKey' => $this->getBindingKey(),
                 'foreignKey' => $this->getForeignKey(),
                 'targetTable' => $source,
             ]);
@@ -1183,27 +1185,33 @@ class BelongsToMany extends Association
                 $target = $this->getTarget();
 
                 $foreignKey = (array)$this->getForeignKey();
-                $prefixedForeignKey = array_map([$junction, 'aliasField'], $foreignKey);
-
-                $junctionPrimaryKey = (array)$junction->getPrimaryKey();
                 $assocForeignKey = (array)$junction->getAssociation($target->getAlias())->getForeignKey();
 
-                $keys = array_combine($foreignKey, $prefixedForeignKey);
+                $prefixedForeignKey = array_map([$junction, 'aliasField'], $foreignKey);
+                $junctionPrimaryKey = (array)$junction->getPrimaryKey();
+                $junctionQueryAlias = $junction->getAlias() . '__matches';
+
+                $keys = $matchesConditions = [];
                 foreach (array_merge($assocForeignKey, $junctionPrimaryKey) as $key) {
-                    $keys[$key] = $junction->aliasField($key);
+                    $aliased = $junction->aliasField($key);
+                    $keys[$key] = $aliased;
+                    $matchesConditions[$aliased] = new IdentifierExpression($junctionQueryAlias . '.' . $key);
                 }
 
-                // Find junction records. We join with the association target so that junction
-                // conditions from `targetConditions()` or the finder work.
-                $existing = $junction->find()
-                    ->innerJoinWith($target->getAlias())
-                    ->where($this->targetConditions())
-                    ->where($this->junctionConditions())
+                // Use association to create row selection
+                // with finders & association conditions.
+                $matches = $this->_appendJunctionJoin($this->find())
+                    ->select($keys)
                     ->where(array_combine($prefixedForeignKey, $primaryValue));
-                [$finder, $finderOptions] = $this->_extractFinder($this->getFinder());
-                if ($finder) {
-                    $existing = $target->callFinder($finder, $existing, $finderOptions);
-                }
+
+                // Create a subquery join to ensure we get
+                // the correct entity passed to callbacks.
+                $existing = $junction->selectQuery()
+                    ->from([$junctionQueryAlias => $matches])
+                    ->innerJoin(
+                        [$junction->getAlias() => $junction->getTable()],
+                        $matchesConditions
+                    );
 
                 $jointEntities = $this->_collectJointEntities($sourceEntity, $targetEntities);
                 $inserts = $this->_diffLinks($existing, $jointEntities, $targetEntities, $options);
@@ -1259,26 +1267,42 @@ class BelongsToMany extends Association
         $assocForeignKey = (array)$belongsTo->getForeignKey();
 
         $keys = array_merge($foreignKey, $assocForeignKey);
-        $deletes = $indexed = $present = [];
+        $deletes = $unmatchedEntityKeys = $present = [];
 
         foreach ($jointEntities as $i => $entity) {
-            $indexed[$i] = $entity->extract($keys);
+            $unmatchedEntityKeys[$i] = $entity->extract($keys);
             $present[$i] = array_values($entity->extract($assocForeignKey));
         }
 
-        foreach ($existing as $result) {
-            $fields = $result->extract($keys);
+        foreach ($existing as $existingLink) {
+            $existingKeys = $existingLink->extract($keys);
             $found = false;
-            foreach ($indexed as $i => $data) {
-                if ($fields === $data) {
-                    unset($indexed[$i]);
+            foreach ($unmatchedEntityKeys as $i => $unmatchedKeys) {
+                $matched = false;
+                foreach ($keys as $key) {
+                    if (is_object($unmatchedKeys[$key]) && is_object($existingKeys[$key])) {
+                        // If both sides are an object then use == so that value objects
+                        // are seen as equivalent.
+                        $matched = $existingKeys[$key] == $unmatchedKeys[$key];
+                    } else {
+                        // Use strict equality for all other values.
+                        $matched = $existingKeys[$key] === $unmatchedKeys[$key];
+                    }
+                    // Stop checks on first failure.
+                    if (!$matched) {
+                        break;
+                    }
+                }
+                if ($matched) {
+                    // Remove the unmatched entity so we don't look at it again.
+                    unset($unmatchedEntityKeys[$i]);
                     $found = true;
                     break;
                 }
             }
 
             if (!$found) {
-                $deletes[] = $result;
+                $deletes[] = $existingLink;
             }
         }
 

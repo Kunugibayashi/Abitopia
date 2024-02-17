@@ -25,6 +25,7 @@ use Cake\Routing\Route\Route;
 use Cake\Utility\Inflector;
 use InvalidArgumentException;
 use RuntimeException;
+use function Cake\Core\getTypeName;
 
 /**
  * Provides features for building routes inside scopes.
@@ -720,6 +721,7 @@ class RouteBuilder
     protected function _makeRoute($route, $defaults, $options): Route
     {
         if (is_string($route)) {
+            /** @var class-string<\Cake\Routing\Route\Route>|null $routeClass */
             $routeClass = App::className($options['routeClass'], 'Routing/Route');
             if ($routeClass === null) {
                 throw new InvalidArgumentException(sprintf(
@@ -754,12 +756,7 @@ class RouteBuilder
             $route = new $routeClass($route, $defaults, $options);
         }
 
-        if ($route instanceof Route) {
-            return $route;
-        }
-        throw new InvalidArgumentException(
-            'Route class not found, or route class is not a subclass of Cake\Routing\Route\Route'
-        );
+        return $route;
     }
 
     /**
@@ -989,13 +986,13 @@ class RouteBuilder
     }
 
     /**
-     * Apply a middleware to the current route scope.
+     * Apply one or many middleware to the current route scope.
      *
-     * Requires middleware to be registered via `registerMiddleware()`
+     * Requires middleware to be registered via `registerMiddleware()`.
      *
      * @param string ...$names The names of the middleware to apply to the current scope.
      * @return $this
-     * @throws \RuntimeException
+     * @throws \RuntimeException If it cannot apply one of the given middleware or middleware groups.
      * @see \Cake\Routing\RouteCollection::addMiddlewareToScope()
      */
     public function applyMiddleware(string ...$names)

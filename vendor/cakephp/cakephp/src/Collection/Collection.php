@@ -17,12 +17,15 @@ declare(strict_types=1);
 namespace Cake\Collection;
 
 use ArrayIterator;
+use Exception;
 use IteratorIterator;
 use Serializable;
 
 /**
  * A collection is an immutable list of elements with a handful of functions to
  * iterate, group, transform and extract information from it.
+ *
+ * @template-extends \IteratorIterator<mixed, mixed, \Traversable<mixed>>
  */
 class Collection extends IteratorIterator implements CollectionInterface, Serializable
 {
@@ -120,8 +123,14 @@ class Collection extends IteratorIterator implements CollectionInterface, Serial
      */
     public function __debugInfo(): array
     {
+        try {
+            $count = $this->count();
+        } catch (Exception $e) {
+            $count = 'An exception occurred while getting count';
+        }
+
         return [
-            'count' => $this->count(),
+            'count' => $count,
         ];
     }
 }

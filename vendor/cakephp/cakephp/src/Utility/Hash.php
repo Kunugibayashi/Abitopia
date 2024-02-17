@@ -728,25 +728,28 @@ class Hash
      */
     public static function expand(array $data, string $separator = '.'): array
     {
-        $result = [];
-        foreach ($data as $flat => $value) {
-            $keys = explode($separator, (string)$flat);
-            $keys = array_reverse($keys);
-            $child = [
-                $keys[0] => $value,
-            ];
-            array_shift($keys);
-            foreach ($keys as $k) {
-                $child = [
-                    $k => $child,
-                ];
+        $hash = [];
+        foreach ($data as $path => $value) {
+            $keys = explode($separator, (string)$path);
+            if (count($keys) === 1) {
+                $hash[$path] = $value;
+                continue;
             }
 
-            $stack = [[$child, &$result]];
-            static::_merge($stack, $result);
+            $valueKey = end($keys);
+            $keys = array_slice($keys, 0, -1);
+
+            $keyHash = &$hash;
+            foreach ($keys as $key) {
+                if (!array_key_exists($key, $keyHash)) {
+                    $keyHash[$key] = [];
+                }
+                $keyHash = &$keyHash[$key];
+            }
+            $keyHash[$valueKey] = $value;
         }
 
-        return $result;
+        return $hash;
     }
 
     /**
@@ -1151,10 +1154,11 @@ class Hash
      *
      * @param array $data List to normalize
      * @param bool $assoc If true, $data will be converted to an associative array.
+     * @param mixed $default The default value to use when a top level numeric key is converted to associative form.
      * @return array
      * @link https://book.cakephp.org/4/en/core-libraries/hash.html#Cake\Utility\Hash::normalize
      */
-    public static function normalize(array $data, bool $assoc = true): array
+    public static function normalize(array $data, bool $assoc = true, $default = null): array
     {
         $keys = array_keys($data);
         $count = count($keys);
@@ -1172,7 +1176,7 @@ class Hash
             $newList = [];
             for ($i = 0; $i < $count; $i++) {
                 if (is_int($keys[$i])) {
-                    $newList[$data[$keys[$i]]] = null;
+                    $newList[$data[$keys[$i]]] = $default;
                 } else {
                     $newList[$keys[$i]] = $data[$keys[$i]];
                 }

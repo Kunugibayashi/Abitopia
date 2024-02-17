@@ -2,16 +2,16 @@
 declare(strict_types=1);
 
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
+ * @license       https://www.opensource.org/licenses/mit-license.php MIT License
  */
 namespace Migrations\Command;
 
@@ -141,7 +141,7 @@ class BakeMigrationDiffCommand extends BakeSimpleMigrationCommand
     protected function setup(Arguments $args)
     {
         $this->migrationsPath = $this->getPath($args);
-        $this->migrationsFiles = glob($this->migrationsPath . '*.php');
+        $this->migrationsFiles = glob($this->migrationsPath . '*.php') ?: [];
         $this->phinxTable = $this->getPhinxTable($this->plugin);
 
         $connection = ConnectionManager::get($this->connection);
@@ -451,7 +451,7 @@ class BakeMigrationDiffCommand extends BakeSimpleMigrationCommand
             $lastVersion = $this->migratedItems[0]['version'];
             $lastFile = end($this->migrationsFiles);
 
-            return (bool)strpos($lastFile, (string)$lastVersion);
+            return $lastFile && (bool)strpos($lastFile, (string)$lastVersion);
         }
 
         return false;
@@ -473,15 +473,7 @@ class BakeMigrationDiffCommand extends BakeSimpleMigrationCommand
         $newArgs = [];
         $newArgs[] = $name;
 
-        if ($args->getOption('connection')) {
-            $newArgs[] = '-c';
-            $newArgs[] = $args->getOption('connection');
-        }
-
-        if ($args->getOption('plugin')) {
-            $newArgs[] = '-p';
-            $newArgs[] = $args->getOption('plugin');
-        }
+        $newArgs = array_merge($newArgs, $this->parseOptions($args));
 
         $exitCode = $this->executeCommand(BakeMigrationSnapshotCommand::class, $newArgs, $io);
 
@@ -524,7 +516,7 @@ class BakeMigrationDiffCommand extends BakeSimpleMigrationCommand
             $this->io->abort($msg);
         }
 
-        return unserialize(file_get_contents($path));
+        return unserialize((string)file_get_contents($path));
     }
 
     /**
@@ -574,7 +566,11 @@ class BakeMigrationDiffCommand extends BakeSimpleMigrationCommand
     {
         $parser = parent::getOptionParser();
 
-        $parser->addArgument('name', [
+        $parser->setDescription(
+            'Create a migration that captures the difference between ' .
+            'the migration state is expected to be and what the schema ' .
+            'reflection contains.'
+        )->addArgument('name', [
             'help' => 'Name of the migration to bake. Can use Plugin.name to bake migration files into plugins.',
             'required' => true,
         ]);

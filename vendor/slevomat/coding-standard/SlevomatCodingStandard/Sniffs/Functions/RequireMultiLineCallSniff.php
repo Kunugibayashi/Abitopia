@@ -33,11 +33,12 @@ class RequireMultiLineCallSniff extends AbstractLineCall
 
 	/**
 	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
-	 * @param File $phpcsFile
 	 * @param int $stringPointer
 	 */
 	public function process(File $phpcsFile, $stringPointer): void
 	{
+		$this->minLineLength = SniffSettingsHelper::normalizeInteger($this->minLineLength);
+
 		if (!$this->isCall($phpcsFile, $stringPointer)) {
 			return;
 		}
@@ -149,7 +150,7 @@ class RequireMultiLineCallSniff extends AbstractLineCall
 
 		for ($i = $parenthesisOpenerPointer + 1; $i < $parenthesisCloserPointer; $i++) {
 			if (in_array($i, $parametersPointers, true)) {
-				FixerHelper::cleanWhitespaceBefore($phpcsFile, $i);
+				FixerHelper::removeWhitespaceBefore($phpcsFile, $i);
 				$phpcsFile->fixer->addContentBefore($i, $phpcsFile->eolChar . $parametersIndentation);
 			} elseif ($tokens[$i]['content'] === $phpcsFile->eolChar) {
 				$phpcsFile->fixer->addContent($i, $oneIndentation);
@@ -224,13 +225,11 @@ class RequireMultiLineCallSniff extends AbstractLineCall
 		int $indentationLength
 	): bool
 	{
-		$minLineLength = SniffSettingsHelper::normalizeInteger($this->minLineLength);
-
-		if ($minLineLength === 0) {
+		if ($this->minLineLength === 0) {
 			return true;
 		}
 
-		if ($lineLength < $minLineLength) {
+		if ($lineLength < $this->minLineLength) {
 			return false;
 		}
 

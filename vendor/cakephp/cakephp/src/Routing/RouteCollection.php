@@ -21,6 +21,7 @@ use Cake\Routing\Exception\MissingRouteException;
 use Cake\Routing\Route\Route;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
+use function Cake\Core\deprecationWarning;
 
 /**
  * Contains a collection of routes.
@@ -45,6 +46,13 @@ class RouteCollection
      * @var array<\Cake\Routing\Route\Route>
      */
     protected $_named = [];
+
+    /**
+     * Routes indexed by static path.
+     *
+     * @var array<string, array<\Cake\Routing\Route\Route>>
+     */
+    protected $staticPaths = [];
 
     /**
      * Routes indexed by path prefix.
@@ -104,12 +112,17 @@ class RouteCollection
 
         // Index path prefixes (for parsing)
         $path = $route->staticPath();
-        $this->_paths[$path][] = $route;
 
         $extensions = $route->getExtensions();
         if (count($extensions) > 0) {
             $this->setExtensions($extensions);
         }
+
+        if ($path === $route->template) {
+            $this->staticPaths[$path][] = $route;
+        }
+
+        $this->_paths[$path][] = $route;
     }
 
     /**
@@ -119,10 +132,36 @@ class RouteCollection
      * @param string $method The HTTP method to use.
      * @return array An array of request parameters parsed from the URL.
      * @throws \Cake\Routing\Exception\MissingRouteException When a URL has no matching route.
+     * @deprecated 4.5.0 Use parseRequest() instead.
      */
     public function parse(string $url, string $method = ''): array
     {
+        deprecationWarning('4.5.0 - Use parseRequest() instead.');
+        $queryParameters = [];
+        if (strpos($url, '?') !== false) {
+            [$url, $qs] = explode('?', $url, 2);
+            parse_str($qs, $queryParameters);
+        }
+
         $decoded = urldecode($url);
+        if ($decoded !== '/') {
+            $decoded = rtrim($decoded, '/');
+        }
+
+        if (isset($this->staticPaths[$decoded])) {
+            foreach ($this->staticPaths[$decoded] as $route) {
+                $r = $route->parse($url, $method);
+                if ($r === null) {
+                    continue;
+                }
+
+                if ($queryParameters) {
+                    $r['?'] = $queryParameters;
+                }
+
+                return $r;
+            }
+        }
 
         // Sort path segments matching longest paths first.
         krsort($this->_paths);
@@ -130,12 +169,6 @@ class RouteCollection
         foreach ($this->_paths as $path => $routes) {
             if (strpos($decoded, $path) !== 0) {
                 continue;
-            }
-
-            $queryParameters = [];
-            if (strpos($url, '?') !== false) {
-                [$url, $qs] = explode('?', $url, 2);
-                parse_str($qs, $queryParameters);
             }
 
             foreach ($routes as $route) {
@@ -172,6 +205,24 @@ class RouteCollection
     {
         $uri = $request->getUri();
         $urlPath = urldecode($uri->getPath());
+        if ($urlPath !== '/') {
+            $urlPath = rtrim($urlPath, '/');
+        }
+
+        if (isset($this->staticPaths[$urlPath])) {
+            foreach ($this->staticPaths[$urlPath] as $route) {
+                $r = $route->parseRequest($request);
+                if ($r === null) {
+                    continue;
+                }
+                if ($uri->getQuery()) {
+                    parse_str($uri->getQuery(), $queryParameters);
+                    $r['?'] = $queryParameters;
+                }
+
+                return $r;
+            }
+        }
 
         // Sort path segments matching longest paths first.
         krsort($this->_paths);
@@ -218,9 +269,9 @@ class RouteCollection
         $action = strtolower($url['action']);
 
         $names = [
-            "${controller}:${action}",
-            "${controller}:_action",
-            "_controller:${action}",
+            "{$controller}:{$action}",
+            "{$controller}:_action",
+            "_controller:{$action}",
             '_controller:_action',
         ];
 
@@ -232,13 +283,13 @@ class RouteCollection
         // Only a plugin
         if ($prefix === false) {
             return [
-                "${plugin}.${controller}:${action}",
-                "${plugin}.${controller}:_action",
-                "${plugin}._controller:${action}",
-                "${plugin}._controller:_action",
-                "_plugin.${controller}:${action}",
-                "_plugin.${controller}:_action",
-                "_plugin._controller:${action}",
+                "{$plugin}.{$controller}:{$action}",
+                "{$plugin}.{$controller}:_action",
+                "{$plugin}._controller:{$action}",
+                "{$plugin}._controller:_action",
+                "_plugin.{$controller}:{$action}",
+                "_plugin.{$controller}:_action",
+                "_plugin._controller:{$action}",
                 '_plugin._controller:_action',
             ];
         }
@@ -246,13 +297,13 @@ class RouteCollection
         // Only a prefix
         if ($plugin === false) {
             return [
-                "${prefix}:${controller}:${action}",
-                "${prefix}:${controller}:_action",
-                "${prefix}:_controller:${action}",
-                "${prefix}:_controller:_action",
-                "_prefix:${controller}:${action}",
-                "_prefix:${controller}:_action",
-                "_prefix:_controller:${action}",
+                "{$prefix}:{$controller}:{$action}",
+                "{$prefix}:{$controller}:_action",
+                "{$prefix}:_controller:{$action}",
+                "{$prefix}:_controller:_action",
+                "_prefix:{$controller}:{$action}",
+                "_prefix:{$controller}:_action",
+                "_prefix:_controller:{$action}",
                 '_prefix:_controller:_action',
             ];
         }
@@ -260,21 +311,21 @@ class RouteCollection
         // Prefix and plugin has the most options
         // as there are 4 factors.
         return [
-            "${prefix}:${plugin}.${controller}:${action}",
-            "${prefix}:${plugin}.${controller}:_action",
-            "${prefix}:${plugin}._controller:${action}",
-            "${prefix}:${plugin}._controller:_action",
-            "${prefix}:_plugin.${controller}:${action}",
-            "${prefix}:_plugin.${controller}:_action",
-            "${prefix}:_plugin._controller:${action}",
-            "${prefix}:_plugin._controller:_action",
-            "_prefix:${plugin}.${controller}:${action}",
-            "_prefix:${plugin}.${controller}:_action",
-            "_prefix:${plugin}._controller:${action}",
-            "_prefix:${plugin}._controller:_action",
-            "_prefix:_plugin.${controller}:${action}",
-            "_prefix:_plugin.${controller}:_action",
-            "_prefix:_plugin._controller:${action}",
+            "{$prefix}:{$plugin}.{$controller}:{$action}",
+            "{$prefix}:{$plugin}.{$controller}:_action",
+            "{$prefix}:{$plugin}._controller:{$action}",
+            "{$prefix}:{$plugin}._controller:_action",
+            "{$prefix}:_plugin.{$controller}:{$action}",
+            "{$prefix}:_plugin.{$controller}:_action",
+            "{$prefix}:_plugin._controller:{$action}",
+            "{$prefix}:_plugin._controller:_action",
+            "_prefix:{$plugin}.{$controller}:{$action}",
+            "_prefix:{$plugin}.{$controller}:_action",
+            "_prefix:{$plugin}._controller:{$action}",
+            "_prefix:{$plugin}._controller:_action",
+            "_prefix:_plugin.{$controller}:{$action}",
+            "_prefix:_plugin.{$controller}:_action",
+            "_prefix:_plugin._controller:{$action}",
             '_prefix:_plugin._controller:_action',
         ];
     }
@@ -328,6 +379,8 @@ class RouteCollection
 
     /**
      * Get all the connected routes as a flat list.
+     *
+     * Routes will not be returned in the order they were added.
      *
      * @return array<\Cake\Routing\Route\Route>
      */

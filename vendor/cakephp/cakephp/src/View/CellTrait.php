@@ -19,6 +19,7 @@ namespace Cake\View;
 use Cake\Core\App;
 use Cake\Utility\Inflector;
 use Cake\View\Exception\MissingCellException;
+use function Cake\Core\pluginSplit;
 
 /**
  * Provides cell() method for usage in Controller and View classes.
@@ -76,9 +77,8 @@ trait CellTrait
             $data = array_values($data);
         }
         $options = ['action' => $action, 'args' => $data] + $options;
-        $cell = $this->_createCell($className, $action, $plugin, $options);
 
-        return $cell;
+        return $this->_createCell($className, $action, $plugin, $options);
     }
 
     /**

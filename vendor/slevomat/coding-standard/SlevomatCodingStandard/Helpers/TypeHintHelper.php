@@ -3,20 +3,21 @@
 namespace SlevomatCodingStandard\Helpers;
 
 use PHP_CodeSniffer\Files\File;
-use SlevomatCodingStandard\Helpers\Annotation\TemplateAnnotation;
-use SlevomatCodingStandard\Helpers\Annotation\TypeAliasAnnotation;
-use SlevomatCodingStandard\Helpers\Annotation\TypeImportAnnotation;
+use PHPStan\PhpDocParser\Ast\PhpDoc\TemplateTagValueNode;
+use PHPStan\PhpDocParser\Ast\PhpDoc\TypeAliasImportTagValueNode;
+use PHPStan\PhpDocParser\Ast\PhpDoc\TypeAliasTagValueNode;
 use function array_key_exists;
 use function array_map;
 use function array_merge;
 use function array_unique;
 use function count;
-use function explode;
 use function implode;
 use function in_array;
+use function preg_split;
 use function sort;
 use function sprintf;
 use function substr;
+use const PREG_SPLIT_DELIM_CAPTURE;
 use const T_FUNCTION;
 use const T_WHITESPACE;
 
@@ -30,7 +31,8 @@ class TypeHintHelper
 		string $typeHint,
 		bool $enableObjectTypeHint,
 		bool $enableStaticTypeHint,
-		bool $enableMixedTypeHint
+		bool $enableMixedTypeHint,
+		bool $enableStandaloneNullTrueFalseTypeHints
 	): bool
 	{
 		if (self::isSimpleTypeHint($typeHint)) {
@@ -47,6 +49,10 @@ class TypeHintHelper
 
 		if ($typeHint === 'mixed') {
 			return $enableMixedTypeHint;
+		}
+
+		if (in_array($typeHint, ['null', 'true', 'false'], true)) {
+			return $enableStandaloneNullTrueFalseTypeHints;
 		}
 
 		return !self::isSimpleUnofficialTypeHints($typeHint);
@@ -78,12 +84,16 @@ class TypeHintHelper
 
 	public static function isVoidTypeHint(string $typeHint): bool
 	{
-		return in_array($typeHint, ['void', 'never', 'never-return', 'never-returns', 'no-return'], true);
+		return $typeHint === 'void';
+	}
+
+	public static function isNeverTypeHint(string $typeHint): bool
+	{
+		return in_array($typeHint, ['never', 'never-return', 'never-returns', 'no-return'], true);
 	}
 
 	/**
-	 * @param string $typeHint
-	 * @return string[]
+	 * @return list<string>
 	 */
 	public static function convertUnofficialUnionTypeHintToOfficialTypeHints(string $typeHint): array
 	{
@@ -97,8 +107,12 @@ class TypeHintHelper
 
 	public static function isTypeDefinedInAnnotation(File $phpcsFile, int $pointer, string $typeHint): bool
 	{
-		/** @var int $docCommentOpenPointer */
 		$docCommentOpenPointer = DocCommentHelper::findDocCommentOpenPointer($phpcsFile, $pointer);
+
+		if ($docCommentOpenPointer === null) {
+			return false;
+		}
+
 		return self::isTemplate($phpcsFile, $docCommentOpenPointer, $typeHint)
 			|| self::isAlias($phpcsFile, $docCommentOpenPointer, $typeHint);
 	}
@@ -113,7 +127,7 @@ class TypeHintHelper
 	}
 
 	/**
-	 * @return string[]
+	 * @return list<string>
 	 */
 	public static function getSimpleTypeHints(): array
 	{
@@ -123,6 +137,7 @@ class TypeHintHelper
 			$simpleTypeHints = [
 				'int',
 				'integer',
+				'false',
 				'float',
 				'string',
 				'bool',
@@ -132,6 +147,7 @@ class TypeHintHelper
 				'array',
 				'iterable',
 				'void',
+				'never',
 			];
 		}
 
@@ -139,7 +155,7 @@ class TypeHintHelper
 	}
 
 	/**
-	 * @return string[]
+	 * @return list<string>
 	 */
 	public static function getSimpleIterableTypeHints(): array
 	{
@@ -160,7 +176,6 @@ class TypeHintHelper
 				'scalar',
 				'numeric',
 				'true',
-				'false',
 				'object',
 				'resource',
 				'static',
@@ -169,9 +184,16 @@ class TypeHintHelper
 				'trait-string',
 				'callable-string',
 				'numeric-string',
+				'non-empty-string',
+				'non-falsy-string',
+				'literal-string',
 				'array-key',
 				'list',
 				'empty',
+				'positive-int',
+				'negative-int',
+				'min',
+				'max',
 			];
 		}
 
@@ -179,9 +201,7 @@ class TypeHintHelper
 	}
 
 	/**
-	 * @param string $type
-	 * @param string[] $traversableTypeHints
-	 * @return bool
+	 * @param list<string> $traversableTypeHints
 	 */
 	public static function isTraversableType(string $type, array $traversableTypeHints): bool
 	{
@@ -195,14 +215,26 @@ class TypeHintHelper
 		string $typeHintInAnnotation
 	): bool
 	{
-		$typeHintParts = explode('|', self::normalize($typeHint));
-		$typeHintInAnnotationParts = explode('|', self::normalize($typeHintInAnnotation));
+		/** @var list<string> $typeHintParts */
+		$typeHintParts = preg_split('~([&|])~', self::normalize($typeHint), -1, PREG_SPLIT_DELIM_CAPTURE);
+		/** @var list<string> $typeHintInAnnotationParts */
+		$typeHintInAnnotationParts = preg_split('~([&|])~', self::normalize($typeHintInAnnotation), -1, PREG_SPLIT_DELIM_CAPTURE);
 
 		if (count($typeHintParts) !== count($typeHintInAnnotationParts)) {
 			return false;
 		}
 
 		for ($i = 0; $i < count($typeHintParts); $i++) {
+			if (
+				(
+					$typeHintParts[$i] === '|'
+					|| $typeHintParts[$i] === '&'
+				)
+				&& $typeHintParts[$i] !== $typeHintInAnnotationParts[$i]
+			) {
+				return false;
+			}
+
 			if (self::getFullyQualifiedTypeHint($phpcsFile, $functionPointer, $typeHintParts[$i]) !== self::getFullyQualifiedTypeHint(
 				$phpcsFile,
 				$functionPointer,
@@ -222,7 +254,7 @@ class TypeHintHelper
 			array_merge([T_WHITESPACE], TokenHelper::getTypeHintTokenCodes()),
 			$endPointer - 1
 		);
-		return TokenHelper::findNextExcluding($phpcsFile, T_WHITESPACE, $previousPointer + 1);
+		return TokenHelper::findNextNonWhitespace($phpcsFile, $previousPointer + 1);
 	}
 
 	private static function isTemplate(File $phpcsFile, int $docCommentOpenPointer, string $typeHint): bool
@@ -231,22 +263,23 @@ class TypeHintHelper
 		if ($templateAnnotationNames === null) {
 			foreach (['template', 'template-covariant'] as $annotationName) {
 				$templateAnnotationNames[] = sprintf('@%s', $annotationName);
-				foreach (AnnotationHelper::PREFIXES as $prefixAnnotationName) {
+				foreach (AnnotationHelper::STATIC_ANALYSIS_PREFIXES as $prefixAnnotationName) {
 					$templateAnnotationNames[] = sprintf('@%s-%s', $prefixAnnotationName, $annotationName);
 				}
 			}
 		}
 
 		$containsTypeHintInTemplateAnnotation = static function (int $docCommentOpenPointer) use ($phpcsFile, $templateAnnotationNames, $typeHint): bool {
-			$annotations = AnnotationHelper::getAnnotations($phpcsFile, $docCommentOpenPointer);
 			foreach ($templateAnnotationNames as $templateAnnotationName) {
-				if (!array_key_exists($templateAnnotationName, $annotations)) {
-					continue;
-				}
+				/** @var list<Annotation<TemplateTagValueNode>> $annotations */
+				$annotations = AnnotationHelper::getAnnotations($phpcsFile, $docCommentOpenPointer, $templateAnnotationName);
 
-				/** @var TemplateAnnotation $templateAnnotation */
-				foreach ($annotations[$templateAnnotationName] as $templateAnnotation) {
-					if ($templateAnnotation->getTemplateName() === $typeHint) {
+				foreach ($annotations as $templateAnnotation) {
+					if ($templateAnnotation->isInvalid()) {
+						continue;
+					}
+
+					if ($templateAnnotation->getValue()->name === $typeHint) {
 						return true;
 					}
 				}
@@ -257,35 +290,18 @@ class TypeHintHelper
 
 		$tokens = $phpcsFile->getTokens();
 
-		$docCommentOwnerPointer = TokenHelper::findNext(
-			$phpcsFile,
-			array_merge([T_FUNCTION], TokenHelper::$typeKeywordTokenCodes),
-			$tokens[$docCommentOpenPointer]['comment_closer'] + 1
-		);
-		if (
-			$docCommentOwnerPointer !== null
-			&& $tokens[$tokens[$docCommentOpenPointer]['comment_closer']]['line'] + 1 === $tokens[$docCommentOwnerPointer]['line']
-		) {
-			if ($containsTypeHintInTemplateAnnotation($docCommentOpenPointer)) {
+		$docCommentOwnerPointer = DocCommentHelper::findDocCommentOwnerPointer($phpcsFile, $docCommentOpenPointer);
+		if ($docCommentOwnerPointer !== null) {
+			if (in_array($tokens[$docCommentOwnerPointer]['code'], TokenHelper::$typeKeywordTokenCodes, true)) {
+				return $containsTypeHintInTemplateAnnotation($docCommentOpenPointer);
+			}
+
+			if ($tokens[$docCommentOwnerPointer]['code'] === T_FUNCTION && $containsTypeHintInTemplateAnnotation($docCommentOpenPointer)) {
 				return true;
 			}
-
-			if ($tokens[$docCommentOwnerPointer]['code'] !== T_FUNCTION) {
-				return false;
-			}
-		} else {
-			$docCommentOwnerPointer = null;
 		}
 
-		$pointerToFindClass = $docCommentOpenPointer;
-		if ($docCommentOwnerPointer === null) {
-			$functionPointer = TokenHelper::findPrevious($phpcsFile, T_FUNCTION, $docCommentOpenPointer - 1);
-			if ($functionPointer !== null) {
-				$pointerToFindClass = $functionPointer;
-			}
-		}
-
-		$classPointer = ClassHelper::getClassPointer($phpcsFile, $pointerToFindClass);
+		$classPointer = ClassHelper::getClassPointer($phpcsFile, $docCommentOpenPointer);
 
 		if ($classPointer === null) {
 			return false;
@@ -304,7 +320,7 @@ class TypeHintHelper
 		static $aliasAnnotationNames = null;
 		if ($aliasAnnotationNames === null) {
 			foreach (['type', 'import-type'] as $annotationName) {
-				foreach (AnnotationHelper::PREFIXES as $prefixAnnotationName) {
+				foreach (AnnotationHelper::STATIC_ANALYSIS_PREFIXES as $prefixAnnotationName) {
 					$aliasAnnotationNames[] = sprintf('@%s-%s', $prefixAnnotationName, $annotationName);
 				}
 			}
@@ -321,15 +337,25 @@ class TypeHintHelper
 			return false;
 		}
 
-		$annotations = AnnotationHelper::getAnnotations($phpcsFile, $classDocCommentOpenPointer);
 		foreach ($aliasAnnotationNames as $aliasAnnotationName) {
-			if (!array_key_exists($aliasAnnotationName, $annotations)) {
-				continue;
-			}
+			$annotations = AnnotationHelper::getAnnotations($phpcsFile, $classDocCommentOpenPointer, $aliasAnnotationName);
 
-			/** @var TypeAliasAnnotation|TypeImportAnnotation $aliasAnnotation */
-			foreach ($annotations[$aliasAnnotationName] as $aliasAnnotation) {
-				if ($aliasAnnotation->getAlias() === $typeHint) {
+			foreach ($annotations as $aliasAnnotation) {
+				$aliasAnnotationValue = $aliasAnnotation->getValue();
+
+				if ($aliasAnnotationValue instanceof TypeAliasTagValueNode && $aliasAnnotationValue->alias === $typeHint) {
+					return true;
+				}
+
+				if (!($aliasAnnotationValue instanceof TypeAliasImportTagValueNode)) {
+					continue;
+				}
+
+				if ($aliasAnnotationValue->importedAs === $typeHint) {
+					return true;
+				}
+
+				if ($aliasAnnotationValue->importedAlias === $typeHint) {
 					return true;
 				}
 			}
@@ -344,32 +370,48 @@ class TypeHintHelper
 			$typeHint = substr($typeHint, 1) . '|null';
 		}
 
-		$parts = explode('|', $typeHint);
+		if (self::isNeverTypeHint($typeHint)) {
+			return 'never';
+		}
 
-		if (in_array('mixed', $parts, true)) {
+		/** @var list<string> $parts */
+		$parts = preg_split('~([&|])~', $typeHint, -1, PREG_SPLIT_DELIM_CAPTURE);
+
+		$hints = [];
+		$delimiter = '|';
+		foreach ($parts as $part) {
+			if ($part === '|' || $part === '&') {
+				$delimiter = $part;
+				continue;
+			}
+
+			$hints[] = $part;
+		}
+
+		if (in_array('mixed', $hints, true)) {
 			return 'mixed';
 		}
 
-		$convertedParts = [];
-		foreach ($parts as $part) {
-			if (self::isUnofficialUnionTypeHint($part)) {
-				$convertedParts = array_merge($convertedParts, self::convertUnofficialUnionTypeHintToOfficialTypeHints($part));
+		$convertedHints = [];
+		foreach ($hints as $hint) {
+			if (self::isUnofficialUnionTypeHint($hint) && $delimiter !== '&') {
+				$convertedHints = array_merge($convertedHints, self::convertUnofficialUnionTypeHintToOfficialTypeHints($hint));
 			} else {
-				$convertedParts[] = $part;
+				$convertedHints[] = $hint;
 			}
 		}
 
-		$convertedParts = array_unique($convertedParts);
+		$convertedHints = array_unique($convertedHints);
 
-		if (count($convertedParts) > 1) {
-			$convertedParts = array_map(static function (string $part): string {
-				return TypeHintHelper::isVoidTypeHint($part) ? 'null' : $part;
-			}, $convertedParts);
+		if (count($convertedHints) > 1) {
+			$convertedHints = array_map(static function (string $part): string {
+				return self::isVoidTypeHint($part) ? 'null' : $part;
+			}, $convertedHints);
 		}
 
-		sort($convertedParts);
+		sort($convertedHints);
 
-		return implode('|', $convertedParts);
+		return implode($delimiter, $convertedHints);
 	}
 
 }

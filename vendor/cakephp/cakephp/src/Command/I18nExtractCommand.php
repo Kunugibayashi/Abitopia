@@ -133,7 +133,7 @@ class I18nExtractCommand extends Command
         /** @psalm-suppress UndefinedConstant */
         $defaultPaths = array_merge(
             [APP],
-            App::path('templates'),
+            array_values(App::path('templates')),
             ['D'] // This is required to break the loop below
         );
         $defaultPathIndex = 0;
@@ -147,8 +147,6 @@ class I18nExtractCommand extends Command
             if (strtoupper($response) === 'Q') {
                 $io->err('Extract Aborted');
                 $this->abort();
-
-                return;
             }
             if (strtoupper($response) === 'D' && count($this->_paths)) {
                 $io->out();
@@ -219,7 +217,7 @@ class I18nExtractCommand extends Command
                 . 'locales' . DIRECTORY_SEPARATOR;
         } else {
             $message = "What is the path you would like to output?\n[Q]uit";
-            $localePaths = App::path('locales');
+            $localePaths = array_values(App::path('locales'));
             if (!$localePaths) {
                 $localePaths[] = ROOT . 'resources' . DIRECTORY_SEPARATOR . 'locales';
             }
@@ -832,7 +830,11 @@ class I18nExtractCommand extends Command
         }
 
         foreach ($this->_paths as $path) {
-            $path = realpath($path) . DIRECTORY_SEPARATOR;
+            $path = realpath($path);
+            if ($path === false) {
+                continue;
+            }
+            $path .= DIRECTORY_SEPARATOR;
             $fs = new Filesystem();
             $files = $fs->findRecursive($path, '/\.php$/');
             $files = array_keys(iterator_to_array($files));

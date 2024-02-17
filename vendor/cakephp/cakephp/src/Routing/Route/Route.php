@@ -16,8 +16,10 @@ declare(strict_types=1);
  */
 namespace Cake\Routing\Route;
 
+use Cake\Http\Exception\BadRequestException;
 use InvalidArgumentException;
 use Psr\Http\Message\ServerRequestInterface;
+use function Cake\Core\deprecationWarning;
 
 /**
  * A single Route used by the Router to connect requests to
@@ -326,9 +328,14 @@ class Route
         $parsed = preg_quote($this->template, '#');
 
         if (strpos($route, '{') !== false && strpos($route, '}') !== false) {
-            preg_match_all(static::PLACEHOLDER_REGEX, $route, $namedElements);
+            preg_match_all(static::PLACEHOLDER_REGEX, $route, $namedElements, PREG_OFFSET_CAPTURE | PREG_SET_ORDER);
         } else {
-            $hasMatches = preg_match_all('/:([a-z0-9-_]+(?<![-_]))/i', $route, $namedElements);
+            $hasMatches = preg_match_all(
+                '/:([a-z0-9-_]+(?<![-_]))/i',
+                $route,
+                $namedElements,
+                PREG_OFFSET_CAPTURE | PREG_SET_ORDER
+            );
             $this->braceKeys = false;
             if ($hasMatches) {
                 deprecationWarning(
@@ -337,17 +344,20 @@ class Route
                 );
             }
         }
-        foreach ($namedElements[1] as $i => $name) {
-            $search = preg_quote($namedElements[0][$i]);
+        foreach ($namedElements as $matchArray) {
+            // Placeholder name, e.g. "foo"
+            $name = $matchArray[1][0];
+            // Placeholder with colon/braces, e.g. "{foo}"
+            $search = preg_quote($matchArray[0][0]);
             if (isset($this->options[$name])) {
                 $option = '';
                 if ($name !== 'plugin' && array_key_exists($name, $this->defaults)) {
                     $option = '?';
                 }
-                $slashParam = '/' . $search;
                 // phpcs:disable Generic.Files.LineLength
-                if (strpos($parsed, $slashParam) !== false) {
-                    $routeParams[$slashParam] = '(?:/(?P<' . $name . '>' . $this->options[$name] . ')' . $option . ')' . $option;
+                // Offset of the colon/braced placeholder in the full template string
+                if ($parsed[$matchArray[0][1] - 1] === '/') {
+                    $routeParams['/' . $search] = '(?:/(?P<' . $name . '>' . $this->options[$name] . ')' . $option . ')' . $option;
                 } else {
                     $routeParams[$search] = '(?:(?P<' . $name . '>' . $this->options[$name] . ')' . $option . ')' . $option;
                 }
@@ -449,13 +459,18 @@ class Route
      * @param string $url The URL to attempt to parse.
      * @param string $method The HTTP method of the request being parsed.
      * @return array|null An array of request parameters, or `null` on failure.
-     * @throws \InvalidArgumentException When method is not an empty string or in `VALID_METHODS` list.
+     * @throws \Cake\Http\Exception\BadRequestException When method is not an empty string and not in `VALID_METHODS` list.
      */
     public function parse(string $url, string $method): ?array
     {
-        if ($method !== '') {
-            $method = $this->normalizeAndValidateMethods($method);
+        try {
+            if ($method !== '') {
+                $method = $this->normalizeAndValidateMethods($method);
+            }
+        } catch (InvalidArgumentException $e) {
+            throw new BadRequestException($e->getMessage());
         }
+
         $compiledRoute = $this->compile();
         [$url, $ext] = $this->_parseExtension($url);
 
@@ -525,6 +540,8 @@ class Route
                 }
             }
         }
+
+        $route['_route'] = $this;
         $route['_matchedRoute'] = $this->template;
         if (count($this->middleware) > 0) {
             $route['_middleware'] = $this->middleware;
@@ -694,11 +711,6 @@ class Route
         }
         unset($url['_method'], $url['[method]'], $defaults['_method']);
 
-        // Missing defaults is a fail.
-        if (array_diff_key($defaults, $url) !== []) {
-            return null;
-        }
-
         // Defaults with different values are a fail.
         if (array_intersect_key($url, $defaults) != $defaults) {
             return null;
@@ -804,7 +816,10 @@ class Route
      */
     protected function _writeUrl(array $params, array $pass = [], array $query = []): string
     {
-        $pass = implode('/', array_map('rawurlencode', $pass));
+        $pass = array_map(function ($value) {
+            return rawurlencode((string)$value);
+        }, $pass);
+        $pass = implode('/', $pass);
         $out = $this->template;
 
         $search = $replace = [];

@@ -109,9 +109,11 @@ example.
 -  **secretKey**: Default is ``null`` but you’re **required** to pass a
    secret key if you’re not in the context of a CakePHP application that
    provides it through ``Security::salt()``.
+-  **jwks**: Default is ``null``. Associative array with a ``'keys'`` key.
+   If provided will be used instead of the secret key.
 
 You need to add the lib `firebase/php-jwt <https://github.com/firebase/php-jwt>`_
-v5.5 or above to your app to use the ``JwtAuthenticator``.
+v6.2 or above to your app to use the ``JwtAuthenticator``.
 
 By default the ``JwtAuthenticator`` uses ``HS256`` symmetric key algorithm and uses
 the value of ``Cake\Utility\Security::salt()`` as encryption key.
@@ -170,6 +172,40 @@ In your ``UsersController``::
         $this->set(compact('json'));
         $this->viewBuilder()->setOption('serialize', 'json');
     }
+
+Using a JWKS fetched from an external JWKS endpoint is supported as well::
+
+    // Application.php
+    public function getAuthenticationService(ServerRequestInterface $request): AuthenticationServiceInterface
+    {
+        $service = new AuthenticationService();
+        // ...
+        $service->loadIdentifier('Authentication.JwtSubject');
+
+        $jwksUrl = 'https://appleid.apple.com/auth/keys';
+
+        // Set of keys. The "keys" key is required. Additionally keys require a "alg" key.
+        // Add it manually to your JWK array if it doesn't already exist.
+        $jsonWebKeySet = Cache::remember('jwks-' . md5($jwksUrl), function () use ($jwksUrl) {
+            $http = new Client();
+            $response = $http->get($jwksUrl);
+            return $response->getJson();
+        });
+
+        $service->loadAuthenticator('Authentication.Jwt', [
+            'jwks' => $jsonWebKeySet,
+            'returnPayload' => false
+        ]);
+    }
+
+The JWKS resource will return the same set of keys most of the time.
+Applications should cache these resources, but they also need to be
+prepared to handle signing key rotations.
+
+.. warning::
+
+    Applications need to pick a cache lifetime that balances performance and security.
+    This is particularly important in situations where a private key is compromised.
 
 Beside from sharing the public key file to external application, you can
 distribute it via a JWKS endpoint by configuring your app as follows::
@@ -274,6 +310,10 @@ Configuration options:
    ``null`` and all pages will be checked.
 -  **passwordHasher**: Password hasher to use for token hashing. Default
    is ``DefaultPasswordHasher::class``.
+-  **salt**: When ``false`` no salt is used. When a string is passed that value is used as a salt value.
+   When ``true`` the default Security.salt is used. Default is ``true``. When a salt is used, the cookie value
+   will contain `hash(username + password + hmac(username + password, salt))`. This helps harden tokens against possible
+   database leaks and enables cookie values to be invalidated by rotating the salt value.
 
 Usage
 -----
@@ -284,7 +324,7 @@ after their session expires for as long as the cookie is valid. If a user is
 explicity logged out via ``AuthenticationComponent::logout()`` the
 authentication cookie is **also destroyed**. An example configuration would be::
 
-    // In Application::getAuthService()
+    // In Application::getAuthenticationService()
 
     // Reuse fields in multiple authenticators.
     $fields = [
@@ -295,11 +335,8 @@ authentication cookie is **also destroyed**. An example configuration would be::
     // Put form authentication first so that users can re-login via
     // the login form if necessary.
     $service->loadAuthenticator('Authentication.Form', [
+        'fields' => $fields,
         'loginUrl' => '/users/login',
-        'fields' => [
-            IdentifierInterface::CREDENTIAL_USERNAME => 'email',
-            IdentifierInterface::CREDENTIAL_PASSWORD => 'password',
-        ],
     ]);
     // Then use sessions if they are active.
     $service->loadAuthenticator('Authentication.Session');
@@ -318,6 +355,34 @@ You'll also need to add a checkbox to your login form to have cookies created::
 After logging in, if the checkbox was checked you should see a ``CookieAuth``
 cookie in your browser dev tools. The cookie stores the username field and
 a hashed token that is used to reauthenticate later.
+
+Environment Variables
+=====================
+
+The ``EnvironmentAuthenticator`` can authenticate users based on mapped
+environment variables exposed by the webserver. This enables authentication via
+`Shibboleth <https://shibboleth.atlassian.net/wiki/spaces/CONCEPT/overview>`_
+and similar SAML 1.1 implementations. An example configuration is::
+
+    // Configure a token identifier that maps `USER_ID` to the
+    // username column
+    $service->loadIdentifier('Authentication.Token', [
+        'tokenField' => 'username',
+        'dataField' => 'USER_NAME',
+    ]);
+
+    $service->loadAuthenticator('Authentication.Environment', [
+        'loginUrl' => '/sso',
+        'fields' => [
+            // Choose which environment variables exposed by your
+            // authentication provider are used to authenticate
+            // in your application.
+            'USER_NAME',
+        ],
+    ]);
+
+.. versionadded:: 2.10.0
+    ``EnvironmentAuthenticator`` was added.
 
 Events
 ======
@@ -402,7 +467,7 @@ You can also get the identifier that identified the user as well::
 Using Stateless Authenticators with Stateful Authenticators
 ===========================================================
 
-When using ``Token`` or ``HttpBasic``, ``HttpDigest`` with other authenticators,
+When using ``HttpBasic``, ``HttpDigest`` with other authenticators,
 you should remember that these authenticators will halt the request when
 authentication credentials are missing or invalid. This is necessary as these
 authenticators must send specific challenge headers in the response::

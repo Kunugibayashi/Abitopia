@@ -36,11 +36,10 @@ class CatchHelper
 	}
 
 	/**
-	 * @param File $phpcsFile
 	 * @param array<string, array<int, int|string>|int|string> $catchToken
-	 * @return string[]
+	 * @return list<string>
 	 */
-	public static function findCatchedTypesInCatch(File $phpcsFile, array $catchToken): array
+	public static function findCaughtTypesInCatch(File $phpcsFile, array $catchToken): array
 	{
 		/** @var int $catchParenthesisOpenerPointer */
 		$catchParenthesisOpenerPointer = $catchToken['parenthesis_opener'];
@@ -51,7 +50,7 @@ class CatchHelper
 
 		$nameEndPointer = $catchParenthesisOpenerPointer;
 		$tokens = $phpcsFile->getTokens();
-		$catchedTypes = [];
+		$caughtTypes = [];
 		do {
 			$nameStartPointer = TokenHelper::findNext(
 				$phpcsFile,
@@ -71,14 +70,14 @@ class CatchHelper
 			$pointerAfterNameEndPointer = TokenHelper::findNextExcluding($phpcsFile, $nameTokenCodes, $nameStartPointer + 1);
 			$nameEndPointer = $pointerAfterNameEndPointer === null ? $nameStartPointer : $pointerAfterNameEndPointer - 1;
 
-			$catchedTypes[] = NamespaceHelper::resolveClassName(
+			$caughtTypes[] = NamespaceHelper::resolveClassName(
 				$phpcsFile,
 				TokenHelper::getContent($phpcsFile, $nameStartPointer, $nameEndPointer),
 				$catchParenthesisOpenerPointer
 			);
 		} while (true);
 
-		return $catchedTypes;
+		return $caughtTypes;
 	}
 
 }

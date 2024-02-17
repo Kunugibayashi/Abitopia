@@ -34,7 +34,6 @@ class OptimizedFunctionsWithoutUnpackingSniff implements Sniff
 
 	/**
 	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
-	 * @param File $phpcsFile
 	 * @param int $pointer
 	 */
 	public function process(File $phpcsFile, $pointer): void
@@ -97,6 +96,11 @@ class OptimizedFunctionsWithoutUnpackingSniff implements Sniff
 		);
 
 		if ($tokens[$nextTokenAfterSeparatorPointer]['code'] !== T_ELLIPSIS) {
+			return;
+		}
+
+		if (TokenHelper::findNextEffective($phpcsFile, $nextTokenAfterSeparatorPointer + 1) === $closeBracketPointer) {
+			// First class callables
 			return;
 		}
 

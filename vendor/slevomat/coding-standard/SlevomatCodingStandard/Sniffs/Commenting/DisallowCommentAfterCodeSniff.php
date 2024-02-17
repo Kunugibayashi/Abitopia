@@ -4,7 +4,9 @@ namespace SlevomatCodingStandard\Sniffs\Commenting;
 
 use PHP_CodeSniffer\Files\File;
 use PHP_CodeSniffer\Sniffs\Sniff;
+use PHP_CodeSniffer\Util\Tokens;
 use SlevomatCodingStandard\Helpers\CommentHelper;
+use SlevomatCodingStandard\Helpers\FixerHelper;
 use SlevomatCodingStandard\Helpers\IndentationHelper;
 use SlevomatCodingStandard\Helpers\TokenHelper;
 use function array_key_exists;
@@ -36,21 +38,31 @@ class DisallowCommentAfterCodeSniff implements Sniff
 
 	/**
 	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
-	 * @param File $phpcsFile
 	 * @param int $commentPointer
 	 */
 	public function process(File $phpcsFile, $commentPointer): void
 	{
+		$tokens = $phpcsFile->getTokens();
+
+		if ($tokens[$commentPointer]['column'] === 1) {
+			return;
+		}
+
 		$firstNonWhitespacePointerOnLine = TokenHelper::findFirstNonWhitespaceOnLine($phpcsFile, $commentPointer);
 
 		if ($firstNonWhitespacePointerOnLine === $commentPointer) {
 			return;
 		}
 
-		$tokens = $phpcsFile->getTokens();
+		if (
+			$tokens[$firstNonWhitespacePointerOnLine]['code'] === T_DOC_COMMENT_OPEN_TAG
+			&& $tokens[$firstNonWhitespacePointerOnLine]['comment_closer'] > $commentPointer
+		) {
+			return;
+		}
 
 		$commentEndPointer = CommentHelper::getCommentEndPointer($phpcsFile, $commentPointer);
-		$nextNonWhitespacePointer = TokenHelper::findNextExcluding($phpcsFile, T_WHITESPACE, $commentEndPointer + 1);
+		$nextNonWhitespacePointer = TokenHelper::findNextNonWhitespace($phpcsFile, $commentEndPointer + 1);
 
 		if (
 			$nextNonWhitespacePointer !== null
@@ -73,11 +85,11 @@ class DisallowCommentAfterCodeSniff implements Sniff
 			$commentContent .= $phpcsFile->eolChar;
 		}
 
-		$firstNonWhiteSpacePointerBeforeComment = TokenHelper::findPreviousExcluding($phpcsFile, T_WHITESPACE, $commentPointer - 1);
+		$firstNonWhiteSpacePointerBeforeComment = TokenHelper::findPreviousNonWhitespace($phpcsFile, $commentPointer - 1);
 
 		$newLineAfterComment = $commentHasNewLineAtTheEnd
 			? $commentEndPointer
-			: TokenHelper::findNextContent($phpcsFile, T_WHITESPACE, $phpcsFile->eolChar, $commentEndPointer + 1);
+			: TokenHelper::findLastTokenOnLine($phpcsFile, $commentEndPointer);
 
 		$indentation = IndentationHelper::getIndentation($phpcsFile, $firstNonWhitespacePointerOnLine);
 		$firstPointerOnLine = TokenHelper::findFirstTokenOnLine($phpcsFile, $firstNonWhitespacePointerOnLine);
@@ -99,14 +111,23 @@ class DisallowCommentAfterCodeSniff implements Sniff
 			);
 		} elseif ($tokens[$firstNonWhitespacePointerOnLine]['code'] === T_CLOSE_CURLY_BRACKET) {
 			$phpcsFile->fixer->addContent($firstNonWhiteSpacePointerBeforeComment, $phpcsFile->eolChar . $indentation . $commentContent);
+		} elseif (isset(Tokens::$stringTokens[$tokens[$firstPointerOnLine]['code']])) {
+			$prevNonStringToken = TokenHelper::findPreviousExcluding(
+				$phpcsFile,
+				[T_WHITESPACE] + Tokens::$stringTokens,
+				$firstPointerOnLine - 1
+			);
+			$firstTokenOnNonStringTokenLine = TokenHelper::findFirstTokenOnLine($phpcsFile, $prevNonStringToken);
+			$firstNonWhitespacePointerOnNonStringTokenLine = TokenHelper::findFirstNonWhitespaceOnLine($phpcsFile, $prevNonStringToken);
+			$prevLineIndentation = IndentationHelper::getIndentation($phpcsFile, $firstNonWhitespacePointerOnNonStringTokenLine);
+			$phpcsFile->fixer->addContentBefore($firstTokenOnNonStringTokenLine, $prevLineIndentation . $commentContent);
+			$phpcsFile->fixer->addNewline($firstNonWhiteSpacePointerBeforeComment);
 		} else {
 			$phpcsFile->fixer->addContentBefore($firstPointerOnLine, $indentation . $commentContent);
 			$phpcsFile->fixer->addNewline($firstNonWhiteSpacePointerBeforeComment);
 		}
 
-		for ($i = $firstNonWhiteSpacePointerBeforeComment + 1; $i <= $newLineAfterComment; $i++) {
-			$phpcsFile->fixer->replaceToken($i, '');
-		}
+		FixerHelper::removeBetweenIncluding($phpcsFile, $firstNonWhiteSpacePointerBeforeComment + 1, $newLineAfterComment);
 
 		$phpcsFile->fixer->endChangeset();
 	}

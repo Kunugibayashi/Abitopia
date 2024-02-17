@@ -30,6 +30,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use Psr\Http\Message\UriInterface;
+use function Cake\Core\deprecationWarning;
+use function Cake\Core\env;
 
 /**
  * A class that helps wrap Request information and particulars about a single request.
@@ -69,14 +71,14 @@ class ServerRequest implements ServerRequestInterface
     /**
      * Array of cookie data.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $cookies = [];
 
     /**
      * Array of environment data.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_environment = [];
 
@@ -127,15 +129,21 @@ class ServerRequest implements ServerRequestInterface
         'head' => ['env' => 'REQUEST_METHOD', 'value' => 'HEAD'],
         'options' => ['env' => 'REQUEST_METHOD', 'value' => 'OPTIONS'],
         'ssl' => ['env' => 'HTTPS', 'options' => [1, 'on']],
+        'https' => ['env' => 'HTTPS', 'options' => [1, 'on']],
         'ajax' => ['env' => 'HTTP_X_REQUESTED_WITH', 'value' => 'XMLHttpRequest'],
         'json' => ['accept' => ['application/json'], 'param' => '_ext', 'value' => 'json'],
-        'xml' => ['accept' => ['application/xml', 'text/xml'], 'param' => '_ext', 'value' => 'xml'],
+        'xml' => [
+            'accept' => ['application/xml', 'text/xml'],
+            'exclude' => ['text/html'],
+            'param' => '_ext',
+            'value' => 'xml',
+        ],
     ];
 
     /**
      * Instance cache for results of is(something) calls
      *
-     * @var array
+     * @var array<string, bool>
      */
     protected $_detectorCache = [];
 
@@ -170,7 +178,7 @@ class ServerRequest implements ServerRequestInterface
     /**
      * Store the additional attributes attached to the request.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $attributes = [];
 
@@ -404,6 +412,7 @@ class ServerRequest implements ServerRequestInterface
     {
         $this->trustedProxies = $proxies;
         $this->trustProxy = true;
+        $this->uri = $this->uri->withScheme($this->scheme());
     }
 
     /**
@@ -479,6 +488,7 @@ class ServerRequest implements ServerRequestInterface
      *   this method will return true if the request matches any type.
      * @param mixed ...$args List of arguments
      * @return bool Whether the request is the type you are checking.
+     * @throws \InvalidArgumentException If no detector has been set for the provided type.
      */
     public function is($type, ...$args): bool
     {
@@ -494,7 +504,7 @@ class ServerRequest implements ServerRequestInterface
 
         $type = strtolower($type);
         if (!isset(static::$_detectors[$type])) {
-            return false;
+            throw new InvalidArgumentException("No detector set for type `{$type}`");
         }
         if ($args) {
             return $this->_is($type, $args);
@@ -522,6 +532,9 @@ class ServerRequest implements ServerRequestInterface
      */
     protected function _is(string $type, array $args): bool
     {
+        if ($type === 'ssl') {
+            deprecationWarning('The `ssl` detector is deprecated. Use `https` instead.');
+        }
         $detect = static::$_detectors[$type];
         if (is_callable($detect)) {
             array_unshift($args, $this);
@@ -552,14 +565,26 @@ class ServerRequest implements ServerRequestInterface
      */
     protected function _acceptHeaderDetector(array $detect): bool
     {
-        $acceptHeaders = explode(',', (string)$this->getEnv('HTTP_ACCEPT'));
-        foreach ($detect['accept'] as $header) {
-            if (in_array($header, $acceptHeaders, true)) {
-                return true;
-            }
+        $content = new ContentTypeNegotiation();
+        $options = $detect['accept'];
+
+        // Some detectors overlap with the default browser Accept header
+        // For these types we use an exclude list to refine our content type
+        // detection.
+        $exclude = $detect['exclude'] ?? null;
+        if ($exclude) {
+            $options = array_merge($options, $exclude);
         }
 
-        return false;
+        $accepted = $content->preferredType($this, $options);
+        if ($accepted === null) {
+            return false;
+        }
+        if ($exclude && in_array($accepted, $exclude, true)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -769,7 +794,7 @@ class ServerRequest implements ServerRequestInterface
      * the headers.
      *
      * @return array<string[]> An associative array of headers and their values.
-     * @link http://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
+     * @link https://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
      */
     public function getHeaders(): array
     {
@@ -797,7 +822,7 @@ class ServerRequest implements ServerRequestInterface
      *
      * @param string $name The header you want to get (case-insensitive)
      * @return bool Whether the header is defined.
-     * @link http://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
+     * @link https://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
      */
     public function hasHeader($name): bool
     {
@@ -815,7 +840,7 @@ class ServerRequest implements ServerRequestInterface
      * @param string $name The header you want to get (case-insensitive)
      * @return array<string> An associative array of headers and their values.
      *   If the header doesn't exist, an empty array will be returned.
-     * @link http://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
+     * @link https://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
      */
     public function getHeader($name): array
     {
@@ -832,7 +857,7 @@ class ServerRequest implements ServerRequestInterface
      *
      * @param string $name The header you want to get (case-insensitive)
      * @return string Header values collapsed into a comma separated string.
-     * @link http://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
+     * @link https://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
      */
     public function getHeaderLine($name): string
     {
@@ -847,7 +872,7 @@ class ServerRequest implements ServerRequestInterface
      * @param string $name The header name.
      * @param array|string $value The header value
      * @return static
-     * @link http://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
+     * @link https://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
      */
     public function withHeader($name, $value)
     {
@@ -867,7 +892,7 @@ class ServerRequest implements ServerRequestInterface
      * @param string $name The header name.
      * @param array|string $value The header value
      * @return static
-     * @link http://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
+     * @link https://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
      */
     public function withAddedHeader($name, $value)
     {
@@ -888,7 +913,7 @@ class ServerRequest implements ServerRequestInterface
      *
      * @param string $name The header name to remove.
      * @return static
-     * @link http://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
+     * @link https://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
      */
     public function withoutHeader($name)
     {
@@ -911,7 +936,7 @@ class ServerRequest implements ServerRequestInterface
      * by CakePHP internally, and will effect the result of this method.
      *
      * @return string The name of the HTTP method used.
-     * @link http://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
+     * @link https://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
      */
     public function getMethod(): string
     {
@@ -923,7 +948,7 @@ class ServerRequest implements ServerRequestInterface
      *
      * @param string $method The HTTP method to use.
      * @return static A new instance with the updated method.
-     * @link http://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
+     * @link https://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
      */
     public function withMethod($method)
     {
@@ -950,7 +975,7 @@ class ServerRequest implements ServerRequestInterface
      * used to create this request.
      *
      * @return array
-     * @link http://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
+     * @link https://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
      */
     public function getServerParams(): array
     {
@@ -962,7 +987,7 @@ class ServerRequest implements ServerRequestInterface
      * use the alternative getQuery() method.
      *
      * @return array
-     * @link http://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
+     * @link https://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
      */
     public function getQueryParams(): array
     {
@@ -974,7 +999,7 @@ class ServerRequest implements ServerRequestInterface
      *
      * @param array $query The query string data to use
      * @return static A new instance with the updated query string data.
-     * @link http://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
+     * @link https://www.php-fig.org/psr/psr-7/ This method is part of the PSR-7 server request interface.
      */
     public function withQueryParams(array $query)
     {
@@ -1092,16 +1117,17 @@ class ServerRequest implements ServerRequestInterface
      */
     public function accepts(?string $type = null)
     {
-        $raw = $this->parseAccept();
-        $accept = [];
-        foreach ($raw as $types) {
-            $accept = array_merge($accept, $types);
-        }
-        if ($type === null) {
-            return $accept;
+        $content = new ContentTypeNegotiation();
+        if ($type) {
+            return $content->preferredType($this, [$type]) !== null;
         }
 
-        return in_array($type, $accept, true);
+        $accept = [];
+        foreach ($content->parseAccept($this) as $types) {
+            $accept = array_merge($accept, $types);
+        }
+
+        return $accept;
     }
 
     /**
@@ -1112,10 +1138,11 @@ class ServerRequest implements ServerRequestInterface
      * of the accepted content types.
      *
      * @return array An array of `prefValue => [content/types]`
+     * @deprecated 4.4.0 Use `accepts()` or `ContentTypeNegotiation` class instead.
      */
     public function parseAccept(): array
     {
-        return $this->_parseAcceptWithQualifier($this->getHeaderLine('Accept'));
+        return (new ContentTypeNegotiation())->parseAccept($this);
     }
 
     /**
@@ -1123,74 +1150,23 @@ class ServerRequest implements ServerRequestInterface
      *
      * Get the list of accepted languages:
      *
-     * ``` \Cake\Http\ServerRequest::acceptLanguage(); ```
+     * ```$request->acceptLanguage();```
      *
      * Check if a specific language is accepted:
      *
-     * ``` \Cake\Http\ServerRequest::acceptLanguage('es-es'); ```
+     * ```$request->acceptLanguage('es-es');```
      *
      * @param string|null $language The language to test.
-     * @return array|bool If a $language is provided, a boolean. Otherwise the array of accepted languages.
+     * @return array|bool If a $language is provided, a boolean. Otherwise, the array of accepted languages.
      */
     public function acceptLanguage(?string $language = null)
     {
-        $raw = $this->_parseAcceptWithQualifier($this->getHeaderLine('Accept-Language'));
-        $accept = [];
-        foreach ($raw as $languages) {
-            foreach ($languages as &$lang) {
-                if (strpos($lang, '_')) {
-                    $lang = str_replace('_', '-', $lang);
-                }
-                $lang = strtolower($lang);
-            }
-            $accept = array_merge($accept, $languages);
-        }
-        if ($language === null) {
-            return $accept;
+        $content = new ContentTypeNegotiation();
+        if ($language !== null) {
+            return $content->acceptLanguage($this, $language);
         }
 
-        return in_array(strtolower($language), $accept, true);
-    }
-
-    /**
-     * Parse Accept* headers with qualifier options.
-     *
-     * Only qualifiers will be extracted, any other accept extensions will be
-     * discarded as they are not frequently used.
-     *
-     * @param string $header Header to parse.
-     * @return array
-     */
-    protected function _parseAcceptWithQualifier(string $header): array
-    {
-        $accept = [];
-        $headers = explode(',', $header);
-        foreach (array_filter($headers) as $value) {
-            $prefValue = '1.0';
-            $value = trim($value);
-
-            $semiPos = strpos($value, ';');
-            if ($semiPos !== false) {
-                $params = explode(';', $value);
-                $value = trim($params[0]);
-                foreach ($params as $param) {
-                    $qPos = strpos($param, 'q=');
-                    if ($qPos !== false) {
-                        $prefValue = substr($param, $qPos + 2);
-                    }
-                }
-            }
-
-            if (!isset($accept[$prefValue])) {
-                $accept[$prefValue] = [];
-            }
-            if ($prefValue) {
-                $accept[$prefValue][] = $value;
-            }
-        }
-        krsort($accept);
-
-        return $accept;
+        return $content->acceptedLanguages($this);
     }
 
     /**
@@ -1363,7 +1339,7 @@ class ServerRequest implements ServerRequestInterface
     /**
      * Get all the cookie data from the request.
      *
-     * @return array An array of cookie data.
+     * @return array<string, mixed> An array of cookie data.
      */
     public function getCookieParams(): array
     {
@@ -1667,7 +1643,7 @@ class ServerRequest implements ServerRequestInterface
      * This will include the params, webroot, base, and here attributes that CakePHP
      * provides.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function getAttributes(): array
     {
@@ -1823,7 +1799,6 @@ class ServerRequest implements ServerRequestInterface
      *   request-target forms allowed in request messages)
      * @param string $requestTarget The request target.
      * @return static
-     * @psalm-suppress MoreSpecificImplementedParamType
      */
     public function withRequestTarget($requestTarget)
     {

@@ -16,10 +16,11 @@ declare(strict_types=1);
  */
 namespace Cake\Database\Expression;
 
-use Cake\Chronos\Date;
+use Cake\Chronos\ChronosDate;
 use Cake\Chronos\MutableDate;
 use Cake\Database\ExpressionInterface;
 use Cake\Database\Query;
+use Cake\Database\TypedResultInterface;
 use Cake\Database\ValueBinder;
 use DateTimeInterface;
 
@@ -51,7 +52,7 @@ trait CaseExpressionTrait
         } elseif (is_bool($value)) {
             $type = 'boolean';
         } elseif (
-            $value instanceof Date ||
+            $value instanceof ChronosDate ||
             $value instanceof MutableDate
         ) {
             $type = 'date';
@@ -67,6 +68,8 @@ trait CaseExpressionTrait
             $value instanceof IdentifierExpression
         ) {
             $type = $this->_typeMap->type($value->getIdentifier());
+        } elseif ($value instanceof TypedResultInterface) {
+            $type = $value->getReturnType();
         }
 
         return $type;

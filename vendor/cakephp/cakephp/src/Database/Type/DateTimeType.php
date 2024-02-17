@@ -16,6 +16,7 @@ declare(strict_types=1);
  */
 namespace Cake\Database\Type;
 
+use Cake\Chronos\ChronosDate;
 use Cake\Database\DriverInterface;
 use Cake\I18n\FrozenTime;
 use Cake\I18n\I18nDateTimeInterface;
@@ -28,6 +29,7 @@ use Exception;
 use InvalidArgumentException;
 use PDO;
 use RuntimeException;
+use function Cake\Core\deprecationWarning;
 
 /**
  * Datetime type converter.
@@ -229,10 +231,9 @@ class DateTimeType extends BaseType implements BatchCastingInterface
         $class = $this->_className;
         if (is_int($value)) {
             $instance = new $class('@' . $value);
+        } elseif (strpos($value, '0000-00-00') === 0) {
+            return null;
         } else {
-            if (strpos($value, '0000-00-00') === 0) {
-                return null;
-            }
             $instance = new $class($value, $this->dbTimezone);
         }
 
@@ -282,14 +283,13 @@ class DateTimeType extends BaseType implements BatchCastingInterface
             }
 
             $value = $values[$field];
-            if (strpos($value, '0000-00-00') === 0) {
-                $values[$field] = null;
-                continue;
-            }
 
             $class = $this->_className;
             if (is_int($value)) {
                 $instance = new $class('@' . $value);
+            } elseif (strpos($value, '0000-00-00') === 0) {
+                $values[$field] = null;
+                continue;
             } else {
                 $instance = new $class($value, $this->dbTimezone);
             }
@@ -324,11 +324,15 @@ class DateTimeType extends BaseType implements BatchCastingInterface
                 $value = clone $value;
             }
 
+            if ($value instanceof ChronosDate) {
+                return $value;
+            }
+
             /** @var \Datetime|\DateTimeImmutable $value */
             return $value->setTimezone($this->defaultTimezone);
         }
 
-        /** @var class-string<\DatetimeInterface> $class */
+        /** @var class-string<\DateTimeInterface> $class */
         $class = $this->_className;
         try {
             if ($value === '' || $value === null || is_bool($value)) {
@@ -336,7 +340,7 @@ class DateTimeType extends BaseType implements BatchCastingInterface
             }
 
             if (is_int($value) || (is_string($value) && ctype_digit($value))) {
-                /** @var \Datetime|\DateTimeImmutable $dateTime */
+                /** @var \DateTime|\DateTimeImmutable $dateTime */
                 $dateTime = new $class('@' . $value);
 
                 return $dateTime->setTimezone($this->defaultTimezone);
@@ -349,7 +353,7 @@ class DateTimeType extends BaseType implements BatchCastingInterface
                     $dateTime = $this->_parseValue($value);
                 }
 
-                /** @var \Datetime|\DateTimeImmutable $dateTime */
+                /** @var \DateTime|\DateTimeImmutable $dateTime */
                 if ($dateTime !== null) {
                     $dateTime = $dateTime->setTimezone($this->defaultTimezone);
                 }
@@ -392,7 +396,7 @@ class DateTimeType extends BaseType implements BatchCastingInterface
             $value['microsecond']
         );
 
-        /** @var \Datetime|\DateTimeImmutable $dateTime */
+        /** @var \DateTime|\DateTimeImmutable $dateTime */
         $dateTime = new $class($format, $value['timezone'] ?? $this->userTimezone);
 
         return $dateTime->setTimezone($this->defaultTimezone);

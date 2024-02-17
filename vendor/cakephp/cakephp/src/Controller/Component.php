@@ -19,6 +19,7 @@ namespace Cake\Controller;
 use Cake\Core\InstanceConfigTrait;
 use Cake\Event\EventListenerInterface;
 use Cake\Log\LogTrait;
+use function Cake\Core\deprecationWarning;
 
 /**
  * Base class for an individual Component. Components provide reusable bits of
@@ -58,6 +59,7 @@ use Cake\Log\LogTrait;
  * @link https://book.cakephp.org/4/en/controllers/components.html
  * @see \Cake\Controller\Controller::$components
  */
+#[\AllowDynamicProperties]
 class Component implements EventListenerInterface
 {
     use InstanceConfigTrait;

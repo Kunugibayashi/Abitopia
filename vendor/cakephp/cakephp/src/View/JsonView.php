@@ -18,6 +18,7 @@ namespace Cake\View;
 
 use Cake\Core\Configure;
 use RuntimeException;
+use function Cake\Core\h;
 
 /**
  * A view class that is used for JSON responses.
@@ -73,13 +74,6 @@ class JsonView extends SerializedView
     protected $subDir = 'json';
 
     /**
-     * Response type.
-     *
-     * @var string
-     */
-    protected $_responseType = 'json';
-
-    /**
      * Default config options.
      *
      * Use ViewBuilder::setOption()/setOptions() in your controller to set these options.
@@ -101,6 +95,16 @@ class JsonView extends SerializedView
         'jsonOptions' => null,
         'jsonp' => null,
     ];
+
+    /**
+     * Mime-type this view class renders as.
+     *
+     * @return string The JSON content type.
+     */
+    public static function contentType(): string
+    {
+        return 'application/json';
+    }
 
     /**
      * Render a JSON view.

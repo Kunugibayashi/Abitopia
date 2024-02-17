@@ -2,17 +2,17 @@
 declare(strict_types=1);
 
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         0.1.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://www.opensource.org/licenses/mit-license.php MIT License
  */
 namespace Bake\Command;
 
@@ -174,17 +174,18 @@ class PluginCommand extends BakeCommand
             true
         );
 
-        $renderer = new TemplateRenderer($args->getOption('theme'));
-        $renderer->set([
-            'package' => $package,
-            'namespace' => $namespace,
-            'baseNamespace' => $baseNamespace,
-            'plugin' => $pluginName,
-            'routePath' => Inflector::dasherize($pluginName),
-            'path' => $path,
-            'root' => ROOT,
-            'cakeVersion' => $composerConfig['require']['cakephp/cakephp'],
-        ]);
+        $renderer = $this->createTemplateRenderer()
+            ->set([
+                'name' => $name,
+                'package' => $package,
+                'namespace' => $namespace,
+                'baseNamespace' => $baseNamespace,
+                'plugin' => $pluginName,
+                'routePath' => Inflector::dasherize($pluginName),
+                'path' => $path,
+                'root' => ROOT,
+                'cakeVersion' => $composerConfig['require']['cakephp/cakephp'],
+            ]);
 
         $root = $path . $pluginName . DS;
 
@@ -202,7 +203,7 @@ class PluginCommand extends BakeCommand
             $templatesPath = array_shift($paths) . BakeView::BAKE_TEMPLATE_FOLDER . '/Plugin';
             if (is_dir($templatesPath)) {
                 $templates = array_keys(iterator_to_array(
-                    $fs->findRecursive($templatesPath, '/.*\.(twig|php)/')
+                    $fs->findRecursive($templatesPath, '/\.twig$/')
                 ));
             }
         } while (!$templates);
@@ -211,7 +212,11 @@ class PluginCommand extends BakeCommand
         foreach ($templates as $template) {
             $template = substr($template, strrpos($template, 'Plugin' . DIRECTORY_SEPARATOR) + 7, -4);
             $template = rtrim($template, '.');
-            $this->_generateFile($renderer, $template, $root, $io);
+            $filename = $template;
+            if ($filename === 'src/Plugin.php') {
+                $filename = 'src/' . $name . 'Plugin.php';
+            }
+            $this->_generateFile($renderer, $template, $root, $filename, $io);
         }
     }
 
@@ -221,6 +226,7 @@ class PluginCommand extends BakeCommand
      * @param \Bake\Utility\TemplateRenderer $renderer The renderer to use.
      * @param string $template The template to render
      * @param string $root The path to the plugin's root
+     * @param string $filename Filename to generate.
      * @param \Cake\Console\ConsoleIo $io The io instance.
      * @return void
      */
@@ -228,11 +234,12 @@ class PluginCommand extends BakeCommand
         TemplateRenderer $renderer,
         string $template,
         string $root,
+        string $filename,
         ConsoleIo $io
     ): void {
         $io->out(sprintf('Generating %s file...', $template));
         $out = $renderer->generate('Bake.Plugin/' . $template);
-        $io->createFile($root . $template, $out);
+        $io->createFile($root . $filename, $out);
     }
 
     /**
@@ -270,7 +277,7 @@ class PluginCommand extends BakeCommand
         $io->out('<info>Modifying composer autoloader</info>');
 
         $out = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
-        $io->createFile($file, $out, (bool)$args->getOption('force'));
+        $io->createFile($file, $out, $this->force);
 
         $composer = $this->findComposer($args, $io);
 
@@ -313,7 +320,7 @@ class PluginCommand extends BakeCommand
     /**
      * find and change $this->path to the user selection
      *
-     * @param array $pathOptions The list of paths to look in.
+     * @param array<string> $pathOptions The list of paths to look in.
      * @param \Cake\Console\ConsoleIo $io The io object
      * @return void
      */
@@ -376,7 +383,7 @@ class PluginCommand extends BakeCommand
         ])->addOption('theme', [
             'short' => 't',
             'help' => 'The theme to use when baking code.',
-            'default' => Configure::read('Bake.theme') ?? '',
+            'default' => Configure::read('Bake.theme') ?: null,
             'choices' => $this->_getBakeThemes(),
         ]);
 
@@ -412,7 +419,7 @@ class PluginCommand extends BakeCommand
     /**
      * Search the $PATH for composer.
      *
-     * @param array $path The paths to search.
+     * @param array<string> $path The paths to search.
      * @param \Cake\Console\ConsoleIo $io The console io
      * @return string|bool
      */

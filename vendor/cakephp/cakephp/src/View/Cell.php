@@ -36,6 +36,7 @@ use ReflectionMethod;
 /**
  * Cell base.
  */
+#[\AllowDynamicProperties]
 abstract class Cell implements EventDispatcherInterface
 {
     use EventDispatcherTrait;
@@ -244,7 +245,6 @@ abstract class Cell implements EventDispatcherInterface
             return $default;
         }
 
-        /** @psalm-suppress PossiblyFalseOperand */
         return $this->_cache + $default;
     }
 

@@ -364,7 +364,10 @@ will generate::
         {
             $table = $this->table('products');
             $table->addColumn('name', 'string')
+                  ->addColumn('email', 'string')
                   ->addIndex(['name'])
+                  // add a unique index:
+                  ->addIndex('email', ['unique' => true])
                   ->update();
         }
     }
@@ -421,7 +424,7 @@ will generate::
     <?php
     use Migrations\AbstractMigration;
 
-    class AlterPriceFromProducts extends AbstractMigration
+    class AlterPriceOnProducts extends AbstractMigration
     {
         public function change()
         {
@@ -795,7 +798,7 @@ method to define your own sequence of seeders execution::
 
     class DatabaseSeed extends AbstractSeed
     {
-        public function run()
+        public function run(): void
         {
             $this->call('AnotherSeed');
             $this->call('YetAnotherSeed');
@@ -873,7 +876,7 @@ If your database also contains tables that are not managed by your application
 like those created by PostGIS, then you can exclude those tables from the drop
 & truncate behavior using the ``skip`` option::
 
-    $migrator->run(['connection' => 'test', 'skip' => 'postgis*']);
+    $migrator->run(['connection' => 'test', 'skip' => ['postgis*']]);
 
 The ``skip`` option accepts a ``fnmatch()`` compatible pattern to exclude tables
 from drop & truncate operations.
@@ -977,6 +980,24 @@ pass them to the method::
     $status = $migrations->status();
     // This one with the "default" connection
     $migrate = $migrations->migrate(['connection' => 'default']);
+
+Feature Flags
+=============
+
+Migrations uses Phinx, which has some feature flags that are disabled by default for now, but
+can enabled if you want them to:
+
+* ``unsigned_primary_keys``: Should Phinx create primary keys as unsigned integers? (default: ``false``)
+* ``column_null_default``: Should Phinx create columns as null by default? (default: ``false``)
+
+Set them via Configure to enable (e.g. in ``config/app.php``)::
+
+    'Migrations' => [
+        'unsigned_primary_keys' => true,
+        'column_null_default' => true,
+    ],
+
+For details see `Phinx docs<https://book.cakephp.org/phinx/0/en/configuration.html#feature-flags>`__.
 
 Tips and tricks
 ===============
@@ -1124,8 +1145,16 @@ method. In your migration file, you can do the following::
     {
         $this->table('old_table_name')
             ->rename('new_table_name')
-            ->save();
+            ->update();
     }
+
+    public function down()
+    {
+        $this->table('new_table_name')
+            ->rename('old_table_name')
+            ->update();
+    }
+
 
 Skipping the ``schema.lock`` file generation
 --------------------------------------------

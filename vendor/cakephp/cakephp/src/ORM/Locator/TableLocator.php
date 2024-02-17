@@ -25,6 +25,7 @@ use Cake\ORM\Exception\MissingTableClassException;
 use Cake\ORM\Table;
 use Cake\Utility\Inflector;
 use RuntimeException;
+use function Cake\Core\pluginSplit;
 
 /**
  * Provides a default registry/factory for Table objects.
@@ -215,8 +216,6 @@ class TableLocator extends AbstractLocator implements LocatorInterface
             $options = ['alias' => $classAlias] + $options;
         } elseif (!isset($options['alias'])) {
             $options['className'] = $alias;
-            /** @psalm-suppress PossiblyFalseOperand */
-            $alias = substr($alias, strrpos($alias, '\\') + 1, -5);
         }
 
         if (isset($this->_config[$alias])) {

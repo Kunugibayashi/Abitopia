@@ -2,17 +2,17 @@
 declare(strict_types=1);
 
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         3.5.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://www.opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\Console;
 
@@ -28,6 +28,8 @@ use Traversable;
  * Used by Applications to specify their console commands.
  * CakePHP will use the mapped commands to construct and dispatch
  * shell commands.
+ *
+ * @template-implements \IteratorAggregate<string, \Cake\Console\CommandInterface|\Cake\Console\Shell|class-string<\Cake\Console\CommandInterface>>
  */
 class CommandCollection implements IteratorAggregate, Countable
 {
@@ -127,7 +129,7 @@ class CommandCollection implements IteratorAggregate, Countable
      * Get the target for a command.
      *
      * @param string $name The named shell.
-     * @return \Cake\Console\CommandInterface|\Cake\Console\Shell|string Either the command class or an instance.
+     * @return \Cake\Console\CommandInterface|\Cake\Console\Shell|class-string<\Cake\Console\CommandInterface> Either the command class or an instance.
      * @throws \InvalidArgumentException when unknown commands are fetched.
      * @psalm-return \Cake\Console\CommandInterface|\Cake\Console\Shell|class-string
      */
@@ -144,7 +146,7 @@ class CommandCollection implements IteratorAggregate, Countable
      * Implementation of IteratorAggregate.
      *
      * @return \Traversable
-     * @psalm-return \Traversable<string, \Cake\Console\Shell|\Cake\Console\CommandInterface|class-string>
+     * @psalm-return \Traversable<string, (\Cake\Console\CommandInterface|\Cake\Console\Shell|class-string<\Cake\Console\CommandInterface>)>
      */
     public function getIterator(): Traversable
     {

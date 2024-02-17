@@ -2,19 +2,20 @@
 declare(strict_types=1);
 
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  * @since         3.7.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://www.opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\TestSuite\Constraint\Response;
 
+use Cake\Http\Cookie\CookieCollection;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\Constraint\Constraint;
 use Psr\Http\Message\ResponseInterface;
@@ -53,5 +54,25 @@ abstract class ResponseBase extends Constraint
     protected function _getBodyAsString(): string
     {
         return (string)$this->response->getBody();
+    }
+
+    /**
+     * Read a cookie from either the response cookie collection,
+     * or headers
+     *
+     * @param string $name The name of the cookie you want to read.
+     * @return array|null Null if the cookie does not exist, array with `value` as the only key.
+     */
+    protected function readCookie(string $name): ?array
+    {
+        if (method_exists($this->response, 'getCookie')) {
+            return $this->response->getCookie($name);
+        }
+        $cookies = CookieCollection::createFromHeader($this->response->getHeader('Set-Cookie'));
+        if (!$cookies->has($name)) {
+            return null;
+        }
+
+        return $cookies->get($name)->toArray();
     }
 }

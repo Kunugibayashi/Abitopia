@@ -22,6 +22,8 @@ use Cake\View\Helper;
 use Cake\View\StringTemplate;
 use Cake\View\StringTemplateTrait;
 use Cake\View\View;
+use function Cake\Core\h;
+use function Cake\I18n\__;
 
 /**
  * Pagination Helper class for easy generation of pagination links.
@@ -891,11 +893,9 @@ class PaginatorHelper extends Helper
             ]);
         }
 
-        $url = $options['url'];
-        $url['?']['page'] = $params['page'];
         $out .= $templater->format('current', [
             'text' => $this->Number->format($params['page']),
-            'url' => $this->generateUrl($url, $options['model']),
+            'url' => $this->generateUrl(['page' => $params['page']], $options['model'], $options['url']),
         ]);
 
         $start = $params['page'] + 1;
@@ -1234,10 +1234,17 @@ class PaginatorHelper extends Helper
      */
     public function limitControl(array $limits = [], ?int $default = null, array $options = []): string
     {
-        $out = $this->Form->create(null, ['type' => 'get']);
+        $model = $options['model'] ?? $this->defaultModel();
+        unset($options['model']);
+
+        $params = $this->params($model);
+        $scope = '';
+        if (!empty($params['scope'])) {
+            $scope = $params['scope'] . '.';
+        }
 
         if (empty($default)) {
-            $default = $this->param('perPage');
+            $default = $params['perPage'] ?? 0;
         }
 
         if (empty($limits)) {
@@ -1247,15 +1254,15 @@ class PaginatorHelper extends Helper
                 '100' => '100',
             ];
         }
-
-        $out .= $this->Form->control('limit', $options + [
-                'type' => 'select',
-                'label' => __('View'),
-                'default' => $default,
-                'value' => $this->_View->getRequest()->getQuery('limit'),
-                'options' => $limits,
-                'onChange' => 'this.form.submit()',
-            ]);
+        $out = $this->Form->create(null, ['type' => 'get']);
+        $out .= $this->Form->control($scope . 'limit', $options + [
+            'type' => 'select',
+            'label' => __('View'),
+            'default' => $default,
+            'value' => $this->_View->getRequest()->getQuery('limit'),
+            'options' => $limits,
+            'onChange' => 'this.form.submit()',
+        ]);
         $out .= $this->Form->end();
 
         return $out;

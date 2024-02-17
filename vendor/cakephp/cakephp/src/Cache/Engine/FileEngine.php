@@ -17,7 +17,6 @@ declare(strict_types=1);
 namespace Cake\Cache\Engine;
 
 use Cake\Cache\CacheEngine;
-use Cake\Cache\InvalidArgumentException;
 use CallbackFilterIterator;
 use Exception;
 use FilesystemIterator;
@@ -51,6 +50,7 @@ class FileEngine extends CacheEngine
      *    handy for deleting a complete group from cache.
      * - `lock` Used by FileCache. Should files be locked before writing to them?
      * - `mask` The mask used for created files
+     * - `dirMask` The mask used for created folders
      * - `path` Path to where cachefiles should be saved. Defaults to system's temp dir.
      * - `prefix` Prepended to all entries. Good for when you need to share a keyspace
      *    with either another cache config or another application.
@@ -64,6 +64,7 @@ class FileEngine extends CacheEngine
         'groups' => [],
         'lock' => true,
         'mask' => 0664,
+        'dirMask' => 0770,
         'path' => null,
         'prefix' => 'cake_',
         'serialize' => true,
@@ -173,6 +174,7 @@ class FileEngine extends CacheEngine
         /** @psalm-suppress PossiblyNullReference */
         $this->_File->rewind();
         $time = time();
+        /** @psalm-suppress RiskyCast */
         $cachetime = (int)$this->_File->current();
 
         if ($cachetime < $time) {
@@ -222,6 +224,10 @@ class FileEngine extends CacheEngine
         /** @psalm-suppress PossiblyNullReference */
         $path = $this->_File->getRealPath();
         $this->_File = null;
+
+        if ($path === false) {
+            return false;
+        }
 
         // phpcs:disable
         return @unlink($path);
@@ -367,7 +373,7 @@ class FileEngine extends CacheEngine
         $dir = $this->_config['path'] . $groups;
 
         if (!is_dir($dir)) {
-            mkdir($dir, 0775, true);
+            mkdir($dir, $this->_config['dirMask'], true);
         }
 
         $path = new SplFileInfo($dir . $key);
@@ -414,7 +420,7 @@ class FileEngine extends CacheEngine
         $success = true;
         if (!is_dir($path)) {
             // phpcs:disable
-            $success = @mkdir($path, 0775, true);
+            $success = @mkdir($path, $this->_config['dirMask'], true);
             // phpcs:enable
         }
 
@@ -437,14 +443,7 @@ class FileEngine extends CacheEngine
     {
         $key = parent::_key($key);
 
-        if (preg_match('/[\/\\<>?:|*"]/', $key)) {
-            throw new InvalidArgumentException(
-                "Cache key `{$key}` contains invalid characters. " .
-                'You cannot use /, \\, <, >, ?, :, |, *, or " in cache keys.'
-            );
-        }
-
-        return $key;
+        return rawurlencode($key);
     }
 
     /**

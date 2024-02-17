@@ -2,22 +2,23 @@
 declare(strict_types=1);
 
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         4.2.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://www.opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\Http\Middleware;
 
 use ArrayAccess;
 use Cake\Http\Exception\InvalidCsrfTokenException;
+use Cake\Http\ServerRequest;
 use Cake\Http\Session;
 use Cake\Utility\Hash;
 use Cake\Utility\Security;
@@ -26,6 +27,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use RuntimeException;
+use function Cake\I18n\__d;
 
 /**
  * Provides CSRF protection via session based tokens.
@@ -43,7 +45,7 @@ use RuntimeException;
  *
  * If you use this middleware *do not* also use CsrfProtectionMiddleware.
  *
- * @see https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#sychronizer-token-pattern
+ * @see https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#synchronizer-token-pattern
  */
 class SessionCsrfProtectionMiddleware implements MiddlewareInterface
 {
@@ -266,5 +268,25 @@ class SessionCsrfProtectionMiddleware implements MiddlewareInterface
             'cake',
             'CSRF token from either the request body or request headers did not match or is missing.'
         ));
+    }
+
+    /**
+     * Replace the token in the provided request.
+     *
+     * Replace the token in the session and request attribute. Replacing
+     * tokens is a good idea during privilege escalation or privilege reduction.
+     *
+     * @param \Cake\Http\ServerRequest $request The request to update
+     * @param string $key The session key/attribute to set.
+     * @return \Cake\Http\ServerRequest An updated request.
+     */
+    public static function replaceToken(ServerRequest $request, string $key = 'csrfToken'): ServerRequest
+    {
+        $middleware = new SessionCsrfProtectionMiddleware(['key' => $key]);
+
+        $token = $middleware->createToken();
+        $request->getSession()->write($key, $token);
+
+        return $request->withAttribute($key, $middleware->saltToken($token));
     }
 }

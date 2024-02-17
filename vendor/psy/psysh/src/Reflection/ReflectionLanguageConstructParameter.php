@@ -3,7 +3,7 @@
 /*
  * This file is part of Psy Shell.
  *
- * (c) 2012-2020 Justin Hileman
+ * (c) 2012-2023 Justin Hileman
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -32,9 +32,9 @@ class ReflectionLanguageConstructParameter extends \ReflectionParameter
     /**
      * No class here.
      */
-    public function getClass()
+    public function getClass(): ?\ReflectionClass
     {
-        return;
+        return null;
     }
 
     /**
@@ -50,13 +50,18 @@ class ReflectionLanguageConstructParameter extends \ReflectionParameter
     /**
      * Get param default value.
      *
+     * @todo remove \ReturnTypeWillChange attribute after dropping support for PHP 7.x (when we can use mixed type)
+     *
      * @return mixed
      */
+    #[\ReturnTypeWillChange]
     public function getDefaultValue()
     {
         if ($this->isDefaultValueAvailable()) {
             return $this->opts['defaultValue'];
         }
+
+        return null;
     }
 
     /**

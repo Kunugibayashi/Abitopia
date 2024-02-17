@@ -2,16 +2,16 @@
 declare(strict_types=1);
 
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         3.5.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://www.opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\Http\Cookie;
 
@@ -20,6 +20,8 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use InvalidArgumentException;
+use function Cake\Core\deprecationWarning;
+use function Cake\Core\getTypeName;
 
 /**
  * Cookie object to build a cookie and turn it into a header value
@@ -134,7 +136,7 @@ class Cookie implements CookieInterface
      * The only difference is the 3rd argument which excepts null or an
      * DateTime or DateTimeImmutable object instead an integer.
      *
-     * @link http://php.net/manual/en/function.setcookie.php
+     * @link https://php.net/manual/en/function.setcookie.php
      * @param string $name Cookie name
      * @param array|string $value Value of the cookie
      * @param \DateTime|\DateTimeImmutable|null $expiresAt Expiration time and date
@@ -236,7 +238,7 @@ class Cookie implements CookieInterface
      * Converts non null expiry value into DateTimeInterface instance.
      *
      * @param mixed $expires Expiry value.
-     * @return \DateTime|\DatetimeImmutable|null
+     * @return \DateTime|\DateTimeImmutable|null
      */
     protected static function dateTimeInstance($expires): ?DateTimeInterface
     {
@@ -284,7 +286,10 @@ class Cookie implements CookieInterface
             $parts = preg_split('/\;[ \t]*/', $cookie);
         }
 
-        [$name, $value] = explode('=', array_shift($parts), 2);
+        $nameValue = explode('=', array_shift($parts), 2);
+        $name = array_shift($nameValue);
+        $value = array_shift($nameValue) ?? '';
+
         $data = [
                 'name' => urldecode($name),
                 'value' => urldecode($value),
@@ -621,7 +626,7 @@ class Cookie implements CookieInterface
     public function withExpired()
     {
         $new = clone $this;
-        $new->expiresAt = new DateTimeImmutable('1970-01-01 00:00:01');
+        $new->expiresAt = new DateTimeImmutable('@1');
 
         return $new;
     }

@@ -27,6 +27,8 @@ use Cake\Utility\Inflector;
 use Cake\Validation\Validator;
 use RuntimeException;
 use Traversable;
+use function Cake\Core\deprecationWarning;
+use function Cake\Core\namespaceSplit;
 
 /**
  * Provides a form context around a single entity and its relations.
@@ -55,7 +57,7 @@ class EntityContext implements ContextInterface
     /**
      * Context data for this object.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected $_context;
 
@@ -91,7 +93,7 @@ class EntityContext implements ContextInterface
     /**
      * Constructor.
      *
-     * @param array $context Context info.
+     * @param array<string, mixed> $context Context info.
      */
     public function __construct(array $context)
     {
@@ -123,10 +125,14 @@ class EntityContext implements ContextInterface
     {
         /** @var \Cake\ORM\Table|null $table */
         $table = $this->_context['table'];
-        /** @var \Cake\Datasource\EntityInterface|iterable $entity */
+        /** @var \Cake\Datasource\EntityInterface|iterable<\Cake\Datasource\EntityInterface|array> $entity */
         $entity = $this->_context['entity'];
+
+        $this->_isCollection = is_iterable($entity);
+
         if (empty($table)) {
-            if (is_iterable($entity)) {
+            if ($this->_isCollection) {
+                /** @var iterable<\Cake\Datasource\EntityInterface|array> $entity */
                 foreach ($entity as $e) {
                     $entity = $e;
                     break;
@@ -138,6 +144,7 @@ class EntityContext implements ContextInterface
                 /** @psalm-suppress PossiblyInvalidMethodCall */
                 $table = $entity->getSource();
             }
+            /** @psalm-suppress PossiblyInvalidArgument */
             if (!$table && $isEntity && get_class($entity) !== Entity::class) {
                 [, $entityClass] = namespaceSplit(get_class($entity));
                 $table = Inflector::pluralize($entityClass);
@@ -152,10 +159,6 @@ class EntityContext implements ContextInterface
                 'Unable to find table class for current entity.'
             );
         }
-        $this->_isCollection = (
-            is_array($entity) ||
-            $entity instanceof Traversable
-        );
 
         $alias = $this->_rootName = $table->getAlias();
         $this->_tables[$alias] = $table;
@@ -399,7 +402,7 @@ class EntityContext implements ContextInterface
      *
      * Traverse the path until an entity cannot be found. Lists containing
      * entities will be traversed if the first element contains an entity.
-     * Otherwise the containing Entity will be assumed to be the terminal one.
+     * Otherwise, the containing Entity will be assumed to be the terminal one.
      *
      * @param array|null $path Each one of the parts in a path for a field name
      *  or null to get the entity passed in constructor context.

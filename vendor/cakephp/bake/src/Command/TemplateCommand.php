@@ -2,23 +2,22 @@
 declare(strict_types=1);
 
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         0.1.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://www.opensource.org/licenses/mit-license.php MIT License
  */
 namespace Bake\Command;
 
 use Bake\Utility\Model\AssociationFilter;
 use Bake\Utility\TableScanner;
-use Bake\Utility\TemplateRenderer;
 use Cake\Console\Arguments;
 use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOptionParser;
@@ -84,6 +83,13 @@ class TemplateCommand extends BakeCommand
      * @var string
      */
     public $path;
+
+    /**
+     * Output extension
+     *
+     * @var string
+     */
+    public $ext = 'php';
 
     /**
      * Override initialize
@@ -334,7 +340,7 @@ class TemplateCommand extends BakeCommand
      * @param \Cake\Console\ConsoleIo $io Console io
      * @param string $template Template file to use.
      * @param string|true $content Content to write.
-     * @param string $outputFile The output file to create. If null will use `$template`
+     * @param ?string $outputFile The output file to create. If null will use `$template`
      * @return void
      */
     public function bake(
@@ -351,15 +357,16 @@ class TemplateCommand extends BakeCommand
             $content = $this->getContent($args, $io, $template);
         }
         if (empty($content)) {
-            $io->err("<warning>No generated content for '{$template}.php', not generating template.</warning>");
+            // phpcs:ignore Generic.Files.LineLength
+            $io->err("<warning>No generated content for '{$template}.{$this->ext}', not generating template.</warning>");
 
             return;
         }
         $path = $this->getTemplatePath($args);
-        $filename = $path . Inflector::underscore($outputFile) . '.php';
+        $filename = $path . Inflector::underscore($outputFile) . '.' . $this->ext;
 
-        $io->out("\n" . sprintf('Baking `%s` view template file...', $outputFile), 1, ConsoleIo::QUIET);
-        $io->createFile($filename, $content, $args->getOption('force'));
+        $io->out("\n" . sprintf('Baking `%s` view template file...', $outputFile), 1, ConsoleIo::NORMAL);
+        $io->createFile($filename, $content, $this->force);
     }
 
     /**
@@ -369,9 +376,9 @@ class TemplateCommand extends BakeCommand
      * @param \Cake\Console\ConsoleIo $io The console io
      * @param string $action name to generate content to
      * @param array|null $vars passed for use in templates
-     * @return string|false Content from template
+     * @return string Content from template
      */
-    public function getContent(Arguments $args, ConsoleIo $io, string $action, ?array $vars = null)
+    public function getContent(Arguments $args, ConsoleIo $io, string $action, ?array $vars = null): string
     {
         if (!$vars) {
             $vars = $this->_loadController($io);
@@ -386,10 +393,10 @@ class TemplateCommand extends BakeCommand
             $vars['fields'] = array_diff($vars['fields'], $vars['hidden']);
         }
 
-        $renderer = new TemplateRenderer($args->getOption('theme'));
-        $renderer->set('action', $action);
-        $renderer->set('plugin', $this->plugin);
-        $renderer->set($vars);
+        $renderer = $this->createTemplateRenderer()
+            ->set('action', $action)
+            ->set('plugin', $this->plugin)
+            ->set($vars);
 
         $indexColumns = 0;
         if ($action === 'index' && $args->getOption('index-columns') !== null) {
