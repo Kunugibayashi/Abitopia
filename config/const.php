@@ -1,4 +1,6 @@
 <?php
+// PHPメモリ上限
+define('PHP_MEMORY_LIMIT', '3072M');
 // 攻撃属性
 define('BT_ATTR_01', 1); //炎
 define('BT_ATTR_02', 2); //地

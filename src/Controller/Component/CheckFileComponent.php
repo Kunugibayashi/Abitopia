@@ -15,6 +15,6 @@ class CheckFileComponent extends Component
         if ($chatRoomCss) {
             return "room/" . $chatRoomId;
         }
-        return "";
+        return null;
     }
 }

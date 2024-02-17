@@ -12,6 +12,9 @@ use Cake\Datasource\ConnectionManager;
  */
 class ChatMessageEditController extends AppController
 {
+    public $ChatEntries = null;
+    public $ChatLogs = null;
+
     public function initialize(): void
     {
         parent::initialize();
@@ -33,7 +36,8 @@ class ChatMessageEditController extends AppController
         $chatEntries = $this->ChatEntries->find()
             ->where(['user_id' => $userId])
             ->order(['id' => 'DESC'])
-            ->last();
+            ->limit(1)
+            ->first();
 
         if ($chatEntries) {
             $chatRoomId = $chatEntries->chat_room_id;
@@ -76,7 +80,8 @@ class ChatMessageEditController extends AppController
         $chatEntries = $this->ChatEntries->find()
             ->where(['user_id' => $userId])
             ->order(['id' => 'DESC'])
-            ->last();
+            ->limit(1)
+            ->first();
         if ($chatEntries) {
             $chatRoomId = $chatEntries->chat_room_id;
             $chatCharacterId = $chatEntries->chat_character_id;

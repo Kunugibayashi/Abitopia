@@ -10,6 +10,10 @@ class DetermineBattleComponent extends Component
 {
     use ModelAwareTrait;
 
+    public $BattleLogs = null;
+    public $BattleTurns = null;
+    public $BattleCharacters = null;
+
     private $request;
     private $battleTurn;
     private $defenseBattleCharacter;

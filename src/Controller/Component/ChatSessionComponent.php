@@ -8,6 +8,8 @@ class ChatSessionComponent extends Component
 {
     use ModelAwareTrait;
 
+    public $BattleTurns = null;
+
     private $session;
     private $chatCharacterId;
 

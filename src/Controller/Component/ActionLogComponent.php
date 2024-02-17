@@ -11,6 +11,10 @@ class ActionLogComponent extends Component
 {
     use ModelAwareTrait;
 
+    public $ChatLogs = null;
+    public $ChatRooms = null;
+    public $ChatCharacters = null;
+
     public function initialize($config): void
     {
         parent::initialize($config);

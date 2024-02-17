@@ -15,6 +15,8 @@ use Cake\Core\Configure;
  */
 class ChatCharactersController extends AppController
 {
+    public $BattleCharacterStatuses = null;
+
     public function initialize(): void
     {
         parent::initialize();

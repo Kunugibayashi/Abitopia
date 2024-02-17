@@ -10,6 +10,9 @@ class CheckChatComponent extends Component
 {
     use ModelAwareTrait;
 
+    public $ChatEntries = null;
+    public $ChatCharacters = null;
+
     public function initialize($config): void
     {
         parent::initialize($config);

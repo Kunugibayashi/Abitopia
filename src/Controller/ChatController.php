@@ -14,6 +14,15 @@ use Cake\Utility\Xml;
  */
 class ChatController extends AppController
 {
+    public $ChatRooms = null;
+    public $ChatCharacters = null;
+    public $ChatEntries = null;
+    public $ChatLogs = null;
+    public $ChatLogWarehouses = null;
+    public $Sessions = null;
+
+    public $BattleSaveSkills = null;
+
     public function initialize(): void
     {
         parent::initialize();
@@ -192,22 +201,26 @@ class ChatController extends AppController
         $connection->commit();
 
         // MAX以上のログは削除する
-        $connection->begin();
         $logMax = Configure::read('Site.logmax');
         $maxLog = $this->ChatLogs->find()
             ->order(['id' => 'DESC'])
             ->limit(1)
             ->offset($logMax)
-            ->last();
+            ->first();
         $firstLog = $this->ChatLogs->find()
             ->order(['id' => 'ASC'])
             ->limit(1)
-            ->last();
-        for ($i = $firstLog->id; $i <= $maxLog->id; $i++) {
-            // 多すぎるとメモリを圧迫するため1つずつ
-            $this->ChatLogs->deleteAll(['id =' => $i]);
+            ->first();
+        if (!is_null($maxLog) && !is_null($firstLog) && !is_null($firstLog->id) && !is_null($maxLog->id)) {
+          $connection->begin();
+          $this->log(__CLASS__.":".__FUNCTION__.":" ."ChatLogs maxLog->id = $maxLog->id", 'debug');
+          $this->log(__CLASS__.":".__FUNCTION__.":" ."ChatLogs firstLog->id = $firstLog->id", 'debug');
+          for ($i = $firstLog->id; $i <= $maxLog->id; $i++) {
+              // 多すぎるとメモリを圧迫するため1つずつ
+              $this->ChatLogs->deleteAll(['id =' => $i]);
+          }
+          $connection->commit();
         }
-        $connection->commit();
 
         // チャットで使用していたセッションを削除
         $this->ChatSession->delete();
@@ -222,6 +235,8 @@ class ChatController extends AppController
     }
 
     public function outputChatLog($chatRoomId, $chatEntryKey) {
+        ini_set('memory_limit', PHP_MEMORY_LIMIT);
+
         $chatRoom = $this->ChatRooms->get($chatRoomId);
 
         $logs = $this->chatLog($chatRoomId, $chatEntryKey);
@@ -358,7 +373,7 @@ class ChatController extends AppController
             ->where(['chat_character_key' => $chatEntry->chat_character_id])
             ->order(['id' => 'DESC'])
             ->first();
-        if($lastChatLog->message == $message) {
+        if(!is_null($lastChatLog) && !is_null($lastChatLog->message) && $lastChatLog->message == $message) {
             $this->log(__CLASS__.":".__FUNCTION__.":" ."The remarks are repeated.", 'warning');
 
             $response = $this->response;
@@ -370,6 +385,9 @@ class ChatController extends AppController
         $connection = ConnectionManager::get('default');
         $connection->begin();
 
+        //for($testCnt = 0; $testCnt < 1000; $testCnt++){ // 負荷試験用
+        //  usleep(10000); // 負荷試験用
+
         $chatLog = $this->ActionLog->setSayMessage($chatEntry, $this->request);
         if(!$this->ChatLogs->save($chatLog)) {
             $connection->rollback();
@@ -380,6 +398,8 @@ class ChatController extends AppController
                 ->withStringBody(json_encode(['code' => '500']));
             return $response;
         }
+
+        //} // 負荷試験用
 
         $connection->commit();
 
@@ -397,7 +417,7 @@ class ChatController extends AppController
         $this->ChatSession->setOpenLogWindow($openLogWindow);
 
         $openLogWindow = $this->ChatSession->getOpenLogWindow();
-        $this->log(__CLASS__.":".__FUNCTION__.": openLogWindow=" .$openLogWindow, 'debug');
+        $this->log(__CLASS__.":".__FUNCTION__.": chatRoomId=" .$chatRoomId ." openLogWindow=" .$openLogWindow, 'debug');
 
         $this->set(compact('chatRoomCss'));
         $this->set(compact('openLogWindow'));
@@ -432,12 +452,13 @@ class ChatController extends AppController
                             ->where(['entry_key' => $chatEntryKey]);
         }
         $count = $tmpChatLogs->count();
-        //$this->log(__CLASS__.":".__FUNCTION__.":" ."count = $count", 'error');
+        // $this->log(__CLASS__.":".__FUNCTION__.":" ."count = $count", 'debug');
 
         // データ取得
         $chatLogs = null;
         $limit = 100;
         for ($i = 0; $i <= $count; $i+=$limit){
+            // 100件ずつ取得
             $tmpChatLogs = $this->ChatLogs->find()
                                 ->contain(['BattleLogs'])
                                 ->where(['chat_room_key' => $chatRoomId])

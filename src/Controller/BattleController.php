@@ -17,6 +17,17 @@ use Cake\Utility\Xml;
  */
 class BattleController extends AppController
 {
+    public $ChatEntries = null;
+    public $ChatCharacters = null;
+    public $ChatLogs = null;
+    public $ChatRooms = null;
+
+    public $BattleTurns = null;
+    public $BattleSaveSkills = null;
+    public $BattleCharacters = null;
+    public $BattleCharacterStatuses = null;
+    public $BattleLogs = null;
+
     public function initialize(): void
     {
         parent::initialize();

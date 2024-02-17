@@ -11,6 +11,9 @@ namespace App\Controller;
  */
 class ChatRoomsController extends AppController
 {
+    public $ChatRooms = null;
+    public $ChatEntries = null;
+
     public function initialize(): void
     {
         parent::initialize();

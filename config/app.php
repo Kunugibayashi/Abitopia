@@ -182,6 +182,7 @@ return [
         'skipLog' => [],
         'log' => true,
         'trace' => true,
+        'convertStatementToDatabaseException' => true,
     ],
 
     /*

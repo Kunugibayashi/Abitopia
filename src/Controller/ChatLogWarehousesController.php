@@ -29,6 +29,12 @@ class ChatLogWarehousesController extends AppController
     public function topListTable()
     {
         $chatLogWarehouses = $this->ChatLogWarehouses->find()
+            ->select([
+              'ChatLogWarehouses.id',
+              'ChatLogWarehouses.created',
+              'ChatLogWarehouses.chat_room_title',
+              'ChatLogWarehouses.characters'
+            ])
             ->order(['id' => 'DESC'])
             ->limit(3);
         $this->set(compact('chatLogWarehouses'));
@@ -36,6 +42,8 @@ class ChatLogWarehousesController extends AppController
 
     public function dl($id = null)
     {
+        ini_set('memory_limit', PHP_MEMORY_LIMIT);
+
         $this->autoRender = false;
 
         $chatLogWarehouses = $this->ChatLogWarehouses->get($id);

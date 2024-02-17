@@ -13,6 +13,11 @@ use Cake\Datasource\ConnectionManager;
  */
 class MessagesController extends AppController
 {
+    public $Users = null;
+    public $ChatCharacters = null;
+    public $ReceivedMessages = null;
+    public $SendMessages = null;
+
     public function initialize(): void
     {
         parent::initialize();
