@@ -33,18 +33,34 @@ class ChatMessageEditController extends AppController
     {
         $userId = $this->Authentication->getIdentityData('id');
 
-        $chatEntries = $this->ChatEntries->find()
+        $chatEntryKeys = $this->ChatEntries->find()
+            ->select([
+                'entry_key',
+            ])
             ->where(['user_id' => $userId])
-            ->order(['id' => 'DESC'])
-            ->limit(1)
-            ->first();
+            ->enableHydration(false)
+            ->distinct(['entry_key'])
+            ->toArray();
+        $chatCharacterIds = $this->ChatEntries->find()
+            ->select([
+                'chat_character_key' => 'chat_character_id',
+            ])
+            ->where(['user_id' => $userId])
+            ->enableHydration(false)
+            ->distinct(['chat_character_id'])
+            ->toArray();
 
-        if ($chatEntries) {
-            $chatRoomId = $chatEntries->chat_room_id;
-            $chatCharacterId = $chatEntries->chat_character_id;
-            $chatEntryKey = $chatEntries->entry_key;
+        if (!is_null($chatEntryKeys) && !is_null($chatCharacterIds)
+            && count($chatEntryKeys) > 0 && count($chatCharacterIds) > 0
+        ) {
 
-            $chatLogs = $this->ChatLogs->find();
+            $chatLogs = $this->ChatLogs->find()
+                ->where([
+                    'OR' => $chatEntryKeys,
+                ])
+                ->where([
+                    'OR' => $chatCharacterIds,
+                ]);
             $string = $chatLogs->func()->left([
                 'message' => 'identifier',
                 '16' => 'literal',
@@ -56,9 +72,6 @@ class ChatMessageEditController extends AppController
                     'messageLeft' => $string,
                     'created',
                 ])
-                ->where(['chat_room_key' => $chatRoomId])
-                ->where(['chat_character_key' => $chatCharacterId])
-                ->where(['entry_key' => $chatEntryKey])
                 ->order(['id' => 'DESC']);
 
             $chatCharacters = $this->paginate($chatLogs);
@@ -77,21 +90,35 @@ class ChatMessageEditController extends AppController
     {
         $userId = $this->Authentication->getIdentityData('id');
 
-        $chatEntries = $this->ChatEntries->find()
+        $chatEntryKeys = $this->ChatEntries->find()
+            ->select([
+                'entry_key',
+            ])
             ->where(['user_id' => $userId])
-            ->order(['id' => 'DESC'])
-            ->limit(1)
-            ->first();
-        if ($chatEntries) {
-            $chatRoomId = $chatEntries->chat_room_id;
-            $chatCharacterId = $chatEntries->chat_character_id;
-            $chatEntryKey = $chatEntries->entry_key;
+            ->enableHydration(false)
+            ->distinct(['entry_key'])
+            ->toArray();
+        $chatCharacterIds = $this->ChatEntries->find()
+            ->select([
+                'chat_character_key' => 'chat_character_id',
+            ])
+            ->where(['user_id' => $userId])
+            ->enableHydration(false)
+            ->distinct(['chat_character_id'])
+            ->toArray();
+
+        if (!is_null($chatEntryKeys) && !is_null($chatCharacterIds)
+            && count($chatEntryKeys) > 0 && count($chatCharacterIds) > 0
+        ) {
 
             $chatLog = $this->ChatLogs->find()
                 ->where(['id' => $id])
-                ->where(['chat_room_key' => $chatRoomId])
-                ->where(['chat_character_key' => $chatCharacterId])
-                ->where(['entry_key' => $chatEntryKey])
+                ->where([
+                    'OR' => $chatEntryKeys,
+                ])
+                ->where([
+                    'OR' => $chatCharacterIds,
+                ])
                 ->first();
 
             if ($this->request->is(['patch', 'post', 'put'])) {
