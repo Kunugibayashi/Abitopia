@@ -24,7 +24,7 @@ use Cake\Datasource\EntityInterface;
 use Cake\Event\EventInterface;
 use Cake\ORM\Entity;
 use Cake\ORM\Locator\LocatorAwareTrait;
-use Cake\ORM\Query;
+use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\Table;
 use Cake\Utility\Hash;
 
@@ -54,7 +54,7 @@ class EavStrategy implements TranslateStrategyInterface
      *
      * @var array<string, mixed>
      */
-    protected $_defaultConfig = [
+    protected array $_defaultConfig = [
         'fields' => [],
         'translationTable' => 'I18n',
         'defaultLocale' => null,
@@ -97,7 +97,7 @@ class EavStrategy implements TranslateStrategyInterface
      *
      * @return void
      */
-    protected function setupAssociations()
+    protected function setupAssociations(): void
     {
         $fields = $this->_config['fields'];
         $table = $this->_config['translationTable'];
@@ -131,20 +131,27 @@ class EavStrategy implements TranslateStrategyInterface
                 $conditions[$name . '.content !='] = '';
             }
 
+            if ($this->table->associations()->has($name)) {
+                $this->table->associations()->remove($name);
+            }
+
             $this->table->hasOne($name, [
                 'targetTable' => $fieldTable,
                 'foreignKey' => 'foreign_key',
-                'joinType' => $filter ? Query::JOIN_TYPE_INNER : Query::JOIN_TYPE_LEFT,
+                'joinType' => $filter ? SelectQuery::JOIN_TYPE_INNER : SelectQuery::JOIN_TYPE_LEFT,
                 'conditions' => $conditions,
                 'propertyName' => $field . '_translation',
             ]);
         }
 
-        $conditions = ["$targetAlias.model" => $model];
+        $conditions = ["{$targetAlias}.model" => $model];
         if (!$this->_config['allowEmptyTranslations']) {
-            $conditions["$targetAlias.content !="] = '';
+            $conditions["{$targetAlias}.content !="] = '';
         }
 
+        if ($this->table->associations()->has($targetAlias)) {
+            $this->table->associations()->remove($targetAlias);
+        }
         $this->table->hasMany($targetAlias, [
             'className' => $table,
             'foreignKey' => 'foreign_key',
@@ -160,12 +167,12 @@ class EavStrategy implements TranslateStrategyInterface
      * table. It modifies the passed query by eager loading the translated fields
      * and adding a formatter to copy the values into the main table records.
      *
-     * @param \Cake\Event\EventInterface $event The beforeFind event that was fired.
-     * @param \Cake\ORM\Query $query Query
-     * @param \ArrayObject $options The options for the query
+     * @param \Cake\Event\EventInterface<\Cake\ORM\Table> $event The beforeFind event that was fired.
+     * @param \Cake\ORM\Query\SelectQuery $query Query
+     * @param \ArrayObject<string, mixed> $options The options for the query
      * @return void
      */
-    public function beforeFind(EventInterface $event, Query $query, ArrayObject $options)
+    public function beforeFind(EventInterface $event, SelectQuery $query, ArrayObject $options): void
     {
         $locale = Hash::get($options, 'locale', $this->getLocale());
 
@@ -173,9 +180,10 @@ class EavStrategy implements TranslateStrategyInterface
             return;
         }
 
-        $conditions = function ($field, $locale, $query, $select) {
-            return function ($q) use ($field, $locale, $query, $select) {
-                $q->where([$q->getRepository()->aliasField('locale') => $locale]);
+        $conditions = function (string $field, string $locale, SelectQuery $query, array $select) {
+            return function (SelectQuery $q) use ($field, $locale, $query, $select) {
+                $table = $q->getRepository();
+                $q->where([$table->aliasField('locale') => $locale]);
 
                 if (
                     $query->isAutoFieldsEnabled() ||
@@ -209,28 +217,29 @@ class EavStrategy implements TranslateStrategyInterface
 
             if ($changeFilter) {
                 $filter = $options['filterByCurrentLocale']
-                    ? Query::JOIN_TYPE_INNER
-                    : Query::JOIN_TYPE_LEFT;
+                    ? SelectQuery::JOIN_TYPE_INNER
+                    : SelectQuery::JOIN_TYPE_LEFT;
                 $contain[$name]['joinType'] = $filter;
             }
         }
 
         $query->contain($contain);
-        $query->formatResults(function ($results) use ($locale) {
-            return $this->rowMapper($results, $locale);
-        }, $query::PREPEND);
+        $query->formatResults(
+            fn (CollectionInterface $results) => $this->rowMapper($results, $locale),
+            $query::PREPEND
+        );
     }
 
     /**
      * Modifies the entity before it is saved so that translated fields are persisted
      * in the database too.
      *
-     * @param \Cake\Event\EventInterface $event The beforeSave event that was fired
+     * @param \Cake\Event\EventInterface<\Cake\ORM\Table> $event The beforeSave event that was fired
      * @param \Cake\Datasource\EntityInterface $entity The entity that is going to be saved
-     * @param \ArrayObject $options the options passed to the save method
+     * @param \ArrayObject<string, mixed> $options the options passed to the save method
      * @return void
      */
-    public function beforeSave(EventInterface $event, EntityInterface $entity, ArrayObject $options)
+    public function beforeSave(EventInterface $event, EntityInterface $entity, ArrayObject $options): void
     {
         $locale = $entity->get('_locale') ?: $this->getLocale();
         $newOptions = [$this->translationTable->getAlias() => ['validate' => false]];
@@ -255,7 +264,7 @@ class EavStrategy implements TranslateStrategyInterface
 
         $values = $entity->extract($this->_config['fields'], true);
         $fields = array_keys($values);
-        $noFields = empty($fields);
+        $noFields = $fields === [];
 
         // If there are no fields and no bundled translations, or both fields
         // in the default locale and bundled translations we can
@@ -265,7 +274,7 @@ class EavStrategy implements TranslateStrategyInterface
         }
 
         $primaryKey = (array)$this->table->getPrimaryKey();
-        $key = $entity->get(current($primaryKey));
+        $key = $entity->get((string)current($primaryKey));
 
         // When we have no key and bundled translations, we
         // need to mark the entity dirty so the root
@@ -286,6 +295,7 @@ class EavStrategy implements TranslateStrategyInterface
 
         $preexistent = [];
         if ($key) {
+            /** @var \Traversable<string, \Cake\Datasource\EntityInterface> $preexistent */
             $preexistent = $this->translationTable->find()
                 ->select(['id', 'field'])
                 ->where([
@@ -294,7 +304,6 @@ class EavStrategy implements TranslateStrategyInterface
                     'foreign_key' => $key,
                     'model' => $model,
                 ])
-                ->disableBufferedResults()
                 ->all()
                 ->indexBy('field');
         }
@@ -351,18 +360,18 @@ class EavStrategy implements TranslateStrategyInterface
      * Modifies the results from a table find in order to merge the translated fields
      * into each entity for a given locale.
      *
-     * @param \Cake\Datasource\ResultSetInterface $results Results to map.
+     * @param \Cake\Collection\CollectionInterface $results Results to map.
      * @param string $locale Locale string
      * @return \Cake\Collection\CollectionInterface
      */
-    protected function rowMapper($results, $locale)
+    protected function rowMapper(CollectionInterface $results, string $locale): CollectionInterface
     {
         return $results->map(function ($row) use ($locale) {
             /** @var \Cake\Datasource\EntityInterface|array|null $row */
             if ($row === null) {
                 return $row;
             }
-            $hydrated = !is_array($row);
+            $hydrated = $row instanceof EntityInterface;
 
             foreach ($this->_config['fields'] as $field) {
                 $name = $field . '_translation';
@@ -376,6 +385,11 @@ class EavStrategy implements TranslateStrategyInterface
                 $content = $translation['content'] ?? null;
                 if ($content !== null) {
                     $row[$field] = $content;
+
+                    if ($hydrated) {
+                        /** @var \Cake\Datasource\EntityInterface $row */
+                        $row->setDirty($field, false);
+                    }
                 }
 
                 unset($row[$name]);
@@ -383,8 +397,8 @@ class EavStrategy implements TranslateStrategyInterface
 
             $row['_locale'] = $locale;
             if ($hydrated) {
-                /** @psalm-suppress PossiblyInvalidMethodCall */
-                $row->clean();
+                /** @var \Cake\Datasource\EntityInterface $row */
+                $row->setDirty('_locale', false);
             }
 
             return $row;
@@ -395,17 +409,17 @@ class EavStrategy implements TranslateStrategyInterface
      * Modifies the results from a table find in order to merge full translation
      * records into each entity under the `_translations` key.
      *
-     * @param \Cake\Datasource\ResultSetInterface $results Results to modify.
+     * @param \Cake\Collection\CollectionInterface $results Results to modify.
      * @return \Cake\Collection\CollectionInterface
      */
-    public function groupTranslations($results): CollectionInterface
+    public function groupTranslations(CollectionInterface $results): CollectionInterface
     {
         return $results->map(function ($row) {
             if (!$row instanceof EntityInterface) {
                 return $row;
             }
             $translations = (array)$row->get('_i18n');
-            if (empty($translations) && $row->get('_translations')) {
+            if (!$translations && $row->get('_translations')) {
                 return $row;
             }
             $grouped = new Collection($translations);
@@ -423,8 +437,8 @@ class EavStrategy implements TranslateStrategyInterface
 
             $options = ['setter' => false, 'guard' => false];
             $row->set('_translations', $result, $options);
+            $row->setDirty('_translations', false);
             unset($row['_i18n']);
-            $row->clean();
 
             return $row;
         });
@@ -438,17 +452,18 @@ class EavStrategy implements TranslateStrategyInterface
      * @param \Cake\Datasource\EntityInterface $entity Entity
      * @return void
      */
-    protected function bundleTranslatedFields($entity)
+    protected function bundleTranslatedFields(EntityInterface $entity): void
     {
+        /** @var array<string, \Cake\Datasource\EntityInterface> $translations */
         $translations = (array)$entity->get('_translations');
 
-        if (empty($translations) && !$entity->isDirty('_translations')) {
+        if (!$translations && !$entity->isDirty('_translations')) {
             return;
         }
 
         $fields = $this->_config['fields'];
         $primaryKey = (array)$this->table->getPrimaryKey();
-        $key = $entity->get(current($primaryKey));
+        $key = $entity->get((string)current($primaryKey));
         $find = [];
         $contents = [];
 
@@ -464,7 +479,7 @@ class EavStrategy implements TranslateStrategyInterface
             }
         }
 
-        if (empty($find)) {
+        if (!$find) {
             return;
         }
 
@@ -492,15 +507,14 @@ class EavStrategy implements TranslateStrategyInterface
      * @param array $ruleSet An array of array of conditions to be used for finding each
      * @return array
      */
-    protected function findExistingTranslations($ruleSet)
+    protected function findExistingTranslations(array $ruleSet): array
     {
         $association = $this->table->getAssociation($this->translationTable->getAlias());
 
         $query = $association->find()
             ->select(['id', 'num' => 0])
             ->where(current($ruleSet))
-            ->disableHydration()
-            ->disableBufferedResults();
+            ->disableHydration();
 
         unset($ruleSet[0]);
         foreach ($ruleSet as $i => $conditions) {

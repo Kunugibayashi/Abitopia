@@ -24,7 +24,7 @@ class ChatEntriesController extends AppController
                 return $q->select(['id', 'fullname', 'color', 'backgroundcolor']);
             }])
             ->where(['chat_room_id' => $chatRoomId])
-            ->order(['ChatEntries.modified' => 'DESC']);
+            ->orderBy(['ChatEntries.modified' => 'DESC']);
 
         $this->set(compact('chatEntries'));
         $this->set(compact('chatRoomId'));

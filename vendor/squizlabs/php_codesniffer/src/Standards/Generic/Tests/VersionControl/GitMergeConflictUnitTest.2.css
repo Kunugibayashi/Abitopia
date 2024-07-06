@@ -1,16 +1,9 @@
 /*
  * This is a CSS comment.
-<<<<<<< HEAD
  * This is a merge conflict started in a comment, ending in a CSS block.
  */
 .SettingsTabPaneWidgetType-tab-mid {
    background: transparent url(tab_inact_mid.png) repeat-x;
-=======
- * which should be detected.
- **/
-.SettingsTabPaneWidgetType-tab-start {
-   line-height: -25px;
->>>>>>> ref/heads/feature-branch
    cursor: pointer;
    -moz-user-select: none;
 }
@@ -24,9 +17,5 @@
 
 /*
  * This is a CSS comment.
-<<<<<<< HEAD
  * This is a merge conflict...
-=======
- * which should be detected.
->>>>>>> ref/heads/feature-branch
  */

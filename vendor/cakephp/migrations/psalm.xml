@@ -7,10 +7,14 @@
     xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
     errorBaseline="psalm-baseline.xml"
     autoloader="tests/bootstrap.php"
+    findUnusedPsalmSuppress="true"
+    findUnusedBaselineEntry="true"
+    findUnusedCode="false"
 >
     <projectFiles>
         <directory name="src/"/>
         <ignoreFiles>
+            <directory name="vendor"/>
             <directory name="tests/test_app/"/>
         </ignoreFiles>
     </projectFiles>
@@ -23,5 +27,6 @@
         <PropertyNotSetInConstructor errorLevel="suppress"/>
         <UnresolvableInclude errorLevel="suppress"/>
         <UnsafeInstantiation errorLevel="suppress"/>
+        <RiskyTruthyFalsyComparison errorLevel="suppress"/>
     </issueHandlers>
 </psalm>

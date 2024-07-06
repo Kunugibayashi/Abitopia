@@ -29,8 +29,8 @@ use Cake\ORM\Entity;
  * @property int $temporary_dodge_rate
  * @property int $defense_skill_code
  * @property int $defense_skill_attribute
- * @property \Cake\I18n\FrozenTime $modified
- * @property \Cake\I18n\FrozenTime $created
+ * @property \Cake\I18n\DateTime $modified
+ * @property \Cake\I18n\DateTime $created
  *
  * @property \App\Model\Entity\BattleTurn $battle_turn
  * @property \App\Model\Entity\ChatCharacter $chat_character
@@ -46,7 +46,7 @@ class BattleCharacter extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'battle_turn_id' => true,
         'chat_character_id' => true,
         'strength' => true,

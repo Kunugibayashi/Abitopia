@@ -1,6 +1,6 @@
 <?php
 if ($chatRoomCss) {
-    $this->Html->css($chatRoomCss, ['block' => true]);
+    $this->Html->css($chatRoomCss .'?date=' .CSS_UPDATE_DATE, ['block' => true]);
 }
 ?>
 <div id="id-chat-chatroom-list" class="content">

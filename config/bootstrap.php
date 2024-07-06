@@ -31,6 +31,11 @@ require __DIR__ . '/paths.php';
  */
 require CORE_PATH . 'config' . DS . 'bootstrap.php';
 
+/**
+ * Load global functions.
+ */
+require CAKE . 'functions.php';
+
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
 use Cake\Core\Configure\Engine\PhpConfig;
@@ -96,7 +101,7 @@ if (file_exists(CONFIG . 'app_local.php')) {
  */
 if (Configure::read('debug')) {
     Configure::write('Cache._cake_model_.duration', '+2 minutes');
-    Configure::write('Cache._cake_core_.duration', '+2 minutes');
+    Configure::write('Cache._cake_translations_.duration', '+2 minutes');
     // disable router cache during development
     Configure::write('Cache._cake_routes_.duration', '+2 seconds');
 }

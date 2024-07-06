@@ -32,14 +32,14 @@ class RuleInvoker
      *
      * @var string|null
      */
-    protected $name;
+    protected ?string $name = null;
 
     /**
      * Rule options
      *
      * @var array<string, mixed>
      */
-    protected $options = [];
+    protected array $options = [];
 
     /**
      * Rule callable
@@ -61,7 +61,7 @@ class RuleInvoker
      * rule $scope.
      *
      * @param callable $rule The rule to be invoked.
-     * @param ?string $name The name of the rule. Used in error messages.
+     * @param string|null $name The name of the rule. Used in error messages.
      * @param array<string, mixed> $options The options for the rule. See above.
      */
     public function __construct(callable $rule, ?string $name, array $options = [])
@@ -136,7 +136,6 @@ class RuleInvoker
             $entity->setInvalidField($errorField, $invalidValue);
         }
 
-        /** @phpstan-ignore-next-line */
-        return $pass === true;
+        return false;
     }
 }

@@ -29,31 +29,46 @@ use function Cake\Core\pluginSplit;
  * related to only one record in the target table and vice versa.
  *
  * An example of a HasOne association would be User has one Profile.
+ *
+ * @template T of \Cake\ORM\Table
+ * @mixin T
  */
 class HasOne extends Association
 {
     /**
      * Valid strategies for this type of association
      *
-     * @var array<string>
+     * @var list<string>
      */
-    protected $_validStrategies = [
+    protected array $_validStrategies = [
         self::STRATEGY_JOIN,
         self::STRATEGY_SELECT,
     ];
 
     /**
-     * Gets the name of the field representing the foreign key to the target table.
-     *
-     * @return array<string>|string
+     * @inheritDoc
      */
-    public function getForeignKey()
+    public function getForeignKey(): array|string|false
     {
-        if ($this->_foreignKey === null) {
+        if (!isset($this->_foreignKey)) {
             $this->_foreignKey = $this->_modelKey($this->getSource()->getAlias());
         }
 
         return $this->_foreignKey;
+    }
+
+    /**
+     * Sets the name of the field representing the foreign key to the target table.
+     *
+     * @param list<string>|string|false $key the key or keys to be used to link both tables together, if set to `false`
+     *  no join conditions will be generated automatically.
+     * @return $this
+     */
+    public function setForeignKey(array|string|false $key)
+    {
+        $this->_foreignKey = $key;
+
+        return $this;
     }
 
     /**
@@ -103,15 +118,17 @@ class HasOne extends Association
      * the saved entity
      * @see \Cake\ORM\Table::save()
      */
-    public function saveAssociated(EntityInterface $entity, array $options = [])
+    public function saveAssociated(EntityInterface $entity, array $options = []): EntityInterface|false
     {
         $targetEntity = $entity->get($this->getProperty());
-        if (empty($targetEntity) || !($targetEntity instanceof EntityInterface)) {
+        if (!$targetEntity instanceof EntityInterface) {
             return $entity;
         }
 
+        /** @var list<string> $foreignKeys */
+        $foreignKeys = (array)$this->getForeignKey();
         $properties = array_combine(
-            (array)$this->getForeignKey(),
+            $foreignKeys,
             $entity->extract((array)$this->getBindingKey())
         );
         $targetEntity->set($properties, ['guard' => false]);
@@ -138,7 +155,7 @@ class HasOne extends Association
             'bindingKey' => $this->getBindingKey(),
             'strategy' => $this->getStrategy(),
             'associationType' => $this->type(),
-            'finder' => [$this, 'find'],
+            'finder' => $this->find(...),
         ]);
 
         return $loader->buildEagerLoader($options);

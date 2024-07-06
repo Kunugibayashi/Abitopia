@@ -32,7 +32,7 @@ class TextareaWidget extends BasicWidget
      *
      * @var array<string, mixed>
      */
-    protected $defaults = [
+    protected array $defaults = [
         'val' => '',
         'name' => '',
         'escape' => true,

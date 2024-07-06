@@ -20,12 +20,18 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
+/**
+ * @deprecated 4.5.0 This command is deprecated alongside phinx compatibility.
+ */
 class Seed extends SeedRun
 {
     use CommandTrait {
         execute as parentExecute;
     }
     use ConfigurationTrait;
+    /**
+     * @use \Cake\Event\EventDispatcherTrait<\Migrations\Command\Phinx\Seed>
+     */
     use EventDispatcherTrait;
 
     /**
@@ -66,7 +72,6 @@ class Seed extends SeedRun
 
         $seed = $input->getOption('seed');
         if (!empty($seed) && !is_array($seed)) {
-            /** @psalm-suppress InvalidScalarArgument */
             $input->setOption('seed', [$seed]);
         }
 

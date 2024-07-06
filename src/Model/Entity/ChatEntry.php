@@ -13,8 +13,8 @@ use Cake\ORM\Entity;
  * @property int $user_id
  * @property int $chat_character_id
  * @property string $entry_key
- * @property \Cake\I18n\FrozenTime|null $modified
- * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
  *
  * @property \App\Model\Entity\ChatRoom $chat_room
  * @property \App\Model\Entity\User $user
@@ -31,7 +31,7 @@ class ChatEntry extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'chat_room_id' => true,
         'user_id' => true,
         'chat_character_id' => true,

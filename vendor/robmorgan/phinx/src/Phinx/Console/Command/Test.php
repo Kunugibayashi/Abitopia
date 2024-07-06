@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /**
  * MIT License
@@ -21,6 +22,7 @@ class Test extends AbstractCommand
     /**
      * @var string|null
      */
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingNativeTypeHint
     protected static $defaultName = 'test';
 
     /**
@@ -57,7 +59,10 @@ EOT
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->loadConfig($input, $output);
+        if (!$this->hasConfig()) {
+            $this->loadConfig($input, $output);
+        }
+
         $this->loadManager($input, $output);
 
         // Verify the migrations path(s)

@@ -15,9 +15,11 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Completion\CompletionInput;
 use Symfony\Component\Console\Completion\CompletionSuggestions;
+use Symfony\Component\Console\Completion\Suggestion;
 use Symfony\Component\Console\Exception\ExceptionInterface;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Exception\LogicException;
+use Symfony\Component\Console\Helper\HelperInterface;
 use Symfony\Component\Console\Helper\HelperSet;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputDefinition;
@@ -37,55 +39,37 @@ class Command
     public const FAILURE = 1;
     public const INVALID = 2;
 
-    /**
-     * @var string|null The default command name
-     */
-    protected static $defaultName;
-
-    /**
-     * @var string|null The default command description
-     */
-    protected static $defaultDescription;
-
-    private $application = null;
+    private ?Application $application = null;
     private ?string $name = null;
     private ?string $processTitle = null;
     private array $aliases = [];
-    private $definition;
+    private InputDefinition $definition;
     private bool $hidden = false;
     private string $help = '';
     private string $description = '';
-    private $fullDefinition = null;
+    private ?InputDefinition $fullDefinition = null;
     private bool $ignoreValidationErrors = false;
     private ?\Closure $code = null;
     private array $synopsis = [];
     private array $usages = [];
-    private $helperSet = null;
+    private ?HelperSet $helperSet = null;
 
     public static function getDefaultName(): ?string
     {
-        $class = static::class;
-
-        if ($attribute = (new \ReflectionClass($class))->getAttributes(AsCommand::class)) {
+        if ($attribute = (new \ReflectionClass(static::class))->getAttributes(AsCommand::class)) {
             return $attribute[0]->newInstance()->name;
         }
 
-        $r = new \ReflectionProperty($class, 'defaultName');
-
-        return $class === $r->class ? static::$defaultName : null;
+        return null;
     }
 
     public static function getDefaultDescription(): ?string
     {
-        $class = static::class;
-
-        if ($attribute = (new \ReflectionClass($class))->getAttributes(AsCommand::class)) {
+        if ($attribute = (new \ReflectionClass(static::class))->getAttributes(AsCommand::class)) {
             return $attribute[0]->newInstance()->description;
         }
 
-        $r = new \ReflectionProperty($class, 'defaultDescription');
-
-        return $class === $r->class ? static::$defaultDescription : null;
+        return null;
     }
 
     /**
@@ -93,7 +77,7 @@ class Command
      *
      * @throws LogicException When the command name is empty
      */
-    public function __construct(string $name = null)
+    public function __construct(?string $name = null)
     {
         $this->definition = new InputDefinition();
 
@@ -124,12 +108,12 @@ class Command
      *
      * This is mainly useful for the help command.
      */
-    public function ignoreValidationErrors()
+    public function ignoreValidationErrors(): void
     {
         $this->ignoreValidationErrors = true;
     }
 
-    public function setApplication(Application $application = null)
+    public function setApplication(?Application $application): void
     {
         $this->application = $application;
         if ($application) {
@@ -141,7 +125,7 @@ class Command
         $this->fullDefinition = null;
     }
 
-    public function setHelperSet(HelperSet $helperSet)
+    public function setHelperSet(HelperSet $helperSet): void
     {
         $this->helperSet = $helperSet;
     }
@@ -167,16 +151,16 @@ class Command
      *
      * Override this to check for x or y and return false if the command cannot
      * run properly under the current conditions.
-     *
-     * @return bool
      */
-    public function isEnabled()
+    public function isEnabled(): bool
     {
         return true;
     }
 
     /**
      * Configures the current command.
+     *
+     * @return void
      */
     protected function configure()
     {
@@ -196,7 +180,7 @@ class Command
      *
      * @see setCode()
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         throw new LogicException('You must override the execute() method in the concrete command class.');
     }
@@ -207,6 +191,8 @@ class Command
      * This method is executed before the InputDefinition is validated.
      * This means that this is the only place where the command can
      * interactively ask for values of missing required arguments.
+     *
+     * @return void
      */
     protected function interact(InputInterface $input, OutputInterface $output)
     {
@@ -221,6 +207,8 @@ class Command
      *
      * @see InputInterface::bind()
      * @see InputInterface::validate()
+     *
+     * @return void
      */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
@@ -289,20 +277,22 @@ class Command
             $statusCode = ($this->code)($input, $output);
         } else {
             $statusCode = $this->execute($input, $output);
-
-            if (!\is_int($statusCode)) {
-                throw new \TypeError(sprintf('Return value of "%s::execute()" must be of the type int, "%s" returned.', static::class, get_debug_type($statusCode)));
-            }
         }
 
         return is_numeric($statusCode) ? (int) $statusCode : 0;
     }
 
     /**
-     * Adds suggestions to $suggestions for the current completion input (e.g. option or argument).
+     * Supplies suggestions when resolving possible completion options for input (e.g. option or argument).
      */
     public function complete(CompletionInput $input, CompletionSuggestions $suggestions): void
     {
+        $definition = $this->getDefinition();
+        if (CompletionInput::TYPE_OPTION_VALUE === $input->getCompletionType() && $definition->hasOption($input->getCompletionName())) {
+            $definition->getOption($input->getCompletionName())->complete($input, $suggestions);
+        } elseif (CompletionInput::TYPE_ARGUMENT_VALUE === $input->getCompletionType() && $definition->hasArgument($input->getCompletionName())) {
+            $definition->getArgument($input->getCompletionName())->complete($input, $suggestions);
+        }
     }
 
     /**
@@ -334,7 +324,7 @@ class Command
                 }
             }
         } else {
-            $code = \Closure::fromCallable($code);
+            $code = $code(...);
         }
 
         $this->code = $code;
@@ -351,7 +341,7 @@ class Command
      *
      * @internal
      */
-    public function mergeApplicationDefinition(bool $mergeArgs = true)
+    public function mergeApplicationDefinition(bool $mergeArgs = true): void
     {
         if (null === $this->application) {
             return;
@@ -405,25 +395,24 @@ class Command
      */
     public function getNativeDefinition(): InputDefinition
     {
-        return $this->definition ?? throw new LogicException(sprintf('Command class "%s" is not correctly initialized. You probably forgot to call the parent constructor.', static::class));
+        return $this->definition ?? throw new LogicException(\sprintf('Command class "%s" is not correctly initialized. You probably forgot to call the parent constructor.', static::class));
     }
 
     /**
      * Adds an argument.
      *
-     * @param int|null $mode    The argument mode: InputArgument::REQUIRED or InputArgument::OPTIONAL
-     * @param mixed    $default The default value (for InputArgument::OPTIONAL mode only)
-     *
-     * @throws InvalidArgumentException When argument mode is not valid
+     * @param                                                                               $mode            The argument mode: InputArgument::REQUIRED or InputArgument::OPTIONAL
+     * @param                                                                               $default         The default value (for InputArgument::OPTIONAL mode only)
+     * @param array|\Closure(CompletionInput,CompletionSuggestions):list<string|Suggestion> $suggestedValues The values used for input completion
      *
      * @return $this
+     *
+     * @throws InvalidArgumentException When argument mode is not valid
      */
-    public function addArgument(string $name, int $mode = null, string $description = '', mixed $default = null): static
+    public function addArgument(string $name, ?int $mode = null, string $description = '', mixed $default = null, array|\Closure $suggestedValues = []): static
     {
-        $this->definition->addArgument(new InputArgument($name, $mode, $description, $default));
-        if (null !== $this->fullDefinition) {
-            $this->fullDefinition->addArgument(new InputArgument($name, $mode, $description, $default));
-        }
+        $this->definition->addArgument(new InputArgument($name, $mode, $description, $default, $suggestedValues));
+        $this->fullDefinition?->addArgument(new InputArgument($name, $mode, $description, $default, $suggestedValues));
 
         return $this;
     }
@@ -431,20 +420,19 @@ class Command
     /**
      * Adds an option.
      *
-     * @param $shortcut The shortcuts, can be null, a string of shortcuts delimited by | or an array of shortcuts
-     * @param $mode     The option mode: One of the InputOption::VALUE_* constants
-     * @param $default  The default value (must be null for InputOption::VALUE_NONE)
-     *
-     * @throws InvalidArgumentException If option mode is invalid or incompatible
+     * @param                                                                               $shortcut        The shortcuts, can be null, a string of shortcuts delimited by | or an array of shortcuts
+     * @param                                                                               $mode            The option mode: One of the InputOption::VALUE_* constants
+     * @param                                                                               $default         The default value (must be null for InputOption::VALUE_NONE)
+     * @param array|\Closure(CompletionInput,CompletionSuggestions):list<string|Suggestion> $suggestedValues The values used for input completion
      *
      * @return $this
+     *
+     * @throws InvalidArgumentException If option mode is invalid or incompatible
      */
-    public function addOption(string $name, string|array $shortcut = null, int $mode = null, string $description = '', mixed $default = null): static
+    public function addOption(string $name, string|array|null $shortcut = null, ?int $mode = null, string $description = '', mixed $default = null, array|\Closure $suggestedValues = []): static
     {
-        $this->definition->addOption(new InputOption($name, $shortcut, $mode, $description, $default));
-        if (null !== $this->fullDefinition) {
-            $this->fullDefinition->addOption(new InputOption($name, $shortcut, $mode, $description, $default));
-        }
+        $this->definition->addOption(new InputOption($name, $shortcut, $mode, $description, $default, $suggestedValues));
+        $this->fullDefinition?->addOption(new InputOption($name, $shortcut, $mode, $description, $default, $suggestedValues));
 
         return $this;
     }
@@ -560,7 +548,7 @@ class Command
     public function getProcessedHelp(): string
     {
         $name = $this->name;
-        $isSingleCommand = $this->application && $this->application->isSingleCommand();
+        $isSingleCommand = $this->application?->isSingleCommand();
 
         $placeholders = [
             '%command.name%',
@@ -615,7 +603,7 @@ class Command
         $key = $short ? 'short' : 'long';
 
         if (!isset($this->synopsis[$key])) {
-            $this->synopsis[$key] = trim(sprintf('%s %s', $this->name, $this->definition->getSynopsis($short)));
+            $this->synopsis[$key] = trim(\sprintf('%s %s', $this->name, $this->definition->getSynopsis($short)));
         }
 
         return $this->synopsis[$key];
@@ -629,7 +617,7 @@ class Command
     public function addUsage(string $usage): static
     {
         if (!str_starts_with($usage, $this->name)) {
-            $usage = sprintf('%s %s', $this->name, $usage);
+            $usage = \sprintf('%s %s', $this->name, $usage);
         }
 
         $this->usages[] = $usage;
@@ -651,10 +639,10 @@ class Command
      * @throws LogicException           if no HelperSet is defined
      * @throws InvalidArgumentException if the helper is not defined
      */
-    public function getHelper(string $name): mixed
+    public function getHelper(string $name): HelperInterface
     {
         if (null === $this->helperSet) {
-            throw new LogicException(sprintf('Cannot retrieve helper "%s" because there is no HelperSet defined. Did you forget to add your command to the application or to set the application on the command using the setApplication() method? You can also set the HelperSet directly using the setHelperSet() method.', $name));
+            throw new LogicException(\sprintf('Cannot retrieve helper "%s" because there is no HelperSet defined. Did you forget to add your command to the application or to set the application on the command using the setApplication() method? You can also set the HelperSet directly using the setHelperSet() method.', $name));
         }
 
         return $this->helperSet->get($name);
@@ -667,10 +655,10 @@ class Command
      *
      * @throws InvalidArgumentException When the name is invalid
      */
-    private function validateName(string $name)
+    private function validateName(string $name): void
     {
         if (!preg_match('/^[^\:]++(\:[^\:]++)*$/', $name)) {
-            throw new InvalidArgumentException(sprintf('Command name "%s" is invalid.', $name));
+            throw new InvalidArgumentException(\sprintf('Command name "%s" is invalid.', $name));
         }
     }
 }

@@ -29,7 +29,7 @@ class BattleCharacterStatus extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'chat_character_id' => true,
         'level' => true,
         'strength' => true,

@@ -16,8 +16,8 @@ use Cake\ORM\Entity;
  * @property string $backgroundcolor
  * @property string|null $tag
  * @property string|null $url
- * @property \Cake\I18n\FrozenTime $modified
- * @property \Cake\I18n\FrozenTime $created
+ * @property \Cake\I18n\DateTime $modified
+ * @property \Cake\I18n\DateTime $created
  * @property string|null $detail
  *
  * @property \App\Model\Entity\User $user
@@ -38,7 +38,7 @@ class ChatCharacter extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'user_id' => true,
         'fullname' => true,
         'sex' => true,

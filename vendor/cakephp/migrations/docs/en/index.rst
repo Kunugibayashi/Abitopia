@@ -987,8 +987,10 @@ Feature Flags
 Migrations uses Phinx, which has some feature flags that are disabled by default for now, but
 can enabled if you want them to:
 
-* ``unsigned_primary_keys``: Should Phinx create primary keys as unsigned integers? (default: ``false``)
-* ``column_null_default``: Should Phinx create columns as null by default? (default: ``false``)
+* ``unsigned_primary_keys``: Should Migrations create primary keys as unsigned integers? (default: ``false``)
+* ``column_null_default``: Should Migrations create columns as null by default? (default: ``false``)
+* ``add_timestamps_use_datetime``: Should Migrations use ``DATETIME`` type
+  columns for the columns added by ``addTimestamps()``.
 
 Set them via Configure to enable (e.g. in ``config/app.php``)::
 
@@ -997,7 +999,7 @@ Set them via Configure to enable (e.g. in ``config/app.php``)::
         'column_null_default' => true,
     ],
 
-For details see `Phinx docs<https://book.cakephp.org/phinx/0/en/configuration.html#feature-flags>`__.
+For details see `Phinx documentation <https://book.cakephp.org/phinx/0/en/configuration.html#feature-flags>`_.
 
 Tips and tricks
 ===============
@@ -1051,7 +1053,7 @@ it to the table declaration::
     class CreateProductsTable extends AbstractMigration
     {
 
-        public $autoId = false;
+        public bool $autoId = false;
 
         public function up()
         {

@@ -50,7 +50,7 @@ class HttpsEnforcerMiddleware implements MiddlewareInterface
      *
      * @var array<string, mixed>
      */
-    protected $config = [
+    protected array $config = [
         'redirect' => true,
         'statusCode' => 301,
         'headers' => [],
@@ -94,7 +94,7 @@ class HttpsEnforcerMiddleware implements MiddlewareInterface
         ) {
             $response = $handler->handle($request);
             if ($this->config['hsts']) {
-                $response = $this->addHsts($response);
+                return $this->addHsts($response);
             }
 
             return $response;

@@ -3,12 +3,12 @@ namespace App\Controller\Component;
 
 use Cake\Controller\Component;
 use Cake\Core\Configure;
-use Cake\Datasource\ModelAwareTrait;
+use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\Datasource\ConnectionManager;
 
 class DetermineBattleComponent extends Component
 {
-    use ModelAwareTrait;
+    use LocatorAwareTrait;
 
     public $BattleLogs = null;
     public $BattleTurns = null;
@@ -58,9 +58,9 @@ class DetermineBattleComponent extends Component
     {
         parent::initialize($config);
 
-        $this->loadModel('BattleLogs');
-        $this->loadModel('BattleTurns');
-        $this->loadModel('BattleCharacters');
+        $this->BattleLogs = $this->fetchTable('BattleLogs');
+        $this->BattleTurns = $this->fetchTable('BattleTurns');
+        $this->BattleCharacters = $this->fetchTable('BattleCharacters');
 
         $this->limitSkills = Configure::read('Battle.limitSkills');
         $this->passiveSkills = Configure::read('Battle.passiveSkills');

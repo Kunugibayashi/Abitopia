@@ -34,9 +34,7 @@ class ChatRoomsController extends AppController
      */
     public function view($id = null)
     {
-        $chatRoom = $this->ChatRooms->get($id, [
-            'contain' => ['ChatEntries'],
-        ]);
+        $chatRoom = $this->ChatRooms->get($id, contain: ['ChatEntries']);
 
         $this->set(compact('chatRoom'));
     }
@@ -70,9 +68,7 @@ class ChatRoomsController extends AppController
      */
     public function edit($id = null)
     {
-        $chatRoom = $this->ChatRooms->get($id, [
-            'contain' => [],
-        ]);
+        $chatRoom = $this->ChatRooms->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $chatRoom = $this->ChatRooms->patchEntity($chatRoom, $this->request->getData());
             if ($this->ChatRooms->save($chatRoom)) {

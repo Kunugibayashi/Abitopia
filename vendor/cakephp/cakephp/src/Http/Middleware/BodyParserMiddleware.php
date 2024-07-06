@@ -38,14 +38,14 @@ class BodyParserMiddleware implements MiddlewareInterface
      *
      * @var array<\Closure>
      */
-    protected $parsers = [];
+    protected array $parsers = [];
 
     /**
      * The HTTP methods to parse data on.
      *
-     * @var array<string>
+     * @var list<string>
      */
-    protected $methods = ['PUT', 'POST', 'PATCH', 'DELETE'];
+    protected array $methods = ['PUT', 'POST', 'PATCH', 'DELETE'];
 
     /**
      * Constructor
@@ -65,13 +65,13 @@ class BodyParserMiddleware implements MiddlewareInterface
         if ($options['json']) {
             $this->addParser(
                 ['application/json', 'text/json'],
-                Closure::fromCallable([$this, 'decodeJson'])
+                $this->decodeJson(...)
             );
         }
         if ($options['xml']) {
             $this->addParser(
                 ['application/xml', 'text/xml'],
-                Closure::fromCallable([$this, 'decodeXml'])
+                $this->decodeXml(...)
             );
         }
         if ($options['methods']) {
@@ -82,7 +82,7 @@ class BodyParserMiddleware implements MiddlewareInterface
     /**
      * Set the HTTP methods to parse request bodies on.
      *
-     * @param array<string> $methods The methods to parse data on.
+     * @param list<string> $methods The methods to parse data on.
      * @return $this
      */
     public function setMethods(array $methods)
@@ -95,7 +95,7 @@ class BodyParserMiddleware implements MiddlewareInterface
     /**
      * Get the HTTP methods to parse request bodies on.
      *
-     * @return array<string>
+     * @return list<string>
      */
     public function getMethods(): array
     {
@@ -117,7 +117,7 @@ class BodyParserMiddleware implements MiddlewareInterface
      * });
      * ```
      *
-     * @param array<string> $types An array of content-type header values to match. eg. application/json
+     * @param list<string> $types An array of content-type header values to match. eg. application/json
      * @param \Closure $parser The parser function. Must return an array of data to be inserted
      *   into the request.
      * @return $this
@@ -178,17 +178,17 @@ class BodyParserMiddleware implements MiddlewareInterface
      * @param string $body The request body to decode
      * @return array|null
      */
-    protected function decodeJson(string $body)
+    protected function decodeJson(string $body): ?array
     {
         if ($body === '') {
             return [];
         }
         $decoded = json_decode($body, true);
-        if (json_last_error() === JSON_ERROR_NONE) {
-            return (array)$decoded;
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return null;
         }
 
-        return null;
+        return (array)$decoded;
     }
 
     /**
@@ -202,12 +202,14 @@ class BodyParserMiddleware implements MiddlewareInterface
         try {
             $xml = Xml::build($body, ['return' => 'domdocument', 'readFile' => false]);
             // We might not get child nodes if there are nested inline entities.
-            if ((int)$xml->childNodes->length > 0) {
+            /** @var \DOMNodeList $domNodeList */
+            $domNodeList = $xml->childNodes;
+            if ((int)$domNodeList->length > 0) {
                 return Xml::toArray($xml);
             }
 
             return [];
-        } catch (XmlException $e) {
+        } catch (XmlException) {
             return [];
         }
     }

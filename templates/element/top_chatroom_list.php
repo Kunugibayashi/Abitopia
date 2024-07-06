@@ -20,10 +20,10 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
-            clearInterval(this.getChatRoomListObj);
-            this.getChatRoomListObj = setInterval(function() {
-                getChatRoomList();
-            }, 20 * 1000);
+            // clearInterval(this.getChatRoomListObj);
+            // this.getChatRoomListObj = setInterval(function() {
+            //     getChatRoomList();
+            // }, 20 * 1000);
         });
     }
     getChatRoomList();

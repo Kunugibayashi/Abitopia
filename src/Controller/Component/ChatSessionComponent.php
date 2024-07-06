@@ -2,11 +2,11 @@
 namespace App\Controller\Component;
 
 use Cake\Controller\Component;
-use Cake\Datasource\ModelAwareTrait;
+use Cake\ORM\Locator\LocatorAwareTrait;
 
 class ChatSessionComponent extends Component
 {
-    use ModelAwareTrait;
+    use LocatorAwareTrait;
 
     public $BattleTurns = null;
 
@@ -17,7 +17,7 @@ class ChatSessionComponent extends Component
     {
         parent::initialize($config);
 
-        $this->loadModel('BattleTurns');
+        $this->BattleTurns = $this->fetchTable('BattleTurns');
     }
 
     public function set($session)

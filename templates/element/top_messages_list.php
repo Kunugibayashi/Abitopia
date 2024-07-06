@@ -23,10 +23,10 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
-            clearInterval(this.getMessagesTimerObj);
-            this.getMessagesTimerObj = setInterval(function() {
-                getMessages();
-            }, 20 * 1000);
+            // clearInterval(this.getMessagesTimerObj);
+            // this.getMessagesTimerObj = setInterval(function() {
+            //     getMessages();
+            // }, 20 * 1000);
         });
     }
     getMessages();

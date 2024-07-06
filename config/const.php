@@ -1,4 +1,6 @@
 <?php
+// CSS更新用（形式はYYYYMMDD）
+define('CSS_UPDATE_DATE', '20241210');
 // PHPメモリ上限
 define('PHP_MEMORY_LIMIT', '3072M');
 // 攻撃属性

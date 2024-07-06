@@ -16,7 +16,7 @@ declare(strict_types=1);
  */
 namespace Cake\Database\Schema;
 
-use Cake\Database\DriverInterface;
+use Cake\Database\Driver;
 use Cake\Database\Type\ColumnSchemaAwareInterface;
 use Cake\Database\TypeFactory;
 use InvalidArgumentException;
@@ -34,9 +34,9 @@ abstract class SchemaDialect
     /**
      * The driver instance being used.
      *
-     * @var \Cake\Database\DriverInterface
+     * @var \Cake\Database\Driver
      */
-    protected $_driver;
+    protected Driver $_driver;
 
     /**
      * Constructor
@@ -44,9 +44,9 @@ abstract class SchemaDialect
      * This constructor will connect the driver so that methods like columnSql() and others
      * will fail when the driver has not been connected.
      *
-     * @param \Cake\Database\DriverInterface $driver The driver to use.
+     * @param \Cake\Database\Driver $driver The driver to use.
      */
-    public function __construct(DriverInterface $driver)
+    public function __construct(Driver $driver)
     {
         $driver->connect();
         $this->_driver = $driver;
@@ -101,17 +101,17 @@ abstract class SchemaDialect
      * Convert foreign key constraints references to a valid
      * stringified list
      *
-     * @param array<string>|string $references The referenced columns of a foreign key constraint statement
+     * @param list<string>|string $references The referenced columns of a foreign key constraint statement
      * @return string
      */
-    protected function _convertConstraintColumns($references): string
+    protected function _convertConstraintColumns(array|string $references): string
     {
         if (is_string($references)) {
             return $this->_driver->quoteIdentifier($references);
         }
 
         return implode(', ', array_map(
-            [$this->_driver, 'quoteIdentifier'],
+            $this->_driver->quoteIdentifier(...),
             $references
         ));
     }
@@ -274,10 +274,10 @@ abstract class SchemaDialect
      * Generate the SQL to create a table.
      *
      * @param \Cake\Database\Schema\TableSchema $schema Table instance.
-     * @param array<string> $columns The columns to go inside the table.
-     * @param array<string> $constraints The constraints for the table.
-     * @param array<string> $indexes The indexes for the table.
-     * @return array<string> SQL statements to create a table.
+     * @param list<string> $columns The columns to go inside the table.
+     * @param list<string> $constraints The constraints for the table.
+     * @param list<string> $indexes The indexes for the table.
+     * @return list<string> SQL statements to create a table.
      */
     abstract public function createTableSql(
         TableSchema $schema,
@@ -337,10 +337,3 @@ abstract class SchemaDialect
      */
     abstract public function truncateTableSql(TableSchema $schema): array;
 }
-
-// phpcs:disable
-class_alias(
-    'Cake\Database\Schema\SchemaDialect',
-    'Cake\Database\Schema\BaseSchema'
-);
-// phpcs:enable

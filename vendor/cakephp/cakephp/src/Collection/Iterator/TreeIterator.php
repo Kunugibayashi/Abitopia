@@ -36,12 +36,12 @@ class TreeIterator extends RecursiveIteratorIterator implements CollectionInterf
      *
      * @var int
      */
-    protected $_mode;
+    protected int $_mode;
 
     /**
      * Constructor
      *
-     * @param \RecursiveIterator $items The iterator to flatten.
+     * @param \RecursiveIterator<mixed, mixed> $items The iterator to flatten.
      * @param int $mode Iterator mode.
      * @param int $flags Iterator flags.
      */
@@ -92,17 +92,23 @@ class TreeIterator extends RecursiveIteratorIterator implements CollectionInterf
      * their depth in the tree
      * @return \Cake\Collection\Iterator\TreePrinter
      */
-    public function printer($valuePath, $keyPath = null, $spacer = '__')
-    {
+    public function printer(
+        callable|string $valuePath,
+        callable|string|null $keyPath = null,
+        string $spacer = '__'
+    ): TreePrinter {
         if (!$keyPath) {
             $counter = 0;
-            $keyPath = function () use (&$counter) {
+            $keyPath = function () use (&$counter): int {
                 return $counter++;
             };
         }
 
+        /** @var \RecursiveIterator $iterator */
+        $iterator = $this->getInnerIterator();
+
         return new TreePrinter(
-            $this->getInnerIterator(),
+            $iterator,
             $valuePath,
             $keyPath,
             $spacer,

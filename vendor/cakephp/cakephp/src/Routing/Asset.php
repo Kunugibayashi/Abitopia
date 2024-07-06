@@ -31,7 +31,7 @@ class Asset
      *
      * @var string
      */
-    protected static $inflectionType = 'underscore';
+    protected static string $inflectionType = 'underscore';
 
     /**
      * Set inflection type to use when inflecting plugin/theme name.
@@ -150,19 +150,20 @@ class Asset
             return $path;
         }
 
-        if (strpos($path, '://') !== false || preg_match('/^[a-z]+:/i', $path)) {
+        if (str_contains($path, '://') || preg_match('/^[a-z]+:/i', $path)) {
             return ltrim(Router::url($path), '/');
         }
 
+        $plugin = null;
         if (!array_key_exists('plugin', $options) || $options['plugin'] !== false) {
             [$plugin, $path] = static::pluginSplit($path);
         }
-        if (!empty($options['pathPrefix']) && $path[0] !== '/') {
+        if (!empty($options['pathPrefix']) && !str_starts_with($path, '/')) {
             $pathPrefix = $options['pathPrefix'];
             $placeHolderVal = '';
             if (!empty($options['theme'])) {
                 $placeHolderVal = static::inflectString($options['theme']) . '/';
-            } elseif (isset($plugin)) {
+            } elseif ($plugin !== null) {
                 $placeHolderVal = static::inflectString($plugin) . '/';
             }
 
@@ -170,8 +171,8 @@ class Asset
         }
         if (
             !empty($options['ext']) &&
-            strpos($path, '?') === false &&
-            substr($path, -strlen($options['ext'])) !== $options['ext']
+            !str_contains($path, '?') &&
+            !str_ends_with($path, $options['ext'])
         ) {
             $path .= $options['ext'];
         }
@@ -181,7 +182,7 @@ class Asset
             return Router::url($path);
         }
 
-        if (isset($plugin)) {
+        if ($plugin !== null) {
             $path = static::inflectString($plugin) . '/' . $path;
         }
 
@@ -215,7 +216,7 @@ class Asset
     protected static function encodeUrl(string $url): string
     {
         $path = parse_url($url, PHP_URL_PATH);
-        if ($path === false) {
+        if ($path === false || $path === null) {
             $path = $url;
         }
 
@@ -235,18 +236,16 @@ class Asset
      * @param string|bool $timestamp If set will overrule the value of `Asset.timestamp` in Configure.
      * @return string Path with a timestamp added, or not.
      */
-    public static function assetTimestamp(string $path, $timestamp = null): string
+    public static function assetTimestamp(string $path, string|bool|null $timestamp = null): string
     {
-        if (strpos($path, '?') !== false) {
+        if (str_contains($path, '?')) {
             return $path;
         }
 
-        if ($timestamp === null) {
-            $timestamp = Configure::read('Asset.timestamp');
-        }
+        $timestamp ??= Configure::read('Asset.timestamp');
         $timestampEnabled = $timestamp === 'force' || ($timestamp === true && Configure::read('debug'));
         if ($timestampEnabled) {
-            $filepath = preg_replace(
+            $filepath = (string)preg_replace(
                 '/^' . preg_quote(static::requestWebroot(), '/') . '/',
                 '',
                 urldecode($path)
@@ -317,7 +316,7 @@ class Asset
                 }
             }
         }
-        if (strpos($webPath, '//') !== false) {
+        if (str_contains($webPath, '//')) {
             return str_replace('//', '/', $webPath . $asset[1]);
         }
 

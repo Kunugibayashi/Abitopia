@@ -29,26 +29,27 @@ class StubConsoleInput extends ConsoleInput
     /**
      * Reply values for ask() and askChoice()
      *
-     * @var array<string>
+     * @var list<string>
      */
-    protected $replies = [];
+    protected array $replies = [];
 
     /**
      * Current message index
      *
      * @var int
      */
-    protected $currentIndex = -1;
+    protected int $currentIndex = -1;
 
     /**
      * Constructor
      *
-     * @param array<string> $replies A list of replies for read()
+     * @param list<string> $replies A list of replies for read()
      */
     public function __construct(array $replies)
     {
         parent::__construct();
 
+        unset($this->_input);
         $this->replies = $replies;
     }
 
@@ -81,7 +82,7 @@ class StubConsoleInput extends ConsoleInput
      * @param int $timeout An optional time to wait for data
      * @return bool True for data available, false otherwise
      */
-    public function dataAvailable($timeout = 0): bool
+    public function dataAvailable(int $timeout = 0): bool
     {
         return true;
     }

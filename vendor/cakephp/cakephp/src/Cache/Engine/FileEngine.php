@@ -18,6 +18,7 @@ namespace Cake\Cache\Engine;
 
 use Cake\Cache\CacheEngine;
 use CallbackFilterIterator;
+use DateInterval;
 use Exception;
 use FilesystemIterator;
 use LogicException;
@@ -38,9 +39,9 @@ class FileEngine extends CacheEngine
     /**
      * Instance of SplFileObject class
      *
-     * @var \SplFileObject|null
+     * @var \SplFileObject
      */
-    protected $_File;
+    protected SplFileObject $_File;
 
     /**
      * The default config used unless overridden by runtime configuration
@@ -59,7 +60,7 @@ class FileEngine extends CacheEngine
      *
      * @var array<string, mixed>
      */
-    protected $_defaultConfig = [
+    protected array $_defaultConfig = [
         'duration' => 3600,
         'groups' => [],
         'lock' => true,
@@ -75,7 +76,7 @@ class FileEngine extends CacheEngine
      *
      * @var bool
      */
-    protected $_init = true;
+    protected bool $_init = true;
 
     /**
      * Initialize File Cache Engine
@@ -89,9 +90,7 @@ class FileEngine extends CacheEngine
     {
         parent::init($config);
 
-        if ($this->_config['path'] === null) {
-            $this->_config['path'] = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'cake_cache' . DIRECTORY_SEPARATOR;
-        }
+        $this->_config['path'] ??= sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'cake_cache' . DIRECTORY_SEPARATOR;
         if (substr($this->_config['path'], -1) !== DIRECTORY_SEPARATOR) {
             $this->_config['path'] .= DIRECTORY_SEPARATOR;
         }
@@ -112,7 +111,7 @@ class FileEngine extends CacheEngine
      *   for it or let the driver take care of that.
      * @return bool True on success and false on failure.
      */
-    public function set($key, $value, $ttl = null): bool
+    public function set(string $key, mixed $value, DateInterval|int|null $ttl = null): bool
     {
         if ($value === '' || !$this->_init) {
             return false;
@@ -129,14 +128,12 @@ class FileEngine extends CacheEngine
         }
 
         $expires = time() + $this->duration($ttl);
-        $contents = implode([$expires, PHP_EOL, $value, PHP_EOL]);
+        $contents = implode('', [$expires, PHP_EOL, $value, PHP_EOL]);
 
         if ($this->_config['lock']) {
-            /** @psalm-suppress PossiblyNullReference */
             $this->_File->flock(LOCK_EX);
         }
 
-        /** @psalm-suppress PossiblyNullReference */
         $this->_File->rewind();
         $success = $this->_File->ftruncate(0) &&
             $this->_File->fwrite($contents) &&
@@ -145,7 +142,7 @@ class FileEngine extends CacheEngine
         if ($this->_config['lock']) {
             $this->_File->flock(LOCK_UN);
         }
-        $this->_File = null;
+        unset($this->_File);
 
         return $success;
     }
@@ -158,7 +155,7 @@ class FileEngine extends CacheEngine
      * @return mixed The cached data, or default value if the data doesn't exist, has
      *   expired, or if there was an error fetching it
      */
-    public function get($key, $default = null)
+    public function get(string $key, mixed $default = null): mixed
     {
         $key = $this->_key($key);
 
@@ -167,14 +164,11 @@ class FileEngine extends CacheEngine
         }
 
         if ($this->_config['lock']) {
-            /** @psalm-suppress PossiblyNullReference */
             $this->_File->flock(LOCK_SH);
         }
 
-        /** @psalm-suppress PossiblyNullReference */
         $this->_File->rewind();
         $time = time();
-        /** @psalm-suppress RiskyCast */
         $cachetime = (int)$this->_File->current();
 
         if ($cachetime < $time) {
@@ -200,7 +194,7 @@ class FileEngine extends CacheEngine
         $data = trim($data);
 
         if ($data !== '' && !empty($this->_config['serialize'])) {
-            $data = unserialize($data);
+            return unserialize($data);
         }
 
         return $data;
@@ -213,7 +207,7 @@ class FileEngine extends CacheEngine
      * @return bool True if the value was successfully deleted, false if it didn't
      *   exist or couldn't be removed
      */
-    public function delete($key): bool
+    public function delete(string $key): bool
     {
         $key = $this->_key($key);
 
@@ -221,9 +215,8 @@ class FileEngine extends CacheEngine
             return false;
         }
 
-        /** @psalm-suppress PossiblyNullReference */
         $path = $this->_File->getRealPath();
-        $this->_File = null;
+        unset($this->_File);
 
         if ($path === false) {
             return false;
@@ -244,7 +237,7 @@ class FileEngine extends CacheEngine
         if (!$this->_init) {
             return false;
         }
-        $this->_File = null;
+        unset($this->_File);
 
         $this->_clearDirectory($this->_config['path']);
 
@@ -252,13 +245,13 @@ class FileEngine extends CacheEngine
             $this->_config['path'],
             FilesystemIterator::SKIP_DOTS
         );
-        $contents = new RecursiveIteratorIterator(
+        /** @var \RecursiveDirectoryIterator<\SplFileInfo> $iterator Coerce for phpstan/psalm */
+        $iterator = new RecursiveIteratorIterator(
             $directory,
             RecursiveIteratorIterator::SELF_FIRST
         );
         $cleared = [];
-        /** @var \SplFileInfo $fileInfo */
-        foreach ($contents as $fileInfo) {
+        foreach ($iterator as $fileInfo) {
             if ($fileInfo->isFile()) {
                 unset($fileInfo);
                 continue;
@@ -282,7 +275,7 @@ class FileEngine extends CacheEngine
 
         // unsetting iterators helps releasing possible locks in certain environments,
         // which could otherwise make `rmdir()` fail
-        unset($directory, $contents);
+        unset($directory, $iterator);
 
         return true;
     }
@@ -313,7 +306,7 @@ class FileEngine extends CacheEngine
 
             try {
                 $file = new SplFileObject($path . $entry, 'r');
-            } catch (Exception $e) {
+            } catch (Exception) {
                 continue;
             }
 
@@ -338,7 +331,7 @@ class FileEngine extends CacheEngine
      * @return int|false
      * @throws \LogicException
      */
-    public function decrement(string $key, int $offset = 1)
+    public function decrement(string $key, int $offset = 1): int|false
     {
         throw new LogicException('Files cannot be atomically decremented.');
     }
@@ -351,7 +344,7 @@ class FileEngine extends CacheEngine
      * @return int|false
      * @throws \LogicException
      */
-    public function increment(string $key, int $offset = 1)
+    public function increment(string $key, int $offset = 1): int|false
     {
         throw new LogicException('Files cannot be atomically incremented.');
     }
@@ -381,8 +374,9 @@ class FileEngine extends CacheEngine
         if (!$createKey && !$path->isFile()) {
             return false;
         }
+        /** @psalm-suppress TypeDoesNotContainType */
         if (
-            empty($this->_File) ||
+            !isset($this->_File) ||
             $this->_File->getBasename() !== $key ||
             $this->_File->valid() === false
         ) {
@@ -398,7 +392,7 @@ class FileEngine extends CacheEngine
 
             if (!$exists && !chmod($this->_File->getPathname(), (int)$this->_config['mask'])) {
                 trigger_error(sprintf(
-                    'Could not apply permission mask "%s" on cache file "%s"',
+                    'Could not apply permission mask `%s` on cache file `%s`',
                     $this->_File->getPathname(),
                     $this->_config['mask']
                 ), E_USER_WARNING);
@@ -439,7 +433,7 @@ class FileEngine extends CacheEngine
     /**
      * @inheritDoc
      */
-    protected function _key($key): string
+    protected function _key(string $key): string
     {
         $key = parent::_key($key);
 
@@ -454,7 +448,7 @@ class FileEngine extends CacheEngine
      */
     public function clearGroup(string $group): bool
     {
-        $this->_File = null;
+        unset($this->_File);
 
         $prefix = (string)$this->_config['prefix'];
 
@@ -463,6 +457,7 @@ class FileEngine extends CacheEngine
             $directoryIterator,
             RecursiveIteratorIterator::CHILD_FIRST
         );
+        /** @var array<\SplFileInfo> $filtered */
         $filtered = new CallbackFilterIterator(
             $contents,
             function (SplFileInfo $current) use ($group, $prefix) {
@@ -470,18 +465,15 @@ class FileEngine extends CacheEngine
                     return false;
                 }
 
-                $hasPrefix = $prefix === ''
-                    || strpos($current->getBasename(), $prefix) === 0;
+                $hasPrefix = $prefix === '' || str_starts_with($current->getBasename(), $prefix);
                 if ($hasPrefix === false) {
                     return false;
                 }
 
-                $pos = strpos(
+                return str_contains(
                     $current->getPathname(),
                     DIRECTORY_SEPARATOR . $group . DIRECTORY_SEPARATOR
                 );
-
-                return $pos !== false;
             }
         );
         foreach ($filtered as $object) {

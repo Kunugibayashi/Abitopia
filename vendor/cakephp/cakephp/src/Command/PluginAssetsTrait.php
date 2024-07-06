@@ -16,9 +16,11 @@ declare(strict_types=1);
  */
 namespace Cake\Command;
 
+use Cake\Console\Arguments;
+use Cake\Console\ConsoleIo;
 use Cake\Core\Configure;
 use Cake\Core\Plugin;
-use Cake\Filesystem\Filesystem;
+use Cake\Utility\Filesystem;
 use Cake\Utility\Inflector;
 
 /**
@@ -33,14 +35,14 @@ trait PluginAssetsTrait
      *
      * @var \Cake\Console\Arguments
      */
-    protected $args;
+    protected Arguments $args;
 
     /**
      * Console IO
      *
      * @var \Cake\Console\ConsoleIo
      */
-    protected $io;
+    protected ConsoleIo $io;
 
     /**
      * Get list of plugins to process. Plugins without a webroot directory are skipped.
@@ -74,7 +76,7 @@ trait PluginAssetsTrait
             $wwwRoot = Configure::read('App.wwwRoot');
             $dir = $wwwRoot;
             $namespaced = false;
-            if (strpos($link, '/') !== false) {
+            if (str_contains($link, '/')) {
                 $namespaced = true;
                 $parts = explode('/', $link);
                 $link = array_pop($parts);
@@ -120,12 +122,12 @@ trait PluginAssetsTrait
             if (file_exists($dest)) {
                 if ($overwrite && !$this->_remove($config)) {
                     continue;
-                } elseif (!$overwrite) {
+                }
+                if (!$overwrite) {
                     $this->io->verbose(
                         $dest . ' already exists',
                         1
                     );
-
                     continue;
                 }
             }
@@ -180,16 +182,15 @@ trait PluginAssetsTrait
 
         if (is_link($dest)) {
             // phpcs:ignore
-            $success = DS === '\\' ? @rmdir($dest) : @unlink($dest);
+            $success = DIRECTORY_SEPARATOR === '\\' ? @rmdir($dest) : @unlink($dest);
             if ($success) {
                 $this->io->out('Unlinked ' . $dest);
 
                 return true;
-            } else {
-                $this->io->err('Failed to unlink  ' . $dest);
-
-                return false;
             }
+            $this->io->err('Failed to unlink  ' . $dest);
+
+            return false;
         }
 
         $fs = new Filesystem();
@@ -197,11 +198,10 @@ trait PluginAssetsTrait
             $this->io->out('Deleted ' . $dest);
 
             return true;
-        } else {
-            $this->io->err('Failed to delete ' . $dest);
-
-            return false;
         }
+        $this->io->err('Failed to delete ' . $dest);
+
+        return false;
     }
 
     /**

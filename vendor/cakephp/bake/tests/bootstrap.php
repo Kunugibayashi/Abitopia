@@ -16,6 +16,8 @@ declare(strict_types=1);
 
 // phpcs:ignoreFile
 
+use function Cake\Core\env;
+use Bake\BakePlugin;
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
 use Cake\Core\Plugin;
@@ -37,7 +39,6 @@ $root = $findRoot(__FILE__);
 unset($findRoot);
 chdir($root);
 
-require_once 'vendor/cakephp/cakephp/src/basics.php';
 require_once 'vendor/autoload.php';
 
 define('ROOT', $root . DS . 'tests' . DS . 'test_app' . DS);
@@ -64,7 +65,7 @@ Configure::write('App', [
 ]);
 
 Cache::setConfig([
-    '_cake_core_' => [
+    '_cake_translations_' => [
         'engine' => 'File',
         'prefix' => 'cake_core_',
         'serialize' => true,
@@ -85,4 +86,4 @@ if (env('FIXTURE_SCHEMA_METADATA')) {
 
 Configure::write('Debugger.exportFormatter', TextFormatter::class);
 
-Plugin::getCollection()->add(new \Bake\Plugin());
+Plugin::getCollection()->add(new BakePlugin());

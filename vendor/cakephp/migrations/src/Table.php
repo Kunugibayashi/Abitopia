@@ -15,10 +15,14 @@ namespace Migrations;
 
 use Cake\Collection\Collection;
 use Cake\ORM\Locator\LocatorAwareTrait;
+use Phinx\Db\Action\AddColumn;
 use Phinx\Db\Table as BaseTable;
 use Phinx\Db\Table\Column;
+use Phinx\Util\Literal;
 
 /**
+ * TODO figure out how to update this for built-in backend.
+ *
  * @method \Migrations\CakeAdapter getAdapter()
  */
 class Table extends BaseTable
@@ -32,7 +36,7 @@ class Table extends BaseTable
      *
      * @var string|string[]
      */
-    protected $primaryKey;
+    protected string|array $primaryKey;
 
     /**
      * Add a primary key to a database table.
@@ -40,7 +44,7 @@ class Table extends BaseTable
      * @param string|string[] $columns Table Column(s)
      * @return $this
      */
-    public function addPrimaryKey($columns)
+    public function addPrimaryKey(string|array $columns)
     {
         $this->primaryKey = $columns;
 
@@ -60,7 +64,7 @@ class Table extends BaseTable
      * @throws \InvalidArgumentException
      * @return $this
      */
-    public function addColumn($columnName, $type = null, $options = [])
+    public function addColumn(Column|string $columnName, string|Literal|null $type = null, $options = [])
     {
         $options = $this->convertedAutoIncrement($options);
 
@@ -79,7 +83,7 @@ class Table extends BaseTable
      * @param array $options Options
      * @return $this
      */
-    public function changeColumn($columnName, $newColumnType, array $options = [])
+    public function changeColumn(string $columnName, string|Column|Literal $newColumnType, array $options = [])
     {
         $options = $this->convertedAutoIncrement($options);
 
@@ -92,7 +96,7 @@ class Table extends BaseTable
      * @param array $options Options
      * @return array Converted options
      */
-    protected function convertedAutoIncrement(array $options)
+    protected function convertedAutoIncrement(array $options): array
     {
         if (isset($options['autoIncrement']) && $options['autoIncrement'] === true) {
             $options['identity'] = true;
@@ -182,7 +186,7 @@ class Table extends BaseTable
      *
      * @return void
      */
-    protected function filterPrimaryKey()
+    protected function filterPrimaryKey(): void
     {
         $options = $this->getTable()->getOptions();
         if ($this->getAdapter()->getAdapterType() !== 'sqlite' || empty($options['primary_key'])) {
@@ -197,7 +201,7 @@ class Table extends BaseTable
 
         $columnsCollection = (new Collection($this->actions->getActions()))
             ->filter(function ($action) {
-                return $action instanceof \Phinx\Db\Action\AddColumn;
+                return $action instanceof AddColumn;
             })
             ->map(function ($action) {
                 /** @var \Phinx\Db\Action\ChangeColumn|\Phinx\Db\Action\RenameColumn|\Phinx\Db\Action\RemoveColumn|\Phinx\Db\Action\AddColumn $action */
@@ -226,5 +230,16 @@ class Table extends BaseTable
         }
 
         $this->getTable()->setOptions($options);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function addTimestamps($createdAt = '', $updatedAt = '', bool $withTimezone = false)
+    {
+        $createdAt = $createdAt ?: 'created';
+        $updatedAt = $updatedAt ?: 'modified';
+
+        return parent::addTimestamps($createdAt, $updatedAt, $withTimezone);
     }
 }

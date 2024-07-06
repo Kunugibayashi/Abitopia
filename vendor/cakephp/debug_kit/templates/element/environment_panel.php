@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * Environment Panel Element
  *
@@ -14,18 +16,25 @@
  * @link          https://cakephp.org CakePHP(tm) Project
  * @license       https://www.opensource.org/licenses/mit-license.php MIT License
  */
+use Cake\Core\Configure;
 use Cake\Error\Debugger;
+use function Cake\Core\h;
 
 /**
  * @var \DebugKit\View\AjaxView $this
  * @var array $app
  * @var array $cake
  * @var array $php
+ * @var array $includedFiles
+ * @var array $includePaths
+ * @var \DebugKit\View\Helper\ToolbarHelper $this->Toolbar
+ * @var \DebugKit\View\Helper\CredentialsHelper $this->Credentials
  */
 ?>
-
 <div class="c-environment-panel">
-    <h2>Application Constants</h2>
+    <h2>CakePHP Version: <?= Configure::version() ?></h2>
+
+    <h3>Application Constants</h3>
 
     <?php if (!empty($app)) : ?>
         <table class="c-debug-table">
@@ -50,7 +59,7 @@ use Cake\Error\Debugger;
         </div>
     <?php endif; ?>
 
-    <h2>CakePHP Constants</h2>
+    <h3>CakePHP Constants</h3>
 
     <?php if (!empty($cake)) : ?>
         <table class="c-debug-table">
@@ -75,7 +84,7 @@ use Cake\Error\Debugger;
         </div>
     <?php endif; ?>
 
-    <h2>INI Environment</h2>
+    <h3>INI Environment</h3>
 
     <?php if (!empty($ini)) : ?>
         <table class="c-debug-table">
@@ -100,7 +109,7 @@ use Cake\Error\Debugger;
         </div>
     <?php endif; ?>
 
-    <h2>PHP Environment</h2>
+    <h3>PHP Environment</h3>
 
     <?php if (!empty($php)) : ?>
         <table class="c-debug-table">
@@ -124,4 +133,12 @@ use Cake\Error\Debugger;
             PHP environment unavailable.
         </div>
     <?php endif; ?>
+
+    <h3>Included Files</h3>
+
+    <h4>Include Paths</h4>
+    <?= $this->Toolbar->dumpNodes($includePaths) ?>
+
+    <h4>Included Files</h4>
+    <?= $this->Toolbar->dumpNodes($includedFiles) ?>
 </div>

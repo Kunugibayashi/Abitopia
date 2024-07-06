@@ -16,8 +16,9 @@ declare(strict_types=1);
  */
 namespace Authentication\Authenticator;
 
+use ArrayAccess;
+use Authentication\Identifier\AbstractIdentifier;
 use Authentication\Identifier\IdentifierCollection;
-use Authentication\Identifier\IdentifierInterface;
 use Authentication\PasswordHasher\PasswordHasherTrait;
 use Authentication\UrlChecker\UrlCheckerTrait;
 use Cake\Http\Cookie\Cookie;
@@ -41,13 +42,13 @@ class CookieAuthenticator extends AbstractAuthenticator implements PersistenceIn
     /**
      * @inheritDoc
      */
-    protected $_defaultConfig = [
+    protected array $_defaultConfig = [
         'loginUrl' => null,
         'urlChecker' => 'Authentication.Default',
         'rememberMeField' => 'remember_me',
         'fields' => [
-            IdentifierInterface::CREDENTIAL_USERNAME => 'username',
-            IdentifierInterface::CREDENTIAL_PASSWORD => 'password',
+            AbstractIdentifier::CREDENTIAL_USERNAME => 'username',
+            AbstractIdentifier::CREDENTIAL_PASSWORD => 'password',
         ],
         'cookie' => [
             'name' => 'CookieAuth',
@@ -149,10 +150,10 @@ class CookieAuthenticator extends AbstractAuthenticator implements PersistenceIn
      *
      * Returns concatenated username, password hash, and HMAC signature.
      *
-     * @param array|\ArrayAccess $identity Identity data.
+     * @param \ArrayAccess|array $identity Identity data.
      * @return string
      */
-    protected function _createPlainToken($identity): string
+    protected function _createPlainToken(ArrayAccess|array $identity): string
     {
         $usernameField = $this->getConfig('fields.username');
         $passwordField = $this->getConfig('fields.password');
@@ -181,27 +182,28 @@ class CookieAuthenticator extends AbstractAuthenticator implements PersistenceIn
      *
      * Cookie token consists of a username and hashed username + password hash.
      *
-     * @param array|\ArrayAccess $identity Identity data.
+     * @param \ArrayAccess|array $identity Identity data.
      * @return string
      */
-    protected function _createToken($identity): string
+    protected function _createToken(ArrayAccess|array $identity): string
     {
         $plain = $this->_createPlainToken($identity);
         $hash = $this->getPasswordHasher()->hash($plain);
 
         $usernameField = $this->getConfig('fields.username');
 
+        /** @var string */
         return json_encode([$identity[$usernameField], $hash]);
     }
 
     /**
      * Checks whether a token hash matches the identity data.
      *
-     * @param array|\ArrayAccess $identity Identity data.
+     * @param \ArrayAccess|array $identity Identity data.
      * @param string $tokenHash Hashed part of a cookie token.
      * @return bool
      */
-    protected function _checkToken($identity, $tokenHash): bool
+    protected function _checkToken(ArrayAccess|array $identity, string $tokenHash): bool
     {
         $plain = $this->_createPlainToken($identity);
 
@@ -227,29 +229,16 @@ class CookieAuthenticator extends AbstractAuthenticator implements PersistenceIn
      * @param mixed $value Cookie value.
      * @return \Cake\Http\Cookie\CookieInterface
      */
-    protected function _createCookie($value): CookieInterface
+    protected function _createCookie(mixed $value): CookieInterface
     {
         $options = $this->getConfig('cookie');
         $name = $options['name'];
         unset($options['name']);
 
-        if (array_key_exists('expire', $options)) {
-            deprecationWarning('Config key `expire` is deprecated, use `expires` instead.');
-            $options['expires'] = $options['expire'];
-            unset($options['expire']);
-        }
-        if (array_key_exists('httpOnly', $options)) {
-            deprecationWarning('Config key `httpOnly` is deprecated, use `httponly` instead.');
-            $options['httponly'] = $options['httpOnly'];
-            unset($options['httpOnly']);
-        }
-
-        $cookie = Cookie::create(
+        return Cookie::create(
             $name,
             $value,
             $options
         );
-
-        return $cookie;
     }
 }

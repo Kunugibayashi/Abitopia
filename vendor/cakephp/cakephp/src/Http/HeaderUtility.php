@@ -34,6 +34,10 @@ class HeaderUtility
     {
         preg_match('/<(.*)>[; ]?[; ]?(.*)?/i', $value, $matches);
 
+        if ($matches === []) {
+            return [];
+        }
+
         $url = $matches[1];
         $parsedParams = ['link' => $url];
 
@@ -46,10 +50,13 @@ class HeaderUtility
                 $trimedValue = trim($explodedParam[1], '"');
                 if ($trimedKey === 'title*') {
                     // See https://www.rfc-editor.org/rfc/rfc8187#section-3.2.3
-                    preg_match('/(.*)\'(.*)\'(.*)/i', $trimedValue, $matches);
+                    preg_match("/(.*)'(.*)'(.*)/i", $trimedValue, $matches);
                     $trimedValue = [
+                        /** @phpstan-ignore-next-line */
                         'language' => $matches[2],
+                        /** @phpstan-ignore-next-line */
                         'encoding' => $matches[1],
+                        /** @phpstan-ignore-next-line */
                         'value' => urldecode($matches[3]),
                     ];
                 }
@@ -64,7 +71,7 @@ class HeaderUtility
      * Parse the Accept header value into weight => value mapping.
      *
      * @param string $header The header value to parse
-     * @return array<string, array<string>>
+     * @return array<string, list<string>>
      */
     public static function parseAccept(string $header): array
     {
@@ -117,6 +124,7 @@ class HeaderUtility
 
         $return = [];
         foreach ($matches as $match) {
+            /** @phpstan-ignore-next-line */
             $return[$match[1]] = $match[3] ?? $match[2];
         }
 

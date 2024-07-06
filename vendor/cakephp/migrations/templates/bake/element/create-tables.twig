@@ -38,13 +38,10 @@
 {%     endfor %}
 {%     if createData.tables[table].constraints is not empty %}
 {%         for name, constraint in createData.tables[table].constraints %}
-{%             if constraint['columns'] != primaryKeysColumns %}
+{%             if constraint['type'] == 'unique' %}
             ->addIndex(
                 [{{ Migration.stringifyList(constraint['columns'], {'indent': 5}) | raw }}],
-{%                 set params = {'name': name} %}
-{%                 if constraint['type'] == 'unique' %}
-{%                     set params = params|merge({'unique': true}) %}
-{%                 endif %}
+{%                 set params = {'name': name, 'unique': true} %}
                 [{{ Migration.stringifyList(params, {'indent': 5}) | raw }}]
             )
 {%             endif %}
@@ -56,7 +53,7 @@
                 [{{ Migration.stringifyList(index['columns'], {'indent': 5}) | raw }}],
 {%         set params = {'name': indexName} %}
 {%         if index['type'] == 'fulltext' %}
-{%             set params = params|merge({'fulltext': true}) %}
+{%             set params = params|merge({'type': 'fulltext'}) %}
 {%         endif %}
                 [{{ Migration.stringifyList(params, {'indent': 5}) | raw }}]
             )
@@ -66,7 +63,7 @@
 {% if createData.constraints %}
 {%   for table, tableConstraints in createData.constraints %}
 {{-     element('Migrations.add-foreign-keys', {
-         constraints: createData.constraints,
+         constraints: tableConstraints,
          table: table,
        })
 -}}

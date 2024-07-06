@@ -13,9 +13,11 @@ declare(strict_types=1);
  */
 namespace Migrations\TestSuite;
 
+use Cake\Database\Connection;
 use Cake\Datasource\ConnectionManager;
 use Cake\Log\Log;
 use Cake\TestSuite\ConnectionHelper;
+use Exception;
 use Migrations\Migrations;
 use RuntimeException;
 
@@ -24,13 +26,14 @@ class Migrator
     /**
      * @var \Cake\TestSuite\ConnectionHelper
      */
-    protected $helper;
+    protected ConnectionHelper $helper;
 
     /**
      * Constructor.
      */
     public function __construct()
     {
+        /** @psalm-suppress InternalClass */
         $this->helper = new ConnectionHelper();
     }
 
@@ -116,7 +119,7 @@ class Migrator
                         "Unable to migrate fixtures for `{$migrationSet['connection']}`."
                     );
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 throw new RuntimeException(
                     'Could not apply migrations for ' . json_encode($migrationSet) . "\n\n" .
                     "Migrations failed to apply with message:\n\n" .
@@ -155,6 +158,7 @@ class Migrator
 
         $tables = $this->getNonPhinxTables($connection, $skip);
         if ($tables) {
+            /** @psalm-suppress InternalMethod */
             $this->helper->truncateTables($connection, $tables);
         }
     }
@@ -224,10 +228,12 @@ class Migrator
     {
         $dropTables = $this->getNonPhinxTables($connection, $skip);
         if (count($dropTables)) {
+            /** @psalm-suppress InternalMethod */
             $this->helper->dropTables($connection, $dropTables);
         }
         $phinxTables = $this->getPhinxTables($connection);
         if (count($phinxTables)) {
+            /** @psalm-suppress InternalMethod */
             $this->helper->truncateTables($connection, $phinxTables);
         }
     }
@@ -240,7 +246,9 @@ class Migrator
      */
     protected function getPhinxTables(string $connection): array
     {
-        $tables = ConnectionManager::get($connection)->getSchemaCollection()->listTables();
+        $connection = ConnectionManager::get($connection);
+        assert($connection instanceof Connection);
+        $tables = $connection->getSchemaCollection()->listTables();
 
         return array_filter($tables, function ($table) {
             return strpos($table, 'phinxlog') !== false;
@@ -256,7 +264,9 @@ class Migrator
      */
     protected function getNonPhinxTables(string $connection, array $skip): array
     {
-        $tables = ConnectionManager::get($connection)->getSchemaCollection()->listTables();
+        $connection = ConnectionManager::get($connection);
+        assert($connection instanceof Connection);
+        $tables = $connection->getSchemaCollection()->listTables();
         $skip[] = '*phinxlog*';
 
         return array_filter($tables, function ($table) use ($skip) {

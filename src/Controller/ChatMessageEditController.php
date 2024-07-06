@@ -19,8 +19,8 @@ class ChatMessageEditController extends AppController
     {
         parent::initialize();
 
-        $this->loadModel('ChatEntries');
-        $this->loadModel('ChatLogs');
+        $this->ChatEntries = $this->fetchTable('ChatEntries');
+        $this->ChatLogs = $this->fetchTable('ChatLogs');
     }
 
 

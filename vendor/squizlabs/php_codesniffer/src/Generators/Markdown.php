@@ -3,12 +3,16 @@
  * A doc generator that outputs documentation in Markdown format.
  *
  * @author    Stefano Kowalke <blueduck@gmx.net>
+ * @author    Juliette Reinders Folmer <phpcs_nospam@adviesenzo.nl>
  * @copyright 2014 Arroba IT
+ * @copyright 2024 PHPCSStandards and contributors
  * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Generators;
 
+use DOMDocument;
+use DOMNode;
 use PHP_CodeSniffer\Config;
 
 class Markdown extends Generator
@@ -27,7 +31,7 @@ class Markdown extends Generator
         $this->printHeader();
 
         foreach ($this->docFiles as $file) {
-            $doc = new \DOMDocument();
+            $doc = new DOMDocument();
             $doc->load($file);
             $documentation = $doc->getElementsByTagName('documentation')->item(0);
             $this->processSniff($documentation);
@@ -81,7 +85,7 @@ class Markdown extends Generator
      *
      * @return void
      */
-    protected function processSniff(\DOMNode $doc)
+    protected function processSniff(DOMNode $doc)
     {
         $title = $this->getTitle($doc);
         echo PHP_EOL."## $title".PHP_EOL;
@@ -104,10 +108,13 @@ class Markdown extends Generator
      *
      * @return void
      */
-    protected function printTextBlock(\DOMNode $node)
+    protected function printTextBlock(DOMNode $node)
     {
         $content = trim($node->nodeValue);
         $content = htmlspecialchars($content);
+
+        // Use the correct line endings based on the OS.
+        $content = str_replace("\n", PHP_EOL, $content);
 
         $content = str_replace('&lt;em&gt;', '*', $content);
         $content = str_replace('&lt;/em&gt;', '*', $content);
@@ -124,19 +131,19 @@ class Markdown extends Generator
      *
      * @return void
      */
-    protected function printCodeComparisonBlock(\DOMNode $node)
+    protected function printCodeComparisonBlock(DOMNode $node)
     {
         $codeBlocks = $node->getElementsByTagName('code');
 
         $firstTitle = $codeBlocks->item(0)->getAttribute('title');
         $first      = trim($codeBlocks->item(0)->nodeValue);
-        $first      = str_replace("\n", "\n    ", $first);
+        $first      = str_replace("\n", PHP_EOL.'    ', $first);
         $first      = str_replace('<em>', '', $first);
         $first      = str_replace('</em>', '', $first);
 
         $secondTitle = $codeBlocks->item(1)->getAttribute('title');
         $second      = trim($codeBlocks->item(1)->nodeValue);
-        $second      = str_replace("\n", "\n    ", $second);
+        $second      = str_replace("\n", PHP_EOL.'    ', $second);
         $second      = str_replace('<em>', '', $second);
         $second      = str_replace('</em>', '', $second);
 

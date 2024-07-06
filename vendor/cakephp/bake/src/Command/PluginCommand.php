@@ -26,8 +26,10 @@ use Cake\Console\ConsoleOptionParser;
 use Cake\Core\App;
 use Cake\Core\Configure;
 use Cake\Core\Plugin;
-use Cake\Filesystem\Filesystem;
+use Cake\Utility\Filesystem;
 use Cake\Utility\Inflector;
+use RuntimeException;
+use function Cake\Core\env;
 
 /**
  * The Plugin Command handles creating an empty plugin, ready to be used
@@ -39,7 +41,7 @@ class PluginCommand extends BakeCommand
      *
      * @var string
      */
-    public $path;
+    public string $path;
 
     /**
      * initialize
@@ -113,9 +115,25 @@ class PluginCommand extends BakeCommand
         }
 
         $this->_generateFiles($plugin, $this->path, $args, $io);
-
-        $this->_modifyAutoloader($plugin, $this->path, $args, $io);
         $this->_modifyApplication($plugin, $io);
+
+        $composer = $this->findComposer($args, $io);
+
+        try {
+            $cwd = getcwd();
+
+            // Windows makes running multiple commands at once hard.
+            chdir(dirname($this->_rootComposerFilePath()));
+            $command = 'php ' . escapeshellarg($composer) . ' dump-autoload';
+            $process = new Process($io);
+            $io->out($process->call($command));
+
+            chdir($cwd);
+        } catch (RuntimeException $e) {
+            $error = $e->getMessage();
+            $io->error(sprintf('Could not run `composer dump-autoload`: %s', $error));
+            $this->abort();
+        }
 
         $io->hr();
         $io->out(sprintf('<success>Created:</success> %s in %s', $plugin, $this->path . $plugin), 2);
@@ -163,12 +181,11 @@ class PluginCommand extends BakeCommand
 
         $name = $pluginName;
         $vendor = 'your-name-here';
-        if (strpos($pluginName, '/') !== false) {
+        if (str_contains($pluginName, '/')) {
             [$vendor, $name] = explode('/', $pluginName);
         }
         $package = Inflector::dasherize($vendor) . '/' . Inflector::dasherize($name);
 
-        /** @psalm-suppress UndefinedConstant */
         $composerConfig = json_decode(
             file_get_contents(ROOT . DS . 'composer.json'),
             true
@@ -240,69 +257,6 @@ class PluginCommand extends BakeCommand
         $io->out(sprintf('Generating %s file...', $template));
         $out = $renderer->generate('Bake.Plugin/' . $template);
         $io->createFile($root . $filename, $out);
-    }
-
-    /**
-     * Modifies App's composer.json to include the plugin and tries to call
-     * composer dump-autoload to refresh the autoloader cache
-     *
-     * @param string $plugin Name of plugin
-     * @param string $path The path to save the phpunit.xml file to.
-     * @param \Cake\Console\Arguments $args The Arguments instance.
-     * @param \Cake\Console\ConsoleIo $io The io instance.
-     * @return bool True if composer could be modified correctly
-     */
-    protected function _modifyAutoloader(
-        string $plugin,
-        string $path,
-        Arguments $args,
-        ConsoleIo $io
-    ): bool {
-        $file = $this->_rootComposerFilePath();
-
-        if (!file_exists($file)) {
-            $io->out(sprintf('<info>Main composer file %s not found</info>', $file));
-
-            return false;
-        }
-
-        $autoloadPath = str_replace(ROOT . DS, '', $this->path);
-        $autoloadPath = str_replace('\\', '/', $autoloadPath);
-        $namespace = str_replace('/', '\\', $plugin);
-
-        $config = json_decode(file_get_contents($file), true);
-        $config['autoload']['psr-4'][$namespace . '\\'] = $autoloadPath . $plugin . '/src/';
-        $config['autoload-dev']['psr-4'][$namespace . '\\Test\\'] = $autoloadPath . $plugin . '/tests/';
-
-        $io->out('<info>Modifying composer autoloader</info>');
-
-        $out = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
-        $io->createFile($file, $out, $this->force);
-
-        $composer = $this->findComposer($args, $io);
-
-        if (!$composer) {
-            $io->error('Could not locate composer. Add composer to your PATH, or use the --composer option.');
-            $this->abort();
-        }
-
-        try {
-            $cwd = getcwd();
-
-            // Windows makes running multiple commands at once hard.
-            chdir(dirname($this->_rootComposerFilePath()));
-            $command = 'php ' . escapeshellarg($composer) . ' dump-autoload';
-            $process = new Process($io);
-            $io->out($process->call($command));
-
-            chdir($cwd);
-        } catch (\RuntimeException $e) {
-            $error = $e->getMessage();
-            $io->error(sprintf('Could not run `composer dump-autoload`: %s', $error));
-            $this->abort();
-        }
-
-        return true;
     }
 
     /**
@@ -397,7 +351,7 @@ class PluginCommand extends BakeCommand
      * @param \Cake\Console\ConsoleIo $io The console io
      * @return string|bool Either the path to composer or false if it cannot be found.
      */
-    public function findComposer(Arguments $args, ConsoleIo $io)
+    public function findComposer(Arguments $args, ConsoleIo $io): string|bool
     {
         if ($args->hasOption('composer')) {
             /** @var string $path */
@@ -423,7 +377,7 @@ class PluginCommand extends BakeCommand
      * @param \Cake\Console\ConsoleIo $io The console io
      * @return string|bool
      */
-    protected function _searchPath(array $path, ConsoleIo $io)
+    protected function _searchPath(array $path, ConsoleIo $io): string|bool
     {
         $composer = ['composer.phar', 'composer'];
         foreach ($path as $dir) {

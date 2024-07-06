@@ -20,7 +20,7 @@ class ChatLogWarehousesController extends AppController
     {
         $chatLogWarehouses = $this->ChatLogWarehouses->find()
             ->select(['id', 'entry_key', 'chat_room_title', 'characters', 'modified', 'created'])
-            ->order(['id' => 'DESC']);
+            ->orderBy(['id' => 'DESC']);
         $chatLogWarehouses = $this->paginate($chatLogWarehouses);
 
         $this->set(compact('chatLogWarehouses'));
@@ -28,14 +28,15 @@ class ChatLogWarehousesController extends AppController
 
     public function topListTable()
     {
+        $this->viewBuilder()->disableAutoLayout();
         $chatLogWarehouses = $this->ChatLogWarehouses->find()
             ->select([
-              'ChatLogWarehouses.id',
-              'ChatLogWarehouses.created',
-              'ChatLogWarehouses.chat_room_title',
-              'ChatLogWarehouses.characters'
+                'ChatLogWarehouses.id',
+                'ChatLogWarehouses.created',
+                'ChatLogWarehouses.chat_room_title',
+                'ChatLogWarehouses.characters'
             ])
-            ->order(['id' => 'DESC'])
+            ->orderBy(['id' => 'DESC'])
             ->limit(3);
         $this->set(compact('chatLogWarehouses'));
     }

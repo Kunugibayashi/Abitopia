@@ -13,8 +13,8 @@ use Cake\ORM\Entity;
  * @property string|null $status
  * @property string|null $narration
  * @property string|null $memo
- * @property \Cake\I18n\FrozenTime $modified
- * @property \Cake\I18n\FrozenTime $created
+ * @property \Cake\I18n\DateTime $modified
+ * @property \Cake\I18n\DateTime $created
  *
  * @property \App\Model\Entity\ChatLog $chat_log
  */
@@ -29,7 +29,7 @@ class BattleLog extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'chat_log_id' => true,
         'status' => true,
         'narration' => true,

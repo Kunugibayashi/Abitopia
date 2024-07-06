@@ -33,14 +33,14 @@ class ChatController extends AppController
         $this->loadComponent('ChatSession');
         $this->loadComponent('Dice');
 
-        $this->loadModel('ChatRooms');
-        $this->loadModel('ChatCharacters');
-        $this->loadModel('ChatEntries');
-        $this->loadModel('ChatLogs');
-        $this->loadModel('ChatLogWarehouses');
-        $this->loadModel('Sessions');
+        $this->ChatRooms = $this->fetchTable('ChatRooms');
+        $this->ChatCharacters = $this->fetchTable('ChatCharacters');
+        $this->ChatEntries = $this->fetchTable('ChatEntries');
+        $this->ChatLogs = $this->fetchTable('ChatLogs');
+        $this->ChatLogWarehouses = $this->fetchTable('ChatLogWarehouses');
+        $this->Sessions = $this->fetchTable('Sessions');
 
-        $this->loadModel('BattleSaveSkills');
+        $this->BattleSaveSkills = $this->fetchTable('BattleSaveSkills');
 
         $this->session = $this->getRequest()->getSession();
         $this->ChatSession->set($this->session);
@@ -212,14 +212,14 @@ class ChatController extends AppController
             ->limit(1)
             ->first();
         if (!is_null($maxLog) && !is_null($firstLog) && !is_null($firstLog->id) && !is_null($maxLog->id)) {
-          $connection->begin();
-          $this->log(__CLASS__.":".__FUNCTION__.":" ."ChatLogs maxLog->id = $maxLog->id", 'debug');
-          $this->log(__CLASS__.":".__FUNCTION__.":" ."ChatLogs firstLog->id = $firstLog->id", 'debug');
-          for ($i = $firstLog->id; $i <= $maxLog->id; $i++) {
-              // 多すぎるとメモリを圧迫するため1つずつ
-              $this->ChatLogs->deleteAll(['id =' => $i]);
-          }
-          $connection->commit();
+            $connection->begin();
+            $this->log(__CLASS__.":".__FUNCTION__.":" ."ChatLogs maxLog->id = $maxLog->id", 'debug');
+            $this->log(__CLASS__.":".__FUNCTION__.":" ."ChatLogs firstLog->id = $firstLog->id", 'debug');
+            for ($i = $firstLog->id; $i <= $maxLog->id; $i++) {
+                // 多すぎるとメモリを圧迫するため1つずつ
+                $this->ChatLogs->deleteAll(['id =' => $i]);
+            }
+            $connection->commit();
         }
 
         // チャットで使用していたセッションを削除
@@ -498,6 +498,7 @@ class ChatController extends AppController
 
     public function topListTable()
     {
+        $this->viewBuilder()->disableAutoLayout();
         $chatLogs = $this->ChatLogs->find()
             ->where(['chat_character_key' => 0]) // システム
             ->order(['id' => 'DESC'])

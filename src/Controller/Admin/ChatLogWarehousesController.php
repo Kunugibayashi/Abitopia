@@ -34,9 +34,7 @@ class ChatLogWarehousesController extends AppController
      */
     public function view($id = null)
     {
-        $chatLogWarehouse = $this->ChatLogWarehouses->get($id, [
-            'contain' => [],
-        ]);
+        $chatLogWarehouse = $this->ChatLogWarehouses->get($id, contain: []);
 
         $this->set(compact('chatLogWarehouse'));
     }
@@ -70,9 +68,7 @@ class ChatLogWarehousesController extends AppController
      */
     public function edit($id = null)
     {
-        $chatLogWarehouse = $this->ChatLogWarehouses->get($id, [
-            'contain' => [],
-        ]);
+        $chatLogWarehouse = $this->ChatLogWarehouses->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $chatLogWarehouse = $this->ChatLogWarehouses->patchEntity($chatLogWarehouse, $this->request->getData());
             if ($this->ChatLogWarehouses->save($chatLogWarehouse)) {

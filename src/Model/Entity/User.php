@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Model\Entity;
 
 use Cake\ORM\Entity;
-use Cake\Auth\DefaultPasswordHasher;
+use Authentication\PasswordHasher\DefaultPasswordHasher as AuthDefaultPasswordHasher;
 
 /**
  * User Entity
@@ -13,8 +13,8 @@ use Cake\Auth\DefaultPasswordHasher;
  * @property string $username
  * @property string $password
  * @property string $role
- * @property \Cake\I18n\FrozenTime $created
- * @property \Cake\I18n\FrozenTime $modified
+ * @property \Cake\I18n\DateTime $created
+ * @property \Cake\I18n\DateTime $modified
  *
  * @property \App\Model\Entity\ChatCharacter[] $chat_characters
  * @property \App\Model\Entity\ChatEntry[] $chat_entries
@@ -32,7 +32,7 @@ class User extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'username' => true,
         'password' => true,
         'role' => true,
@@ -49,14 +49,15 @@ class User extends Entity
      *
      * @var array
      */
-    protected $_hidden = [
+    protected array $_hidden = [
         'password',
     ];
 
     protected function _setPassword($password)
     {
         if (strlen($password) > 0) {
-            return (new DefaultPasswordHasher)->hash($password);
+            $hasher = new AuthDefaultPasswordHasher();
+            return $hasher->hash($password);
         }
     }
 }

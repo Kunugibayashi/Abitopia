@@ -37,9 +37,7 @@ class ReceivedMessagesController extends AppController
      */
     public function view($id = null)
     {
-        $receivedMessage = $this->ReceivedMessages->get($id, [
-            'contain' => ['Users'],
-        ]);
+        $receivedMessage = $this->ReceivedMessages->get($id, contain: ['Users']);
 
         $this->set(compact('receivedMessage'));
     }
@@ -74,9 +72,7 @@ class ReceivedMessagesController extends AppController
      */
     public function edit($id = null)
     {
-        $receivedMessage = $this->ReceivedMessages->get($id, [
-            'contain' => [],
-        ]);
+        $receivedMessage = $this->ReceivedMessages->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $receivedMessage = $this->ReceivedMessages->patchEntity($receivedMessage, $this->request->getData());
             if ($this->ReceivedMessages->save($receivedMessage)) {

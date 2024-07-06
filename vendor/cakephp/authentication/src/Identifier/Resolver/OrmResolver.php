@@ -16,6 +16,7 @@ declare(strict_types=1);
  */
 namespace Authentication\Identifier\Resolver;
 
+use ArrayAccess;
 use Cake\Core\InstanceConfigTrait;
 use Cake\ORM\Locator\LocatorAwareTrait;
 
@@ -34,7 +35,7 @@ class OrmResolver implements ResolverInterface
      *
      * @var array
      */
-    protected $_defaultConfig = [
+    protected array $_defaultConfig = [
         'userModel' => 'Users',
         'finder' => 'all',
     ];
@@ -52,17 +53,17 @@ class OrmResolver implements ResolverInterface
     /**
      * @inheritDoc
      */
-    public function find(array $conditions, $type = self::TYPE_AND)
+    public function find(array $conditions, string $type = self::TYPE_AND): ArrayAccess|array|null
     {
         $table = $this->getTableLocator()->get($this->_config['userModel']);
 
-        $query = $table->find();
+        $query = $table->selectQuery();
         $finders = (array)$this->_config['finder'];
         foreach ($finders as $finder => $options) {
             if (is_string($options)) {
                 $query->find($options);
             } else {
-                $query->find($finder, $options);
+                $query->find($finder, ...$options);
             }
         }
 

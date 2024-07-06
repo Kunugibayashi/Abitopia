@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /**
  * MIT License
@@ -26,6 +27,7 @@ class SeedCreate extends AbstractCommand
     /**
      * @var string|null
      */
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingNativeTypeHint
     protected static $defaultName = 'seed:create';
 
     /**
@@ -196,7 +198,7 @@ class SeedCreate extends AbstractCommand
 
         $namespace = $config instanceof NamespaceAwareInterface ? $config->getSeedNamespaceByPath($path) : null;
         $classes = [
-            '$namespaceDefinition' => $namespace !== null ? ('namespace ' . $namespace . ';') : '',
+            '$namespaceDefinition' => $namespace !== null ? (PHP_EOL . 'namespace ' . $namespace . ';' . PHP_EOL) : '',
             '$namespace' => $namespace,
             '$useClassName' => $config->getSeedBaseClassName(false),
             '$className' => $className,

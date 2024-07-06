@@ -34,7 +34,7 @@ trait SchemaTrait
     {
         /** @var string $connectionName */
         $connectionName = $input->getOption('connection');
-        /** @var \Cake\Database\Connection $connection */
+        /** @var \Cake\Database\Connection|\Cake\Datasource\ConnectionInterface $connection */
         $connection = ConnectionManager::get($connectionName);
 
         if (!method_exists($connection, 'getSchemaCollection')) {

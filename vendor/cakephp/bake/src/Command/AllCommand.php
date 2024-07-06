@@ -30,9 +30,9 @@ class AllCommand extends BakeCommand
     /**
      * All commands to call.
      *
-     * @var string[]
+     * @var array<string>
      */
-    protected $commands = [
+    protected array $commands = [
         ModelCommand::class,
         ControllerCommand::class,
         TemplateCommand::class,
@@ -111,7 +111,8 @@ class AllCommand extends BakeCommand
             }
 
             foreach ($tables as $table) {
-                $subArgs = new Arguments([$table], $options, ['name']);
+                $parser = $command->getOptionParser();
+                $subArgs = new Arguments([$table], $options, $parser->argumentNames());
                 $command->execute($subArgs, $io);
             }
         }

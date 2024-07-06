@@ -60,6 +60,9 @@
     <rule ref="CakePHP.Commenting.FunctionComment">
         <exclude-pattern>*/tests/*</exclude-pattern>
     </rule>
+    <rule ref="CakePHP.Commenting.TypeHint">
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
 
     <!-- phpcs Squiz sniffs -->
     <rule ref="Squiz.Arrays.ArrayBracketSpacing"/>
@@ -139,6 +142,12 @@
         <exclude-pattern>*/tests/*</exclude-pattern>
     </rule>
     <rule ref="SlevomatCodingStandard.Namespaces.NamespaceDeclaration"/>
+    <rule ref="SlevomatCodingStandard.Namespaces.ReferenceUsedNamesOnly">
+        <properties>
+            <property name="allowFallbackGlobalFunctions" type="boolean" value="true"/>
+            <property name="allowFallbackGlobalConstants" type="boolean" value="true"/>
+        </properties>
+    </rule>
     <rule ref="SlevomatCodingStandard.Namespaces.UnusedUses"/>
     <rule ref="SlevomatCodingStandard.Namespaces.UseDoesNotStartWithBackslash"/>
     <rule ref="SlevomatCodingStandard.Namespaces.UseFromSameNamespace"/>
@@ -160,10 +169,56 @@
         <exclude-pattern>*/tests/Fixture/*</exclude-pattern>
     </rule>
     <rule ref="SlevomatCodingStandard.TypeHints.LongTypeHints"/>
-    <rule ref="SlevomatCodingStandard.TypeHints.ReturnTypeHintSpacing"/>
     <rule ref="SlevomatCodingStandard.TypeHints.NullableTypeForNullDefaultValue"/>
+    <rule ref="SlevomatCodingStandard.TypeHints.ParameterTypeHint">
+        <properties>
+            <property name="enableMixedTypeHint" type="boolean" value="true"/>
+            <property name="enableUnionTypeHint" type="boolean" value="true"/>
+        </properties>
+        <exclude name="SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification"/>
+        <exclude name="SlevomatCodingStandard.TypeHints.ParameterTypeHint.UselessAnnotation"/>
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
     <rule ref="SlevomatCodingStandard.TypeHints.ParameterTypeHintSpacing"/>
+    <rule ref="SlevomatCodingStandard.TypeHints.ReturnTypeHint">
+        <properties>
+            <property name="enableMixedTypeHint" type="boolean" value="true"/>
+            <property name="enableStaticTypeHint" type="boolean" value="true"/>
+            <property name="enableUnionTypeHint" type="boolean" value="true"/>
+        </properties>
+        <exclude name="SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification"/>
+        <exclude name="SlevomatCodingStandard.TypeHints.ReturnTypeHint.UselessAnnotation"/>
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="SlevomatCodingStandard.TypeHints.PropertyTypeHint">
+        <properties>
+            <property name="enableMixedTypeHint" type="boolean" value="true"/>
+            <property name="enableUnionTypeHint" type="boolean" value="true"/>
+        </properties>
+        <exclude name="SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification"/>
+        <exclude name="SlevomatCodingStandard.TypeHints.PropertyTypeHint.UselessAnnotation"/>
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="SlevomatCodingStandard.TypeHints.UnionTypeHintFormat">
+        <properties>
+            <property name="enable" type="boolean" value="true"/>
+            <property name="withSpaces" value="no"/>
+            <property name="shortNullable" value="yes"/>
+            <property name="nullPosition" value="last"/>
+        </properties>
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="SlevomatCodingStandard.Classes.PropertyDeclaration"/>
+    <rule ref="SlevomatCodingStandard.TypeHints.ReturnTypeHintSpacing"/>
     <rule ref="SlevomatCodingStandard.Variables.DuplicateAssignmentToVariable"/>
+    <rule ref="SlevomatCodingStandard.Variables.UnusedVariable">
+        <properties>
+            <property name="ignoreUnusedValuesWhenOnlyKeysAreUsedInForeach" value="true" />
+        </properties>
+    </rule>
+    <rule ref="SlevomatCodingStandard.Functions.ArrowFunctionDeclaration" />
+    <rule ref="SlevomatCodingStandard.Attributes.AttributeAndTargetSpacing"/>
+    <rule ref="SlevomatCodingStandard.Attributes.RequireAttributeAfterDocComment"/>
 
     <!-- phpcs Zend sniffs -->
     <rule ref="Zend.NamingConventions.ValidVariableName">

@@ -37,9 +37,7 @@ class ChatCharactersController extends AppController
      */
     public function view($id = null)
     {
-        $chatCharacter = $this->ChatCharacters->get($id, [
-            'contain' => ['Users', 'BattleCharacterStatuses', 'ChatEntries', 'BattleCharacters', 'BattleSaveSkills'],
-        ]);
+        $chatCharacter = $this->ChatCharacters->get($id, contain: ['Users', 'BattleCharacterStatuses', 'ChatEntries', 'BattleCharacters', 'BattleSaveSkills']);
 
         $this->set(compact('chatCharacter'));
     }
@@ -74,9 +72,7 @@ class ChatCharactersController extends AppController
      */
     public function edit($id = null)
     {
-        $chatCharacter = $this->ChatCharacters->get($id, [
-            'contain' => [],
-        ]);
+        $chatCharacter = $this->ChatCharacters->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $chatCharacter = $this->ChatCharacters->patchEntity($chatCharacter, $this->request->getData());
             if ($this->ChatCharacters->save($chatCharacter)) {

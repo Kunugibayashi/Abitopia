@@ -13,7 +13,7 @@
  * @license       https://opensource.org/licenses/mit-license.php MIT License
  * @var string $name
  * @var string $file
- * @var array<string> $paths
+ * @var list<string> $paths
  */
 use function Cake\Core\h;
 
@@ -35,7 +35,7 @@ $this->start('file');
 <ul>
 <?php
     foreach ($paths as $path) :
-        if (strpos($path, CORE_PATH) !== false) {
+        if (str_contains($path, CORE_PATH)) {
             continue;
         }
         echo sprintf('<li>%sCell/%s/%s</li>', h($path), h($name), h($file));

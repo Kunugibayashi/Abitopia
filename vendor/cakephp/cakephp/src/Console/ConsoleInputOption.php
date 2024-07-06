@@ -32,63 +32,63 @@ class ConsoleInputOption
      *
      * @var string
      */
-    protected $_name;
+    protected string $_name;
 
     /**
      * Short (1 character) alias for the option.
      *
      * @var string
      */
-    protected $_short;
+    protected string $_short;
 
     /**
      * Help text for the option.
      *
      * @var string
      */
-    protected $_help;
+    protected string $_help;
 
     /**
      * Is the option a boolean option. Boolean options do not consume a parameter.
      *
      * @var bool
      */
-    protected $_boolean;
+    protected bool $_boolean;
 
     /**
      * Default value for the option
      *
      * @var string|bool|null
      */
-    protected $_default;
+    protected string|bool|null $_default = null;
 
     /**
      * Can the option accept multiple value definition.
      *
      * @var bool
      */
-    protected $_multiple;
+    protected bool $_multiple;
 
     /**
      * An array of choices for the option.
      *
-     * @var array<string>
+     * @var list<string>
      */
-    protected $_choices;
+    protected array $_choices;
 
     /**
      * The prompt string
      *
      * @var string|null
      */
-    protected $prompt;
+    protected ?string $prompt = null;
 
     /**
      * Is the option required.
      *
      * @var bool
      */
-    protected $required;
+    protected bool $required;
 
     /**
      * Make a new Input Option
@@ -98,7 +98,7 @@ class ConsoleInputOption
      * @param string $help The help text for this option
      * @param bool $isBoolean Whether this option is a boolean option. Boolean options don't consume extra tokens
      * @param string|bool|null $default The default value for this option.
-     * @param array<string> $choices Valid choices for this option.
+     * @param list<string> $choices Valid choices for this option.
      * @param bool $multiple Whether this option can accept multiple value definition.
      * @param bool $required Whether this option is required or not.
      * @param string|null $prompt The prompt string.
@@ -109,7 +109,7 @@ class ConsoleInputOption
         string $short = '',
         string $help = '',
         bool $isBoolean = false,
-        $default = null,
+        string|bool|null $default = null,
         array $choices = [],
         bool $multiple = false,
         bool $required = false,
@@ -132,10 +132,10 @@ class ConsoleInputOption
 
         if (strlen($this->_short) > 1) {
             throw new ConsoleException(
-                sprintf('Short option "%s" is invalid, short options must be one letter.', $this->_short)
+                sprintf('Short option `%s` is invalid, short options must be one letter.', $this->_short)
             );
         }
-        if (isset($this->_default) && $this->prompt) {
+        if ($this->_default !== null && $this->prompt) {
             throw new ConsoleException(
                 'You cannot set both `prompt` and `default` options. ' .
                 'Use either a static `default` or interactive `prompt`'
@@ -171,7 +171,8 @@ class ConsoleInputOption
      */
     public function help(int $width = 0): string
     {
-        $default = $short = '';
+        $default = '';
+        $short = '';
         if ($this->_default && $this->_default !== true) {
             $default = sprintf(' <comment>(default: %s)</comment>', $this->_default);
         }
@@ -221,7 +222,7 @@ class ConsoleInputOption
      *
      * @return string|bool|null
      */
-    public function defaultValue()
+    public function defaultValue(): string|bool|null
     {
         return $this->_default;
     }
@@ -263,15 +264,15 @@ class ConsoleInputOption
      * @return true
      * @throws \Cake\Console\Exception\ConsoleException
      */
-    public function validChoice($value): bool
+    public function validChoice(string|bool $value): bool
     {
-        if (empty($this->_choices)) {
+        if ($this->_choices === []) {
             return true;
         }
         if (!in_array($value, $this->_choices, true)) {
             throw new ConsoleException(
                 sprintf(
-                    '"%s" is not a valid value for --%s. Please use one of "%s"',
+                    '`%s` is not a valid value for `--%s`. Please use one of `%s`',
                     (string)$value,
                     $this->_name,
                     implode(', ', $this->_choices)

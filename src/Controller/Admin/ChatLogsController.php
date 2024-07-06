@@ -34,9 +34,7 @@ class ChatLogsController extends AppController
      */
     public function view($id = null)
     {
-        $chatLog = $this->ChatLogs->get($id, [
-            'contain' => ['BattleLogs'],
-        ]);
+        $chatLog = $this->ChatLogs->get($id, contain: ['BattleLogs']);
 
         $this->set(compact('chatLog'));
     }
@@ -70,9 +68,7 @@ class ChatLogsController extends AppController
      */
     public function edit($id = null)
     {
-        $chatLog = $this->ChatLogs->get($id, [
-            'contain' => [],
-        ]);
+        $chatLog = $this->ChatLogs->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $chatLog = $this->ChatLogs->patchEntity($chatLog, $this->request->getData());
             if ($this->ChatLogs->save($chatLog)) {

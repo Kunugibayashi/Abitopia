@@ -171,6 +171,46 @@ interface TableSchemaInterface extends SchemaInterface
     public const TYPE_UUID = 'uuid';
 
     /**
+     * Geometry column type
+     *
+     * @var string
+     */
+    public const TYPE_GEOMETRY = 'geometry';
+
+    /**
+     * Point column type
+     *
+     * @var string
+     */
+    public const TYPE_POINT = 'point';
+
+    /**
+     * Linestring column type
+     *
+     * @var string
+     */
+    public const TYPE_LINESTRING = 'linestring';
+
+    /**
+     * Polgon column type
+     *
+     * @var string
+     */
+    public const TYPE_POLYGON = 'polygon';
+
+    /**
+     * Geospatial column types
+     *
+     * @var array
+     */
+    public const GEOSPATIAL_TYPES = [
+        self::TYPE_GEOMETRY,
+        self::TYPE_POINT,
+        self::TYPE_LINESTRING,
+        self::TYPE_POLYGON,
+    ];
+
+    /**
      * Check whether a table has an autoIncrement column defined.
      *
      * @return bool
@@ -195,7 +235,7 @@ interface TableSchemaInterface extends SchemaInterface
     /**
      * Get the column(s) used for the primary key.
      *
-     * @return array<string> Column name(s) for the primary key. An
+     * @return list<string> Column name(s) for the primary key. An
      *   empty list will be returned when the table has no primary key.
      */
     public function getPrimaryKey(): array;
@@ -217,7 +257,7 @@ interface TableSchemaInterface extends SchemaInterface
      * @return $this
      * @throws \Cake\Database\Exception\DatabaseException
      */
-    public function addIndex(string $name, $attrs);
+    public function addIndex(string $name, array|string $attrs);
 
     /**
      * Read information about an index based on name.
@@ -230,7 +270,7 @@ interface TableSchemaInterface extends SchemaInterface
     /**
      * Get the names of all the indexes in the table.
      *
-     * @return array<string>
+     * @return list<string>
      */
     public function indexes(): array;
 
@@ -256,7 +296,7 @@ interface TableSchemaInterface extends SchemaInterface
      * @return $this
      * @throws \Cake\Database\Exception\DatabaseException
      */
-    public function addConstraint(string $name, $attrs);
+    public function addConstraint(string $name, array|string $attrs);
 
     /**
      * Read information about a constraint based on name.
@@ -277,7 +317,7 @@ interface TableSchemaInterface extends SchemaInterface
     /**
      * Get the names of all the constraints in the table.
      *
-     * @return array<string>
+     * @return list<string>
      */
     public function constraints(): array;
 }

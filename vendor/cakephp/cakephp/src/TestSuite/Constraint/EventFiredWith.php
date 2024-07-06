@@ -21,21 +21,21 @@ class EventFiredWith extends Constraint
      *
      * @var \Cake\Event\EventManager
      */
-    protected $_eventManager;
+    protected EventManager $_eventManager;
 
     /**
      * Event data key
      *
      * @var string
      */
-    protected $_dataKey;
+    protected string $_dataKey;
 
     /**
      * Event data value
      *
      * @var mixed
      */
-    protected $_dataValue;
+    protected mixed $_dataValue;
 
     /**
      * Constructor
@@ -44,7 +44,7 @@ class EventFiredWith extends Constraint
      * @param string $dataKey Data key
      * @param mixed $dataValue Data value
      */
-    public function __construct(EventManager $eventManager, string $dataKey, $dataValue)
+    public function __construct(EventManager $eventManager, string $dataKey, mixed $dataValue)
     {
         $this->_eventManager = $eventManager;
         $this->_dataKey = $dataKey;
@@ -64,7 +64,7 @@ class EventFiredWith extends Constraint
      * @return bool
      * @throws \PHPUnit\Framework\AssertionFailedError
      */
-    public function matches($other): bool
+    public function matches(mixed $other): bool
     {
         $firedEvents = [];
         $list = $this->_eventManager->getEventList();
@@ -85,12 +85,12 @@ class EventFiredWith extends Constraint
             return false;
         }
 
-        /** @var array<\Cake\Event\EventInterface> $events */
+        /** @var array<\Cake\Event\EventInterface<object>> $events */
         $events = $eventGroup[$other];
 
         if (count($events) > 1) {
             throw new AssertionFailedError(sprintf(
-                'Event "%s" was fired %d times, cannot make data assertion',
+                'Event `%s` was fired %d times, cannot make data assertion',
                 $other,
                 count($events)
             ));

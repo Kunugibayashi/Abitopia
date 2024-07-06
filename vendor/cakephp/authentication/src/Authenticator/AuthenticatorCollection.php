@@ -22,7 +22,7 @@ use Cake\Core\App;
 use RuntimeException;
 
 /**
- * @method \Authentication\Authenticator\AuthenticatorInterface|null get(string $name)
+ * @extends \Authentication\AbstractCollection<\Authentication\Authenticator\AuthenticatorInterface>
  */
 class AuthenticatorCollection extends AbstractCollection
 {
@@ -31,7 +31,7 @@ class AuthenticatorCollection extends AbstractCollection
      *
      * @var \Authentication\Identifier\IdentifierCollection
      */
-    protected $_identifiers;
+    protected IdentifierCollection $_identifiers;
 
     /**
      * Constructor.
@@ -49,38 +49,31 @@ class AuthenticatorCollection extends AbstractCollection
     /**
      * Creates authenticator instance.
      *
-     * @param string $class Authenticator class.
+     * @param \Authentication\Authenticator\AuthenticatorInterface|class-string<\Authentication\Authenticator\AuthenticatorInterface> $class Authenticator class.
      * @param string $alias Authenticator alias.
      * @param array $config Config array.
      * @return \Authentication\Authenticator\AuthenticatorInterface
      * @throws \RuntimeException
      */
-    protected function _create($class, string $alias, array $config): AuthenticatorInterface
+    protected function _create(object|string $class, string $alias, array $config): AuthenticatorInterface
     {
-        $authenticator = new $class($this->_identifiers, $config);
-        if (!($authenticator instanceof AuthenticatorInterface)) {
-            throw new RuntimeException(sprintf(
-                'Authenticator class `%s` must implement `%s`.',
-                $class,
-                AuthenticatorInterface::class
-            ));
+        if (is_string($class)) {
+            return new $class($this->_identifiers, $config);
         }
 
-        return $authenticator;
+        return $class;
     }
 
     /**
      * Resolves authenticator class name.
      *
      * @param string $class Class name to be resolved.
-     * @return string|null
-     * @psalm-return class-string|null
+     * @return class-string<\Authentication\Authenticator\AuthenticatorInterface>|null
      */
-    protected function _resolveClassName($class): ?string
+    protected function _resolveClassName(string $class): ?string
     {
-        $className = App::className($class, 'Authenticator', 'Authenticator');
-
-        return is_string($className) ? $className : null;
+        /** @var class-string<\Authentication\Authenticator\AuthenticatorInterface>|null */
+        return App::className($class, 'Authenticator', 'Authenticator');
     }
 
     /**

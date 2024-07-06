@@ -19,7 +19,7 @@ class InformationsController extends AppController
     public function index()
     {
         $informations = $this->Informations->find()
-            ->order(['id' => 'DESC']);
+            ->orderBy(['id' => 'DESC']);
         $informations = $this->paginate($informations);
 
         $this->set(compact('informations'));
@@ -34,17 +34,16 @@ class InformationsController extends AppController
      */
     public function view($id = null)
     {
-        $information = $this->Informations->get($id, [
-            'contain' => [],
-        ]);
+        $information = $this->Informations->get($id, contain: []);
 
         $this->set(compact('information'));
     }
 
     public function topListTable()
     {
+        $this->viewBuilder()->disableAutoLayout();
         $informations = $this->Informations->find()
-            ->order(['id' => 'DESC'])
+            ->orderBy(['id' => 'DESC'])
             ->limit(3);
         $this->set(compact('informations'));
     }

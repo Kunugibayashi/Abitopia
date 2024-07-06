@@ -18,10 +18,11 @@ declare(strict_types=1);
 namespace Cake\Cache\Engine;
 
 use Cake\Cache\CacheEngine;
+use Cake\Core\Exception\CakeException;
 use Cake\Log\Log;
+use DateInterval;
 use Redis;
 use RedisException;
-use RuntimeException;
 
 /**
  * Redis storage engine for cache.
@@ -33,7 +34,7 @@ class RedisEngine extends CacheEngine
      *
      * @var \Redis
      */
-    protected $_Redis;
+    protected Redis $_Redis;
 
     /**
      * The default config used unless overridden by runtime configuration
@@ -45,6 +46,7 @@ class RedisEngine extends CacheEngine
      * - `password` Redis server password.
      * - `persistent` Connect to the Redis server with a persistent connection
      * - `port` port number to the Redis server.
+     * - `tls` connect to the Redis server using TLS.
      * - `prefix` Prefix appended to all entries. Good for when you need to share a keyspace
      *    with either another cache config or another application.
      * - `scanCount` Number of keys to ask for each scan (default: 10)
@@ -54,13 +56,14 @@ class RedisEngine extends CacheEngine
      *
      * @var array<string, mixed>
      */
-    protected $_defaultConfig = [
+    protected array $_defaultConfig = [
         'database' => 0,
         'duration' => 3600,
         'groups' => [],
         'password' => false,
         'persistent' => true,
         'port' => 6379,
+        'tls' => false,
         'prefix' => 'cake_',
         'host' => null,
         'server' => '127.0.0.1',
@@ -80,7 +83,7 @@ class RedisEngine extends CacheEngine
     public function init(array $config = []): bool
     {
         if (!extension_loaded('redis')) {
-            throw new RuntimeException('The `redis` extension must be enabled to use RedisEngine.');
+            throw new CakeException('The `redis` extension must be enabled to use RedisEngine.');
         }
 
         if (!empty($config['host'])) {
@@ -99,24 +102,29 @@ class RedisEngine extends CacheEngine
      */
     protected function _connect(): bool
     {
+        $tls = $this->_config['tls'] === true ? 'tls://' : '';
+
+        $map = [
+            'ssl_ca' => 'cafile',
+            'ssl_key' => 'local_pk',
+            'ssl_cert' => 'local_cert',
+        ];
+
+        $ssl = [];
+        foreach ($map as $key => $context) {
+            if (!empty($this->_config[$key])) {
+                $ssl[$context] = $this->_config[$key];
+            }
+        }
+
         try {
-            $this->_Redis = new Redis();
+            $this->_Redis = $this->_createRedisInstance();
             if (!empty($this->_config['unix_socket'])) {
                 $return = $this->_Redis->connect($this->_config['unix_socket']);
             } elseif (empty($this->_config['persistent'])) {
-                $return = $this->_Redis->connect(
-                    $this->_config['server'],
-                    (int)$this->_config['port'],
-                    (int)$this->_config['timeout']
-                );
+                $return = $this->_connectTransient($tls . $this->_config['server'], $ssl);
             } else {
-                $persistentId = $this->_config['port'] . $this->_config['timeout'] . $this->_config['database'];
-                $return = $this->_Redis->pconnect(
-                    $this->_config['server'],
-                    (int)$this->_config['port'],
-                    (int)$this->_config['timeout'],
-                    $persistentId
-                );
+                $return = $this->_connectPersistent($tls . $this->_config['server'], $ssl);
             }
         } catch (RedisException $e) {
             if (class_exists(Log::class)) {
@@ -129,10 +137,71 @@ class RedisEngine extends CacheEngine
             $return = $this->_Redis->auth($this->_config['password']);
         }
         if ($return) {
-            $return = $this->_Redis->select((int)$this->_config['database']);
+            return $this->_Redis->select((int)$this->_config['database']);
         }
 
         return $return;
+    }
+
+    /**
+     * Connects to a Redis server using a new connection.
+     *
+     * @param string $server Server to connect to.
+     * @param array $ssl SSL context options.
+     * @throws \RedisException
+     * @return bool True if Redis server was connected
+     */
+    protected function _connectTransient(string $server, array $ssl): bool
+    {
+        if ($ssl === []) {
+            return $this->_Redis->connect(
+                $server,
+                (int)$this->_config['port'],
+                (int)$this->_config['timeout']
+            );
+        }
+
+        return $this->_Redis->connect(
+            $server,
+            (int)$this->_config['port'],
+            (int)$this->_config['timeout'],
+            null,
+            0,
+            0.0,
+            ['ssl' => $ssl]
+        );
+    }
+
+    /**
+     * Connects to a Redis server using a persistent connection.
+     *
+     * @param string $server Server to connect to.
+     * @param array $ssl SSL context options.
+     * @throws \RedisException
+     * @return bool True if Redis server was connected
+     */
+    protected function _connectPersistent(string $server, array $ssl): bool
+    {
+        $persistentId = $this->_config['port'] . $this->_config['timeout'] . $this->_config['database'];
+
+        if ($ssl === []) {
+            return $this->_Redis->pconnect(
+                $server,
+                (int)$this->_config['port'],
+                (int)$this->_config['timeout'],
+                $persistentId
+            );
+        }
+
+        return $this->_Redis->pconnect(
+            $server,
+            (int)$this->_config['port'],
+            (int)$this->_config['timeout'],
+            $persistentId,
+            0,
+            0.0,
+            ['ssl' => $ssl]
+        );
     }
 
     /**
@@ -145,7 +214,7 @@ class RedisEngine extends CacheEngine
      *   for it or let the driver take care of that.
      * @return bool True if the data was successfully cached, false on failure
      */
-    public function set($key, $value, $ttl = null): bool
+    public function set(string $key, mixed $value, DateInterval|int|null $ttl = null): bool
     {
         $key = $this->_key($key);
         $value = $this->serialize($value);
@@ -166,7 +235,7 @@ class RedisEngine extends CacheEngine
      * @return mixed The cached data, or the default if the data doesn't exist, has
      *   expired, or if there was an error fetching it
      */
-    public function get($key, $default = null)
+    public function get(string $key, mixed $default = null): mixed
     {
         $value = $this->_Redis->get($this->_key($key));
         if ($value === false) {
@@ -183,7 +252,7 @@ class RedisEngine extends CacheEngine
      * @param int $offset How much to increment
      * @return int|false New incremented value, false otherwise
      */
-    public function increment(string $key, int $offset = 1)
+    public function increment(string $key, int $offset = 1): int|false
     {
         $duration = $this->_config['duration'];
         $key = $this->_key($key);
@@ -203,7 +272,7 @@ class RedisEngine extends CacheEngine
      * @param int $offset How much to subtract
      * @return int|false New decremented value, false otherwise
      */
-    public function decrement(string $key, int $offset = 1)
+    public function decrement(string $key, int $offset = 1): int|false
     {
         $duration = $this->_config['duration'];
         $key = $this->_key($key);
@@ -222,11 +291,11 @@ class RedisEngine extends CacheEngine
      * @param string $key Identifier for the data
      * @return bool True if the value was successfully deleted, false if it didn't exist or couldn't be removed
      */
-    public function delete($key): bool
+    public function delete(string $key): bool
     {
         $key = $this->_key($key);
 
-        return $this->_Redis->del($key) > 0;
+        return (int)$this->_Redis->del($key) > 0;
     }
 
     /**
@@ -241,7 +310,7 @@ class RedisEngine extends CacheEngine
     {
         $key = $this->_key($key);
 
-        return $this->_Redis->unlink($key) > 0;
+        return (int)$this->_Redis->unlink($key) > 0;
     }
 
     /**
@@ -265,7 +334,7 @@ class RedisEngine extends CacheEngine
             }
 
             foreach ($keys as $key) {
-                $isDeleted = ($this->_Redis->del($key) > 0);
+                $isDeleted = ((int)$this->_Redis->del($key) > 0);
                 $isAllDeleted = $isAllDeleted && $isDeleted;
             }
         }
@@ -296,7 +365,7 @@ class RedisEngine extends CacheEngine
             }
 
             foreach ($keys as $key) {
-                $isDeleted = ($this->_Redis->unlink($key) > 0);
+                $isDeleted = ((int)$this->_Redis->unlink($key) > 0);
                 $isAllDeleted = $isAllDeleted && $isDeleted;
             }
         }
@@ -313,7 +382,7 @@ class RedisEngine extends CacheEngine
      * @return bool True if the data was successfully cached, false on failure.
      * @link https://github.com/phpredis/phpredis#set
      */
-    public function add(string $key, $value): bool
+    public function add(string $key, mixed $value): bool
     {
         $duration = $this->_config['duration'];
         $key = $this->_key($key);
@@ -331,7 +400,7 @@ class RedisEngine extends CacheEngine
      * If the group initial value was not found, then it initializes
      * the group accordingly.
      *
-     * @return array<string>
+     * @return list<string>
      */
     public function groups(): array
     {
@@ -370,7 +439,7 @@ class RedisEngine extends CacheEngine
      * @return string
      * @link https://github.com/phpredis/phpredis/issues/81
      */
-    protected function serialize($value): string
+    protected function serialize(mixed $value): string
     {
         if (is_int($value)) {
             return (string)$value;
@@ -385,7 +454,7 @@ class RedisEngine extends CacheEngine
      * @param string $value Value to unserialize.
      * @return mixed
      */
-    protected function unserialize(string $value)
+    protected function unserialize(string $value): mixed
     {
         if (preg_match('/^[-]?\d+$/', $value)) {
             return (int)$value;
@@ -395,11 +464,21 @@ class RedisEngine extends CacheEngine
     }
 
     /**
+     * Create new Redis instance.
+     *
+     * @return \Redis
+     */
+    protected function _createRedisInstance(): Redis
+    {
+        return new Redis();
+    }
+
+    /**
      * Disconnects from the redis server
      */
     public function __destruct()
     {
-        if (empty($this->_config['persistent']) && $this->_Redis instanceof Redis) {
+        if (empty($this->_config['persistent'])) {
             $this->_Redis->close();
         }
     }

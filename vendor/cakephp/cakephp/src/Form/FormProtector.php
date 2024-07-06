@@ -37,21 +37,21 @@ class FormProtector
      *
      * @var array
      */
-    protected $fields = [];
+    protected array $fields = [];
 
     /**
      * Unlocked fields.
      *
-     * @var array<string>
+     * @var list<string>
      */
-    protected $unlockedFields = [];
+    protected array $unlockedFields = [];
 
     /**
      * Error message providing detail for failed validation.
      *
      * @var string|null
      */
-    protected $debugMessage;
+    protected ?string $debugMessage = null;
 
     /**
      * Validate submitted form data.
@@ -61,12 +61,12 @@ class FormProtector
      * @param string $sessionId Session id for hash generation.
      * @return bool
      */
-    public function validate($formData, string $url, string $sessionId): bool
+    public function validate(mixed $formData, string $url, string $sessionId): bool
     {
         $this->debugMessage = null;
 
         $extractedToken = $this->extractToken($formData);
-        if (empty($extractedToken)) {
+        if (!$extractedToken) {
             return false;
         }
 
@@ -107,20 +107,20 @@ class FormProtector
     /**
      * Determine which fields of a form should be used for hash.
      *
-     * @param array<string>|string $field Reference to field to be secured. Can be dot
+     * @param list<string>|string $field Reference to field to be secured. Can be dot
      *   separated string to indicate nesting or array of fieldname parts.
      * @param bool $lock Whether this field should be part of the validation
      *   or excluded as part of the unlockedFields. Default `true`.
      * @param mixed $value Field value, if value should not be tampered with.
      * @return $this
      */
-    public function addField($field, bool $lock = true, $value = null)
+    public function addField(array|string $field, bool $lock = true, mixed $value = null)
     {
         if (is_string($field)) {
             $field = $this->getFieldNameArray($field);
         }
 
-        if (empty($field)) {
+        if (!$field) {
             return $this;
         }
 
@@ -132,7 +132,7 @@ class FormProtector
         }
 
         $field = implode('.', $field);
-        $field = preg_replace('/(\.\d+)+$/', '', $field);
+        $field = (string)preg_replace('/(\.\d+)+$/', '', $field);
 
         if ($lock) {
             if (!in_array($field, $this->fields, true)) {
@@ -159,16 +159,16 @@ class FormProtector
      * fieldname parts like ['Model', 'field'] is returned.
      *
      * @param string $name The form inputs name attribute.
-     * @return array<string> Array of field name params like ['Model.field'] or
+     * @return list<string> Array of field name params like ['Model.field'] or
      *   ['Model', 'field'] for array fields or empty array if $name is empty.
      */
     protected function getFieldNameArray(string $name): array
     {
-        if (empty($name) && $name !== '0') {
+        if ($name === '') {
             return [];
         }
 
-        if (strpos($name, '[') === false) {
+        if (!str_contains($name, '[')) {
             return Hash::filter(explode('.', $name));
         }
         $parts = explode('[', $name);
@@ -187,7 +187,7 @@ class FormProtector
      * @param string $name The dot separated name for the field.
      * @return $this
      */
-    public function unlockField($name)
+    public function unlockField(string $name)
     {
         if (!in_array($name, $this->unlockedFields, true)) {
             $this->unlockedFields[] = $name;
@@ -218,7 +218,7 @@ class FormProtector
      * @param mixed $formData Data to validate.
      * @return string|null Fields token on success, null on failure.
      */
-    protected function extractToken($formData): ?string
+    protected function extractToken(mixed $formData): ?string
     {
         if (!is_array($formData)) {
             $this->debugMessage = 'Request data is not an array.';
@@ -259,7 +259,7 @@ class FormProtector
         }
 
         $token = urldecode($formData['_Token']['fields']);
-        if (strpos($token, ':')) {
+        if (str_contains($token, ':')) {
             [$token, ] = explode(':', $token, 2);
         }
 
@@ -296,7 +296,7 @@ class FormProtector
         $token = urldecode($formData['_Token']['fields']);
         $unlocked = urldecode($formData['_Token']['unlocked']);
 
-        if (strpos($token, ':')) {
+        if (str_contains($token, ':')) {
             [, $locked] = explode(':', $token, 2);
         }
         unset($formData['_Token']);
@@ -306,7 +306,8 @@ class FormProtector
 
         $fields = Hash::flatten($formData);
         $fieldList = array_keys($fields);
-        $multi = $lockedFields = [];
+        $multi = [];
+        $lockedFields = [];
         $isUnlocked = false;
 
         foreach ($fieldList as $i => $key) {
@@ -317,7 +318,7 @@ class FormProtector
                 $fieldList[$i] = (string)$key;
             }
         }
-        if (!empty($multi)) {
+        if ($multi) {
             $fieldList += array_unique($multi);
         }
 
@@ -328,17 +329,16 @@ class FormProtector
             )
         );
 
+        /** @var string $key */
         foreach ($fieldList as $i => $key) {
             $isLocked = in_array($key, $locked, true);
 
-            if (!empty($unlockedFields)) {
-                foreach ($unlockedFields as $off) {
-                    $off = explode('.', $off);
-                    $field = array_values(array_intersect(explode('.', $key), $off));
-                    $isUnlocked = ($field === $off);
-                    if ($isUnlocked) {
-                        break;
-                    }
+            foreach ($unlockedFields as $off) {
+                $off = explode('.', $off);
+                $field = array_values(array_intersect(explode('.', $key), $off));
+                $isUnlocked = ($field === $off);
+                if ($isUnlocked) {
+                    break;
                 }
             }
 
@@ -360,12 +360,12 @@ class FormProtector
      * Get the sorted unlocked string
      *
      * @param array $formData Data array
-     * @return array<string>
+     * @return list<string>
      */
     protected function sortedUnlockedFields(array $formData): array
     {
         $unlocked = urldecode($formData['_Token']['unlocked']);
-        if (empty($unlocked)) {
+        if (!$unlocked) {
             return [];
         }
 
@@ -379,7 +379,7 @@ class FormProtector
      * Generate the token data.
      *
      * @param string $url Form URL.
-     * @param string $sessionId Session Id.
+     * @param string $sessionId Session ID.
      * @return array<string, string> The token data.
      * @psalm-return array{fields: string, unlocked: string, debug: string}
      */
@@ -410,7 +410,7 @@ class FormProtector
         return [
             'fields' => urlencode($fields . ':' . $locked),
             'unlocked' => urlencode(implode('|', $unlockedFields)),
-            'debug' => urlencode(json_encode([
+            'debug' => urlencode((string)json_encode([
                 $url,
                 $this->fields,
                 $this->unlockedFields,
@@ -422,12 +422,12 @@ class FormProtector
      * Generate validation hash.
      *
      * @param array $fields Fields list.
-     * @param array<string> $unlockedFields Unlocked fields.
+     * @param list<string> $unlockedFields Unlocked fields.
      * @param string $url Form URL.
      * @param string $sessionId Session Id.
      * @return string
      */
-    protected function generateHash(array $fields, array $unlockedFields, string $url, string $sessionId)
+    protected function generateHash(array $fields, array $unlockedFields, string $url, string $sessionId): string
     {
         $hashParts = [
             $url,
@@ -495,7 +495,7 @@ class FormProtector
      * @param string $stringKeyMessage Message string if tampered found in
      *  data fields indexed by string (protected).
      * @param string $missingMessage Message string if missing field
-     * @return array<string> Messages
+     * @return list<string> Messages
      */
     protected function debugCheckFields(
         array $dataFields,
@@ -522,7 +522,7 @@ class FormProtector
      * @param string $intKeyMessage Message string if unexpected found in data fields indexed by int (not protected)
      * @param string $stringKeyMessage Message string if tampered found in
      *   data fields indexed by string (protected)
-     * @return array<string> Error messages
+     * @return list<string> Error messages
      */
     protected function matchExistingFields(
         array $dataFields,
@@ -559,7 +559,7 @@ class FormProtector
      */
     protected function debugExpectedFields(array $expectedFields = [], string $missingMessage = ''): ?string
     {
-        if (count($expectedFields) === 0) {
+        if ($expectedFields === []) {
             return null;
         }
 

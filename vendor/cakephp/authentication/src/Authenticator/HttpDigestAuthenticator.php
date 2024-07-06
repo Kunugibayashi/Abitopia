@@ -15,6 +15,7 @@ declare(strict_types=1);
  */
 namespace Authentication\Authenticator;
 
+use Authentication\Identifier\AbstractIdentifier;
 use Authentication\Identifier\IdentifierInterface;
 use Cake\Utility\Security;
 use InvalidArgumentException;
@@ -94,7 +95,7 @@ class HttpDigestAuthenticator extends HttpBasicAuthenticator
         }
 
         $user = $this->_identifier->identify([
-            IdentifierInterface::CREDENTIAL_USERNAME => $digest['username'],
+            AbstractIdentifier::CREDENTIAL_USERNAME => $digest['username'],
         ]);
 
         if (empty($user)) {
@@ -105,7 +106,7 @@ class HttpDigestAuthenticator extends HttpBasicAuthenticator
             return new Result(null, Result::FAILURE_CREDENTIALS_INVALID);
         }
 
-        $field = $this->_config['fields'][IdentifierInterface::CREDENTIAL_PASSWORD];
+        $field = $this->_config['fields'][AbstractIdentifier::CREDENTIAL_PASSWORD];
         $password = $user[$field];
 
         $server = $request->getServerParams();
@@ -125,7 +126,7 @@ class HttpDigestAuthenticator extends HttpBasicAuthenticator
      * Gets the digest headers from the request/environment.
      *
      * @param \Psr\Http\Message\ServerRequestInterface $request The request that contains login information.
-     * @return string[]|null Array of digest information.
+     * @return array<string>|null Array of digest information.
      */
     protected function _getDigest(ServerRequestInterface $request): ?array
     {
@@ -148,7 +149,7 @@ class HttpDigestAuthenticator extends HttpBasicAuthenticator
      * Parse the digest authentication headers and split them up.
      *
      * @param string $digest The raw digest authentication headers.
-     * @return string[]|null An array of digest authentication headers
+     * @return array<string>|null An array of digest authentication headers
      */
     public function parseAuthData(string $digest): ?array
     {
@@ -174,7 +175,7 @@ class HttpDigestAuthenticator extends HttpBasicAuthenticator
     /**
      * Generate the response hash for a given digest array.
      *
-     * @param string[] $digest Digest information containing data from HttpDigestAuthenticate::parseAuthData().
+     * @param array<string> $digest Digest information containing data from HttpDigestAuthenticate::parseAuthData().
      * @param string $password The digest hash password generated with HttpDigestAuthenticate::password()
      * @param string $method Request method
      * @return string Response hash

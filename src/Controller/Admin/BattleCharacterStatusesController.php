@@ -34,9 +34,7 @@ class BattleCharacterStatusesController extends AppController
      */
     public function view($id = null)
     {
-        $battleCharacterStatus = $this->BattleCharacterStatuses->get($id, [
-            'contain' => ['ChatCharacters'],
-        ]);
+        $battleCharacterStatus = $this->BattleCharacterStatuses->get($id, contain: ['ChatCharacters']);
 
         $this->set(compact('battleCharacterStatus'));
     }
@@ -70,9 +68,7 @@ class BattleCharacterStatusesController extends AppController
      */
     public function edit($id = null)
     {
-        $battleCharacterStatus = $this->BattleCharacterStatuses->get($id, [
-            'contain' => [],
-        ]);
+        $battleCharacterStatus = $this->BattleCharacterStatuses->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $battleCharacterStatus = $this->BattleCharacterStatuses->patchEntity($battleCharacterStatus, $this->request->getData());
             if ($this->BattleCharacterStatuses->save($battleCharacterStatus)) {

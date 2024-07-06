@@ -37,9 +37,7 @@ class ChatEntriesController extends AppController
      */
     public function view($id = null)
     {
-        $chatEntry = $this->ChatEntries->get($id, [
-            'contain' => ['ChatRooms', 'Users', 'ChatCharacters'],
-        ]);
+        $chatEntry = $this->ChatEntries->get($id, contain: ['ChatRooms', 'Users', 'ChatCharacters']);
 
         $this->set(compact('chatEntry'));
     }
@@ -76,9 +74,7 @@ class ChatEntriesController extends AppController
      */
     public function edit($id = null)
     {
-        $chatEntry = $this->ChatEntries->get($id, [
-            'contain' => [],
-        ]);
+        $chatEntry = $this->ChatEntries->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $chatEntry = $this->ChatEntries->patchEntity($chatEntry, $this->request->getData());
             if ($this->ChatEntries->save($chatEntry)) {

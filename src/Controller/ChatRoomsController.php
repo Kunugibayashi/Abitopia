@@ -19,8 +19,8 @@ class ChatRoomsController extends AppController
         parent::initialize();
         $this->loadComponent('FormatTopList');
 
-        $this->loadModel('ChatRooms');
-        $this->loadModel('ChatEntries');
+        $this->ChatRooms = $this->fetchTable('ChatRooms');
+        $this->ChatEntries = $this->fetchTable('ChatEntries');
     }
 
     /**
@@ -63,6 +63,7 @@ class ChatRoomsController extends AppController
 
     public function topListTable()
     {
+        $this->viewBuilder()->disableAutoLayout();
         $this->viewBuilder()->setLayout('none');
 
         $chatRooms = $this->ChatRooms
@@ -81,7 +82,7 @@ class ChatRoomsController extends AppController
                 'displayno',
                 'readonly',
             ])
-            ->order(['displayno' => 'ASC'])
+            ->orderBy(['displayno' => 'ASC'])
             ->toArray();
 
         $chatRooms = $this->FormatTopList->formatChatRooms($chatRooms);

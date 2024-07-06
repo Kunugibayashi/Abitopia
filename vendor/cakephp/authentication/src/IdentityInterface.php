@@ -20,20 +20,22 @@ use ArrayAccess;
 
 /**
  * Identity interface
+ *
+ * @template-extends \ArrayAccess<int, \Authentication\IdentityInterface>
  */
 interface IdentityInterface extends ArrayAccess
 {
     /**
      * Get the primary key/id field for the identity.
      *
-     * @return string|int|array|null
+     * @return array|string|int|null
      */
-    public function getIdentifier();
+    public function getIdentifier(): array|string|int|null;
 
     /**
      * Gets the original data object.
      *
      * @return \ArrayAccess|array
      */
-    public function getOriginalData();
+    public function getOriginalData(): ArrayAccess|array;
 }

@@ -34,9 +34,7 @@ class BattleTurnsController extends AppController
      */
     public function view($id = null)
     {
-        $battleTurn = $this->BattleTurns->get($id, [
-            'contain' => ['BattleCharacters', 'BattleSaveSkills'],
-        ]);
+        $battleTurn = $this->BattleTurns->get($id, contain: ['BattleCharacters', 'BattleSaveSkills']);
 
         $this->set(compact('battleTurn'));
     }
@@ -70,9 +68,7 @@ class BattleTurnsController extends AppController
      */
     public function edit($id = null)
     {
-        $battleTurn = $this->BattleTurns->get($id, [
-            'contain' => [],
-        ]);
+        $battleTurn = $this->BattleTurns->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $battleTurn = $this->BattleTurns->patchEntity($battleTurn, $this->request->getData());
             if ($this->BattleTurns->save($battleTurn)) {

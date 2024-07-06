@@ -19,8 +19,8 @@ use Cake\ORM\Entity;
  * @property string|null $fullname
  * @property string|null $note
  * @property string|null $message
- * @property \Cake\I18n\FrozenTime $modified
- * @property \Cake\I18n\FrozenTime $created
+ * @property \Cake\I18n\DateTime $modified
+ * @property \Cake\I18n\DateTime $created
  *
  * @property \App\Model\Entity\BattleLog $battle_log
  */
@@ -35,7 +35,7 @@ class ChatLog extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'entry_key' => true,
         'chat_room_key' => true,
         'chat_room_title' => true,

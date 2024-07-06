@@ -14,6 +14,7 @@ use PhpParser\NodeVisitor\FindingVisitor;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;
 use PhpParser\ParserFactory;
+use PhpParser\PhpVersion;
 use ReflectionFunction;
 
 /**
@@ -23,10 +24,7 @@ use ReflectionFunction;
  */
 class ClosureExporter extends ObjectExporter
 {
-    /**
-     * @var Parser|null
-     */
-    private $parser;
+    private ?Parser $parser = null;
 
     /**
      * {@inheritDoc}
@@ -70,7 +68,7 @@ class ClosureExporter extends ObjectExporter
     private function getParser()
     {
         if ($this->parser === null) {
-            $this->parser = (new ParserFactory)->create(ParserFactory::ONLY_PHP7);
+            $this->parser = (new ParserFactory)->createForVersion(PhpVersion::fromComponents(7, 4));
         }
 
         return $this->parser;
@@ -150,10 +148,10 @@ class ClosureExporter extends ObjectExporter
         int $line,
         array $path
     ) : Node\Expr\Closure {
-        $finder = new FindingVisitor(function(Node $node) use ($line) : bool {
-            return ($node instanceof Node\Expr\Closure || $node instanceof Node\Expr\ArrowFunction)
-                && $node->getStartLine() === $line;
-        });
+        $finder = new FindingVisitor(
+            fn(Node $node): bool => ($node instanceof Node\Expr\Closure || $node instanceof Node\Expr\ArrowFunction)
+            && $node->getStartLine() === $line
+        );
 
         $traverser = new NodeTraverser();
         $traverser->addVisitor($finder);

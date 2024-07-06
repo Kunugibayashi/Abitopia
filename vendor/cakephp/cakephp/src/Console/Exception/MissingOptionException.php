@@ -9,7 +9,7 @@ declare(strict_types=1);
  * Redistributions of files must retain the above copyright notice.
  *
  * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
- * @link          https://book.cakephp.org/4/en/development/errors.html#error-exception-configuration
+ * @link          https://book.cakephp.org/5/en/development/errors.html#error-exception-configuration
  * @since         4.0.0
  * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
@@ -27,21 +27,21 @@ class MissingOptionException extends ConsoleException
      *
      * @var string
      */
-    protected $requested = '';
+    protected string $requested = '';
 
     /**
      * The valid suggestions.
      *
-     * @var array<string>
+     * @var list<string>
      */
-    protected $suggestions = [];
+    protected array $suggestions = [];
 
     /**
      * Constructor.
      *
      * @param string $message The string message.
      * @param string $requested The requested value.
-     * @param array<string> $suggestions The list of potential values that were valid.
+     * @param list<string> $suggestions The list of potential values that were valid.
      * @param int|null $code The exception code if relevant.
      * @param \Throwable|null $previous the previous exception.
      */
@@ -87,14 +87,14 @@ class MissingOptionException extends ConsoleException
      * Find the best match for requested in suggestions
      *
      * @param string $needle Unknown option name trying to be used.
-     * @param array<string> $haystack Suggestions to look through.
-     * @return string The best match
+     * @param list<string> $haystack Suggestions to look through.
+     * @return string|null The best match
      */
-    protected function findClosestItem($needle, $haystack): ?string
+    protected function findClosestItem(string $needle, array $haystack): ?string
     {
         $bestGuess = null;
         foreach ($haystack as $item) {
-            if (strpos($item, $needle) === 0) {
+            if (str_starts_with($item, $needle)) {
                 return $item;
             }
         }

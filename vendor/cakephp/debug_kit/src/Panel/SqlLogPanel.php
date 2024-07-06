@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace DebugKit\Panel;
 
 use Cake\Core\Configure;
+use Cake\Database\Driver;
 use Cake\Datasource\ConnectionInterface;
 use Cake\Datasource\ConnectionManager;
 use Cake\ORM\Locator\LocatorAwareTrait;
@@ -34,7 +35,7 @@ class SqlLogPanel extends DebugPanel
      *
      * @var array
      */
-    protected $_loggers = [];
+    protected array $_loggers = [];
 
     /**
      * Initialize hook - configures logger.
@@ -44,7 +45,7 @@ class SqlLogPanel extends DebugPanel
      *
      * @return void
      */
-    public function initialize()
+    public function initialize(): void
     {
         $configs = ConnectionManager::configured();
         $includeSchemaReflection = (bool)Configure::read('DebugKit.includeSchemaReflection');
@@ -57,8 +58,12 @@ class SqlLogPanel extends DebugPanel
             ) {
                 continue;
             }
+            $driver = $connection->getDriver();
             $logger = null;
-            if ($connection->isQueryLoggingEnabled()) {
+            if ($driver instanceof Driver) {
+                $logger = $driver->getLogger();
+            } elseif (method_exists($connection, 'getLogger')) {
+                // ElasticSearch connection holds the logger, not the Elastica Driver
                 $logger = $connection->getLogger();
             }
 
@@ -69,8 +74,8 @@ class SqlLogPanel extends DebugPanel
             }
             $logger = new DebugLog($logger, $name, $includeSchemaReflection);
 
-            $connection->enableQueryLogging(true);
-            $connection->setLogger($logger);
+            /** @var \Cake\Database\Driver $driver */
+            $driver->setLogger($logger);
 
             $this->_loggers[] = $logger;
         }
@@ -81,7 +86,7 @@ class SqlLogPanel extends DebugPanel
      *
      * @return array
      */
-    public function data()
+    public function data(): array
     {
         return [
             'tables' => array_map(function (Table $table) {
@@ -96,7 +101,7 @@ class SqlLogPanel extends DebugPanel
      *
      * @return string
      */
-    public function summary()
+    public function summary(): string
     {
         $count = $time = 0;
         foreach ($this->_loggers as $logger) {

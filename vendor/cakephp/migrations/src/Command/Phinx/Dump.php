@@ -13,9 +13,10 @@ declare(strict_types=1);
  */
 namespace Migrations\Command\Phinx;
 
+use Cake\Database\Connection;
 use Cake\Datasource\ConnectionManager;
 use Migrations\ConfigurationTrait;
-use Migrations\TableFinderTrait;
+use Migrations\Util\TableFinder;
 use Phinx\Console\Command\AbstractCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -25,19 +26,20 @@ use Symfony\Component\Console\Output\OutputInterface;
  * Dump command class.
  * A "dump" is a snapshot of a database at a given point in time. It is stored in a
  * .lock file in the same folder as migrations files.
+ *
+ * @deprecated 4.5.0 This command is deprecated alongside phinx compatibility.
  */
 class Dump extends AbstractCommand
 {
     use CommandTrait;
     use ConfigurationTrait;
-    use TableFinderTrait;
 
     /**
      * Output object.
      *
      * @var \Symfony\Component\Console\Output\OutputInterface
      */
-    protected $output;
+    protected ?OutputInterface $output = null;
 
     /**
      * Configures the current command.
@@ -60,9 +62,9 @@ class Dump extends AbstractCommand
 
     /**
      * @param \Symfony\Component\Console\Output\OutputInterface $output The output object.
-     * @return mixed
+     * @return \Symfony\Component\Console\Output\OutputInterface|null
      */
-    public function output(?OutputInterface $output = null)
+    public function output(?OutputInterface $output = null): ?OutputInterface
     {
         if ($output !== null) {
             $this->output = $output;
@@ -85,16 +87,18 @@ class Dump extends AbstractCommand
         $this->output($output);
 
         $path = $this->getOperationsPath($input);
-        /** @var string $connectionName */
         $connectionName = $input->getOption('connection') ?: 'default';
+        assert(is_string($connectionName), 'Connection name must be a string');
         $connection = ConnectionManager::get($connectionName);
+        assert($connection instanceof Connection);
         $collection = $connection->getSchemaCollection();
 
         $options = [
             'require-table' => false,
             'plugin' => $this->getPlugin($input),
         ];
-        $tables = $this->getTablesToBake($collection, $options);
+        $finder = new TableFinder($connectionName);
+        $tables = $finder->getTablesToBake($collection, $options);
 
         $dump = [];
         if ($tables) {

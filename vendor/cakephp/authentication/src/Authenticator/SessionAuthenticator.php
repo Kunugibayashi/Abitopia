@@ -17,7 +17,7 @@ namespace Authentication\Authenticator;
 
 use ArrayAccess;
 use ArrayObject;
-use Authentication\Identifier\IdentifierInterface;
+use Authentication\Identifier\AbstractIdentifier;
 use Cake\Http\Exception\UnauthorizedException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -37,9 +37,9 @@ class SessionAuthenticator extends AbstractAuthenticator implements PersistenceI
      *
      * @var array
      */
-    protected $_defaultConfig = [
+    protected array $_defaultConfig = [
         'fields' => [
-            IdentifierInterface::CREDENTIAL_USERNAME => 'username',
+            AbstractIdentifier::CREDENTIAL_USERNAME => 'username',
         ],
         'sessionKey' => 'Auth',
         'impersonateSessionKey' => 'AuthImpersonate',
@@ -132,8 +132,8 @@ class SessionAuthenticator extends AbstractAuthenticator implements PersistenceI
     public function impersonate(
         ServerRequestInterface $request,
         ResponseInterface $response,
-        \ArrayAccess $impersonator,
-        \ArrayAccess $impersonated
+        ArrayAccess $impersonator,
+        ArrayAccess $impersonated
     ): array {
         $sessionKey = $this->getConfig('sessionKey');
         $impersonateSessionKey = $this->getConfig('impersonateSessionKey');

@@ -238,6 +238,10 @@ strong {
     -webkit-animation: spin 4s linear infinite;
     animation: spin 4s linear infinite;
 }
+.o-help {
+  color: var(--checkbox-label);
+  font-size: 14px;
+}
 
 @-webkit-keyframes spin {
     100% {
@@ -275,6 +279,11 @@ strong {
 .c-debug-table th.u-text-left,
 .c-debug-table td.u-text-left {
     text-align: left;
+}
+
+/* correct height to fit with environment panel */
+.c-debug-table .cake-debug-copy {
+    padding: 5px 6px;
 }
 
 .c-debug-table .duplicate-route td {
@@ -674,6 +683,10 @@ strong {
     margin-left: 20px;
     padding-left: 10px;
     border-left: 1px solid var(--mail-border);
+}
+
+.c-plugins-panel img {
+    height: 18px;
 }
 
 .u-text-center {

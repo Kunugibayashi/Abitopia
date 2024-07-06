@@ -23,11 +23,7 @@ function test()
     {
         $arr = array(
             'a' => 'a'
-<<<<<<< HEAD
             'b' => 'b'
-=======
-            'c' => 'c'
->>>>>>> master
         );
     }
 
@@ -42,7 +38,6 @@ function test()
 /*
  * Testing detecting subsequent merge conflicts.
  *
-<<<<<<< HEAD
  * @var string $bar
  */
 public function foo($bar){ }
@@ -50,9 +45,6 @@ public function foo($bar){ }
 /**
 ============
 The above is not the boundary, the below is.
-=======
- * @var string $bar
->>>>>>> f19f8a5... Commit message
 */
 
 // Test that stray boundaries, i.e. an opener without closer and such, are detected.

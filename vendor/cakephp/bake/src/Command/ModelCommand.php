@@ -17,6 +17,7 @@ declare(strict_types=1);
 namespace Bake\Command;
 
 use Bake\CodeGen\FileBuilder;
+use Bake\Utility\Model\EnumParser;
 use Bake\Utility\TableScanner;
 use Cake\Console\Arguments;
 use Cake\Console\ConsoleIo;
@@ -28,9 +29,13 @@ use Cake\Database\Exception\DatabaseException;
 use Cake\Database\Schema\CachedCollection;
 use Cake\Database\Schema\TableSchema;
 use Cake\Database\Schema\TableSchemaInterface;
+use Cake\Database\Type\EnumType;
+use Cake\Database\TypeFactory;
 use Cake\Datasource\ConnectionManager;
 use Cake\ORM\Table;
 use Cake\Utility\Inflector;
+use ReflectionEnum;
+use function Cake\Core\pluginSplit;
 
 /**
  * Command for generating model files.
@@ -42,7 +47,7 @@ class ModelCommand extends BakeCommand
      *
      * @var string
      */
-    public $pathFragment = 'Model/';
+    public string $pathFragment = 'Model/';
 
     /**
      * Table prefix
@@ -51,14 +56,14 @@ class ModelCommand extends BakeCommand
      *
      * @var string
      */
-    public $tablePrefix = '';
+    public string $tablePrefix = '';
 
     /**
      * Holds tables found on connection.
      *
-     * @var string[]
+     * @var array<string>
      */
-    protected $_tables = [];
+    protected array $_tables = [];
 
     /**
      * Execute the command.
@@ -110,6 +115,8 @@ class ModelCommand extends BakeCommand
         $tableObject = $this->getTableObject($name, $table);
         $this->validateNames($tableObject->getSchema(), $io);
         $data = $this->getTableContext($tableObject, $table, $name, $args, $io);
+
+        $this->bakeEnums($tableObject, $data, $args, $io);
         $this->bakeTable($tableObject, $data, $args, $io);
         $this->bakeEntity($tableObject, $data, $args, $io);
         $this->bakeFixture($tableObject->getAlias(), $tableObject->getTable(), $args, $io);
@@ -167,6 +174,7 @@ class ModelCommand extends BakeCommand
         $behaviors = $this->getBehaviors($tableObject);
         $connection = $this->connection;
         $hidden = $this->getHiddenFields($tableObject, $args);
+        $enumSchema = $this->getEnumDefinitions($tableObject->getSchema());
 
         return compact(
             'associations',
@@ -180,7 +188,8 @@ class ModelCommand extends BakeCommand
             'rulesChecker',
             'behaviors',
             'connection',
-            'hidden'
+            'hidden',
+            'enumSchema',
         );
     }
 
@@ -626,7 +635,7 @@ class ModelCommand extends BakeCommand
      * @param \Cake\Console\Arguments $args CLI Arguments
      * @return array<string>|string|null
      */
-    public function getDisplayField(Table $model, Arguments $args)
+    public function getDisplayField(Table $model, Arguments $args): array|string|null
     {
         if ($args->getOption('display-field')) {
             return (string)$args->getOption('display-field');
@@ -640,7 +649,7 @@ class ModelCommand extends BakeCommand
      *
      * @param \Cake\ORM\Table $model The model to introspect.
      * @param \Cake\Console\Arguments $args CLI Arguments
-     * @return string[] The columns in the primary key
+     * @return array<string> The columns in the primary key
      */
     public function getPrimaryKey(Table $model, Arguments $args): array
     {
@@ -729,11 +738,11 @@ class ModelCommand extends BakeCommand
      *
      * @param \Cake\ORM\Table $table The table instance to get fields for.
      * @param \Cake\Console\Arguments $args CLI Arguments
-     * @return string[]|false|null Either an array of fields, `false` in
+     * @return array<string>|false|null Either an array of fields, `false` in
      *   case the no-fields option is used, or `null` if none of the
      *   field options is used.
      */
-    public function getFields(Table $table, Arguments $args)
+    public function getFields(Table $table, Arguments $args): array|false|null
     {
         if ($args->getOption('no-fields')) {
             return false;
@@ -760,7 +769,7 @@ class ModelCommand extends BakeCommand
      *
      * @param \Cake\ORM\Table $model The model to introspect.
      * @param \Cake\Console\Arguments $args CLI Arguments
-     * @return string[] The columns to make accessible
+     * @return array<string> The columns to make accessible
      */
     public function getHiddenFields(Table $model, Arguments $args): array
     {
@@ -787,7 +796,7 @@ class ModelCommand extends BakeCommand
      * @param \Cake\Console\Arguments $args CLI Arguments
      * @return array|false The validation rules.
      */
-    public function getValidation(Table $model, array $associations, Arguments $args)
+    public function getValidation(Table $model, array $associations, Arguments $args): array|false
     {
         if ($args->getOption('no-validation')) {
             return [];
@@ -962,7 +971,7 @@ class ModelCommand extends BakeCommand
                 return $prefix . 'EmptyDateTime';
         }
 
-        if (preg_match('/file|image/', $fieldName)) {
+        if (preg_match('/(^|\s|_|-)(attachment|file|image)$/i', $fieldName)) {
             return $prefix . 'EmptyFile';
         }
 
@@ -983,22 +992,14 @@ class ModelCommand extends BakeCommand
             return [];
         }
         $schema = $model->getSchema();
-        $fields = $schema->columns();
-        if (empty($fields)) {
+        $schemaFields = $schema->columns();
+        if (empty($schemaFields)) {
             return [];
         }
 
-        $uniqueColumns = ['username', 'login'];
-        if (in_array($model->getAlias(), ['Users', 'Accounts'])) {
-            $uniqueColumns[] = 'email';
-        }
+        $uniqueRules = [];
+        $uniqueConstraintsColumns = [];
 
-        $rules = [];
-        foreach ($fields as $fieldName) {
-            if (in_array($fieldName, $uniqueColumns, true)) {
-                $rules[$fieldName] = ['name' => 'isUnique', 'fields' => [$fieldName], 'options' => []];
-            }
-        }
         foreach ($schema->constraints() as $name) {
             $constraint = $schema->getConstraint($name);
             if ($constraint['type'] !== TableSchema::CONSTRAINT_UNIQUE) {
@@ -1006,8 +1007,11 @@ class ModelCommand extends BakeCommand
             }
 
             $options = [];
-            $fields = $constraint['columns'];
-            foreach ($fields as $field) {
+            /** @var array<string> $constraintFields */
+            $constraintFields = $constraint['columns'];
+            $uniqueConstraintsColumns = [...$uniqueConstraintsColumns, ...$constraintFields];
+
+            foreach ($constraintFields as $field) {
                 if ($schema->isNullable($field)) {
                     $allowMultiple = !ConnectionManager::get($this->connection)->getDriver() instanceof Sqlserver;
                     $options['allowMultipleNulls'] = $allowMultiple;
@@ -1015,15 +1019,37 @@ class ModelCommand extends BakeCommand
                 }
             }
 
-            $rules[$constraint['columns'][0]] = ['name' => 'isUnique', 'fields' => $fields, 'options' => $options];
+            $uniqueRules[] = ['name' => 'isUnique', 'fields' => $constraintFields, 'options' => $options];
         }
+
+        $possiblyUniqueColumns = ['username', 'login'];
+        if (in_array($model->getAlias(), ['Users', 'Accounts'])) {
+            $possiblyUniqueColumns[] = 'email';
+        }
+
+        $possiblyUniqueRules = [];
+        foreach ($schemaFields as $field) {
+            if (
+                !in_array($field, $uniqueConstraintsColumns, true) &&
+                in_array($field, $possiblyUniqueColumns, true)
+            ) {
+                $possiblyUniqueRules[] = ['name' => 'isUnique', 'fields' => [$field], 'options' => []];
+            }
+        }
+
+        $rules = [...$possiblyUniqueRules, ...$uniqueRules];
 
         if (empty($associations['belongsTo'])) {
             return $rules;
         }
 
         foreach ($associations['belongsTo'] as $assoc) {
-            $rules[$assoc['foreignKey']] = ['name' => 'existsIn', 'extra' => $assoc['alias'], 'options' => []];
+            $rules[] = [
+                'name' => 'existsIn',
+                'fields' => (array)$assoc['foreignKey'],
+                'extra' => $assoc['alias'],
+                'options' => [],
+            ];
         }
 
         return $rules;
@@ -1100,7 +1126,7 @@ class ModelCommand extends BakeCommand
      * Bake an entity class.
      *
      * @param \Cake\ORM\Table $model Model name or object
-     * @param array $data An array to use to generate the Table
+     * @param array<string, mixed> $data An array to use to generate the Table
      * @param \Cake\Console\Arguments $args CLI Arguments
      * @param \Cake\Console\ConsoleIo $io CLI io
      * @return void
@@ -1152,7 +1178,7 @@ class ModelCommand extends BakeCommand
      * Bake a table class.
      *
      * @param \Cake\ORM\Table $model Model name or object
-     * @param array $data An array to use to generate the Table
+     * @param array<string, mixed> $data An array to use to generate the Table
      * @param \Cake\Console\Arguments $args CLI Arguments
      * @param \Cake\Console\ConsoleIo $io CLI Arguments
      * @return void
@@ -1194,6 +1220,7 @@ class ModelCommand extends BakeCommand
             'validation' => [],
             'rulesChecker' => [],
             'behaviors' => [],
+            'enums' => $this->enums($model, $entity, $namespace),
             'connection' => $this->connection,
             'fileBuilder' => new FileBuilder($io, "{$namespace}\Model\Table", $parsedFile),
         ];
@@ -1218,7 +1245,7 @@ class ModelCommand extends BakeCommand
     /**
      * Outputs the a list of possible models or controllers from database
      *
-     * @return string[]
+     * @return array<string>
      */
     public function listAll(): array
     {
@@ -1237,7 +1264,7 @@ class ModelCommand extends BakeCommand
     /**
      * Outputs the a list of unskipped models or controllers from database
      *
-     * @return string[]
+     * @return array<string>
      */
     public function listUnskipped(): array
     {
@@ -1380,5 +1407,143 @@ class ModelCommand extends BakeCommand
             ['type', 'name']
         );
         $test->execute($testArgs, $io);
+    }
+
+    /**
+     * @param \Cake\ORM\Table $table
+     * @param string $entity
+     * @param string $namespace
+     * @return array<string, class-string>
+     */
+    protected function enums(Table $table, string $entity, string $namespace): array
+    {
+        $fields = $this->possibleEnumFields($table->getSchema());
+        $enumClassNamespace = $namespace . '\Model\Enum\\';
+
+        $enums = [];
+        foreach ($fields as $field) {
+            $enumClassName = $enumClassNamespace . $entity . Inflector::camelize($field);
+            if (!class_exists($enumClassName)) {
+                continue;
+            }
+
+            $enums[$field] = $enumClassName;
+        }
+
+        return $enums;
+    }
+
+    /**
+     * @param \Cake\Database\Schema\TableSchemaInterface $schema
+     * @return array<string>
+     */
+    protected function possibleEnumFields(TableSchemaInterface $schema): array
+    {
+        $fields = [];
+
+        foreach ($schema->columns() as $column) {
+            $columnSchema = $schema->getColumn($column);
+            if (str_starts_with($columnSchema['type'], 'enum-')) {
+                $fields[] = $column;
+
+                continue;
+            }
+
+            if (!in_array($columnSchema['type'], ['string', 'integer', 'tinyinteger', 'smallinteger'], true)) {
+                continue;
+            }
+
+            $fields[] = $column;
+        }
+
+        return $fields;
+    }
+
+    /**
+     * @param \Cake\Database\Schema\TableSchemaInterface $schema
+     * @return array<string, mixed>
+     */
+    protected function getEnumDefinitions(TableSchemaInterface $schema): array
+    {
+        $enums = [];
+
+        foreach ($schema->columns() as $column) {
+            $columnSchema = $schema->getColumn($column);
+            if (
+                !in_array($columnSchema['type'], ['string', 'integer', 'tinyinteger', 'smallinteger'], true)
+                && !str_starts_with($columnSchema['type'], 'enum-')
+            ) {
+                continue;
+            }
+
+            if (empty($columnSchema['comment']) || !str_contains($columnSchema['comment'], '[enum]')) {
+                continue;
+            }
+
+            $enumsDefinitionString = EnumParser::parseDefinitionString($columnSchema['comment']);
+            $isInt = in_array($columnSchema['type'], ['integer', 'tinyinteger', 'smallinteger'], true);
+            if (str_starts_with($columnSchema['type'], 'enum-')) {
+                $dbType = TypeFactory::build($columnSchema['type']);
+                if ($dbType instanceof EnumType) {
+                    $class = $dbType->getEnumClassName();
+                    $reflectionEnum = new ReflectionEnum($class);
+                    $backingType = (string)$reflectionEnum->getBackingType();
+                    if ($backingType === 'int') {
+                        $isInt = true;
+                    }
+                }
+            }
+            $enumsDefinition = EnumParser::parseCases($enumsDefinitionString, $isInt);
+            if (!$enumsDefinition) {
+                continue;
+            }
+
+            $enums[$column] = [
+                'type' => $isInt ? 'int' : 'string',
+                'cases' => $enumsDefinition,
+            ];
+        }
+
+        return $enums;
+    }
+
+    /**
+     * @param \Cake\ORM\Table $model
+     * @param array<string, mixed> $data
+     * @param \Cake\Console\Arguments $args
+     * @param \Cake\Console\ConsoleIo $io
+     * @return void
+     */
+    protected function bakeEnums(Table $model, array $data, Arguments $args, ConsoleIo $io): void
+    {
+        $enums = $data['enumSchema'];
+        if (!$enums) {
+            return;
+        }
+
+        $entity = $this->_entityName($model->getAlias());
+
+        foreach ($enums as $column => $data) {
+            $enumCommand = new EnumCommand();
+
+            $name = $entity . Inflector::camelize($column);
+            if ($this->plugin) {
+                $name = $this->plugin . '.' . $name;
+            }
+
+            $enumCases = $data['cases'];
+
+            $cases = [];
+            foreach ($enumCases as $k => $v) {
+                $cases[] = $k . ':' . $v;
+            }
+
+            $args = new Arguments(
+                [$name, implode(',', $cases)],
+                ['int' => $data['type'] === 'int'] + $args->getOptions(),
+                ['name', 'cases']
+            );
+            $enumCommand->execute($args, $io);
+        }
     }
 }

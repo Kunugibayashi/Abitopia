@@ -23,10 +23,10 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
-            clearInterval(this.getNameListTimerObj);
-            this.getNameListTimerObj = setInterval(function() {
-                getNameList();
-            }, 20 * 1000);
+            // clearInterval(this.getNameListTimerObj);
+            // this.getNameListTimerObj = setInterval(function() {
+            //     getNameList();
+            // }, 20 * 1000);
         });
     }
     getNameList();

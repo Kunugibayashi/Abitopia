@@ -24,6 +24,7 @@
 
 use Doctrine\SqlFormatter\HtmlHighlighter;
 use Doctrine\SqlFormatter\SqlFormatter;
+use function Cake\Core\h;
 
 $noOutput = true;
 ?>
@@ -55,10 +56,9 @@ $noOutput = true;
                 <h4><?= h($logger->name()) ?></h4>
                 <h5>
                 <?= sprintf(
-                    'Total Time: %d ms &mdash; Total Queries: %d &mdash; Total Rows: %d',
+                    'Total Time: %d ms &mdash; Total Queries: %d',
                     $logger->totalTime(),
-                    count($queries),
-                    $logger->totalRows()
+                    count($queries)
                 );
                 ?>
                 </h5>

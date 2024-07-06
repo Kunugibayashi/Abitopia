@@ -22,23 +22,23 @@ use Symfony\Component\Config\Definition\NodeInterface;
  */
 abstract class NodeDefinition implements NodeParentInterface
 {
-    protected $name;
-    protected $normalization;
-    protected $validation;
-    protected $defaultValue;
-    protected $default = false;
-    protected $required = false;
-    protected $deprecation = [];
-    protected $merge;
-    protected $allowEmptyValue = true;
-    protected $nullEquivalent;
-    protected $trueEquivalent = true;
-    protected $falseEquivalent = false;
-    protected $pathSeparator = BaseNode::DEFAULT_PATH_SEPARATOR;
-    protected $parent;
-    protected $attributes = [];
+    protected ?string $name = null;
+    protected NormalizationBuilder $normalization;
+    protected ValidationBuilder $validation;
+    protected mixed $defaultValue;
+    protected bool $default = false;
+    protected bool $required = false;
+    protected array $deprecation = [];
+    protected MergeBuilder $merge;
+    protected bool $allowEmptyValue = true;
+    protected mixed $nullEquivalent = null;
+    protected mixed $trueEquivalent = true;
+    protected mixed $falseEquivalent = false;
+    protected string $pathSeparator = BaseNode::DEFAULT_PATH_SEPARATOR;
+    protected NodeParentInterface|NodeInterface|null $parent;
+    protected array $attributes = [];
 
-    public function __construct(?string $name, NodeParentInterface $parent = null)
+    public function __construct(?string $name, ?NodeParentInterface $parent = null)
     {
         $this->parent = $parent;
         $this->name = $name;
@@ -90,8 +90,10 @@ abstract class NodeDefinition implements NodeParentInterface
 
     /**
      * Returns the parent node.
+     *
+     * @return NodeParentInterface|NodeBuilder|self|ArrayNodeDefinition|VariableNodeDefinition
      */
-    public function end(): NodeParentInterface|NodeBuilder|NodeDefinition|ArrayNodeDefinition|VariableNodeDefinition|null
+    public function end(): NodeParentInterface
     {
         return $this->parent;
     }
@@ -105,11 +107,17 @@ abstract class NodeDefinition implements NodeParentInterface
             $this->parent = null;
         }
 
-        if (null !== $this->normalization) {
+        if (isset($this->normalization)) {
+            $allowedTypes = [];
+            foreach ($this->normalization->before as $expr) {
+                $allowedTypes[] = $expr->allowedTypes;
+            }
+            $allowedTypes = array_unique($allowedTypes);
             $this->normalization->before = ExprBuilder::buildExpressions($this->normalization->before);
+            $this->normalization->declaredTypes = $allowedTypes;
         }
 
-        if (null !== $this->validation) {
+        if (isset($this->validation)) {
             $this->validation->rules = ExprBuilder::buildExpressions($this->validation->rules);
         }
 
@@ -284,11 +292,7 @@ abstract class NodeDefinition implements NodeParentInterface
      */
     protected function validation(): ValidationBuilder
     {
-        if (null === $this->validation) {
-            $this->validation = new ValidationBuilder($this);
-        }
-
-        return $this->validation;
+        return $this->validation ??= new ValidationBuilder($this);
     }
 
     /**
@@ -296,11 +300,7 @@ abstract class NodeDefinition implements NodeParentInterface
      */
     protected function merge(): MergeBuilder
     {
-        if (null === $this->merge) {
-            $this->merge = new MergeBuilder($this);
-        }
-
-        return $this->merge;
+        return $this->merge ??= new MergeBuilder($this);
     }
 
     /**
@@ -308,11 +308,7 @@ abstract class NodeDefinition implements NodeParentInterface
      */
     protected function normalization(): NormalizationBuilder
     {
-        if (null === $this->normalization) {
-            $this->normalization = new NormalizationBuilder($this);
-        }
-
-        return $this->normalization;
+        return $this->normalization ??= new NormalizationBuilder($this);
     }
 
     /**

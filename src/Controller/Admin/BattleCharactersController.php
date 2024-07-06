@@ -37,9 +37,7 @@ class BattleCharactersController extends AppController
      */
     public function view($id = null)
     {
-        $battleCharacter = $this->BattleCharacters->get($id, [
-            'contain' => ['BattleTurns', 'ChatCharacters'],
-        ]);
+        $battleCharacter = $this->BattleCharacters->get($id, contain: ['BattleTurns', 'ChatCharacters']);
 
         $this->set(compact('battleCharacter'));
     }
@@ -75,9 +73,7 @@ class BattleCharactersController extends AppController
      */
     public function edit($id = null)
     {
-        $battleCharacter = $this->BattleCharacters->get($id, [
-            'contain' => [],
-        ]);
+        $battleCharacter = $this->BattleCharacters->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $battleCharacter = $this->BattleCharacters->patchEntity($battleCharacter, $this->request->getData());
             if ($this->BattleCharacters->save($battleCharacter)) {

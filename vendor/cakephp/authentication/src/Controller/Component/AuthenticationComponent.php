@@ -31,13 +31,20 @@ use Cake\Event\EventDispatcherTrait;
 use Cake\Routing\Router;
 use Cake\Utility\Hash;
 use Exception;
+use InvalidArgumentException;
 use RuntimeException;
+use UnexpectedValueException;
 
 /**
  * Controller Component for interacting with Authentication.
+ *
+ * @implements \Cake\Event\EventDispatcherInterface<\Cake\Controller\Controller>
  */
 class AuthenticationComponent extends Component implements EventDispatcherInterface
 {
+    /**
+     * @use \Cake\Event\EventDispatcherTrait<\Cake\Controller\Controller>
+     */
     use EventDispatcherTrait;
 
     /**
@@ -51,7 +58,7 @@ class AuthenticationComponent extends Component implements EventDispatcherInterf
      *
      * @var array<string, mixed>
      */
-    protected $_defaultConfig = [
+    protected array $_defaultConfig = [
         'logoutRedirect' => false,
         'requireIdentity' => true,
         'identityAttribute' => 'identity',
@@ -62,16 +69,16 @@ class AuthenticationComponent extends Component implements EventDispatcherInterf
     /**
      * List of actions that don't require authentication.
      *
-     * @var string[]
+     * @var array<string>
      */
-    protected $unauthenticatedActions = [];
+    protected array $unauthenticatedActions = [];
 
     /**
      * Authentication service instance.
      *
      * @var \Authentication\AuthenticationServiceInterface|null
      */
-    protected $_authentication;
+    protected ?AuthenticationServiceInterface $_authentication = null;
 
     /**
      * Initialize component.
@@ -189,7 +196,7 @@ class AuthenticationComponent extends Component implements EventDispatcherInterf
      * Actions not in this list will require an identity to be present. Any
      * valid identity will pass this constraint.
      *
-     * @param string[] $actions The action list.
+     * @param array<string> $actions The action list.
      * @return $this
      */
     public function allowUnauthenticated(array $actions)
@@ -202,7 +209,7 @@ class AuthenticationComponent extends Component implements EventDispatcherInterf
     /**
      * Add to the list of actions that don't require an authentication identity to be present.
      *
-     * @param string[] $actions The action or actions to append.
+     * @param array<string> $actions The action or actions to append.
      * @return $this
      */
     public function addUnauthenticatedActions(array $actions)
@@ -216,7 +223,7 @@ class AuthenticationComponent extends Component implements EventDispatcherInterf
     /**
      * Get the current list of actions that don't require authentication.
      *
-     * @return string[]
+     * @return array<string>
      */
     public function getUnauthenticatedActions(): array
     {
@@ -231,6 +238,16 @@ class AuthenticationComponent extends Component implements EventDispatcherInterf
     public function getResult(): ?ResultInterface
     {
         return $this->getAuthenticationService()->getResult();
+    }
+
+    /**
+     * Get the identifier (primary key) of the identity.
+     *
+     * @return array|string|int|null
+     */
+    public function getIdentifier(): array|string|int|null
+    {
+        return $this->getIdentity()?->getIdentifier();
     }
 
     /**
@@ -253,7 +270,7 @@ class AuthenticationComponent extends Component implements EventDispatcherInterf
      * @return mixed
      * @throws \RuntimeException If the identity has not been found.
      */
-    public function getIdentityData(string $path)
+    public function getIdentityData(string $path): mixed
     {
         $identity = $this->getIdentity();
 
@@ -383,7 +400,7 @@ class AuthenticationComponent extends Component implements EventDispatcherInterf
         );
 
         if (!$service->isImpersonating($controller->getRequest())) {
-            throw new \UnexpectedValueException('An error has occurred impersonating user.');
+            throw new UnexpectedValueException('An error has occurred impersonating user.');
         }
 
         $controller->setRequest($result['request']);
@@ -411,7 +428,7 @@ class AuthenticationComponent extends Component implements EventDispatcherInterf
         );
 
         if ($service->isImpersonating($controller->getRequest())) {
-            throw new \UnexpectedValueException('An error has occurred stopping impersonation.');
+            throw new UnexpectedValueException('An error has occurred stopping impersonation.');
         }
 
         $controller->setRequest($result['request']);
@@ -428,6 +445,10 @@ class AuthenticationComponent extends Component implements EventDispatcherInterf
      */
     public function isImpersonating(): bool
     {
+        if (!$this->getIdentity()) {
+            return false;
+        }
+
         $service = $this->getImpersonationAuthenticationService();
         $controller = $this->getController();
 
@@ -447,7 +468,7 @@ class AuthenticationComponent extends Component implements EventDispatcherInterf
         $service = $this->getAuthenticationService();
         if (!($service instanceof ImpersonationInterface)) {
             $className = get_class($service);
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 "The {$className} must implement ImpersonationInterface in order to use impersonation."
             );
         }

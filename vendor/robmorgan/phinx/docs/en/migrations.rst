@@ -778,7 +778,7 @@ Option  Description
 limit   set maximum length for strings, also hints column types in adapters (see note below)
 length  alias for ``limit``
 default set default value or action
-null    allow ``NULL`` values, defaults to false if `identity` option is set to true, else defaults to true
+null    allow ``NULL`` values, defaults to ``true`` (setting ``identity`` will override default to ``false``)
 after   specify the column that a new column should be placed after, or use ``\Phinx\Db\Adapter\MysqlAdapter::FIRST`` to place the column at the start of the table *(only applies to MySQL)*
 comment set a text comment on the column
 ======= ===========
@@ -806,7 +806,7 @@ For ``smallinteger``, ``integer`` and ``biginteger`` columns:
 ======== ===========
 Option   Description
 ======== ===========
-identity enable or disable automatic incrementing
+identity enable or disable automatic incrementing (if enabled, will set ``null: false`` if ``null`` option is not set)
 signed   enable or disable the ``unsigned`` option *(only applies to MySQL)*
 ======== ===========
 
@@ -902,11 +902,8 @@ Limit Option and MySQL
 
 When using the MySQL adapter, there are a couple things to consider when working with limits:
 
-- When using a ``string`` primary key or index on MySQL 5.7 or below and the default charset of ``utf8mb4_unicode_ci``, you
-must specify a limit less than or equal to 191, or use a different charset.
-- Additional hinting of database column type can be
-made for ``integer``, ``text``, ``blob``, ``tinyblob``, ``mediumblob``, ``longblob`` columns. Using ``limit`` with
-one the following options will modify the column type accordingly:
+- When using a ``string`` primary key or index on MySQL 5.7 or below, or the MyISAM storage engine, and the default charset of ``utf8mb4_unicode_ci``, you must specify a limit less than or equal to 191, or use a different charset.
+- Additional hinting of database column type can be made for ``integer``, ``text``, ``blob``, ``tinyblob``, ``mediumblob``, ``longblob`` columns. Using ``limit`` with one the following options will modify the column type accordingly:
 
 ============ ==============
 Limit        Column Type
@@ -1656,7 +1653,7 @@ Phinx provides access to a Query builder object, that you may use to execute com
 
 The Query builder is provided by the `cakephp/database <https://github.com/cakephp/database>`_ project, and should
 be easy to work with as it resembles very closely plain SQL. Accesing the query builder is done by calling the
-``getQueryBuilder()`` function:
+``getQueryBuilder(string $type)`` function. The ``string $type`` options are `'select'`, `'insert'`, `'update'` and `'delete'`:
 
 
 .. code-block:: php
@@ -1672,7 +1669,7 @@ be easy to work with as it resembles very closely plain SQL. Accesing the query 
              */
             public function up()
             {
-                $builder = $this->getQueryBuilder();
+                $builder = $this->getQueryBuilder('select');
                 $statement = $builder->select('*')->from('users')->execute();
                 var_dump($statement->fetchAll());
             }
@@ -1867,7 +1864,7 @@ Creating insert queries is also possible:
 .. code-block:: php
 
     <?php
-    $builder = $this->getQueryBuilder();
+    $builder = $this->getQueryBuilder('insert');
     $builder
         ->insert(['first_name', 'last_name'])
         ->into('users')
@@ -1882,13 +1879,13 @@ For increased performance, you can use another builder object as the values for 
 
     <?php
 
-    $namesQuery = $this->getQueryBuilder();
+    $namesQuery = $this->getQueryBuilder('select');
     $namesQuery
         ->select(['fname', 'lname'])
         ->from('users')
         ->where(['is_active' => true]);
 
-    $builder = $this->getQueryBuilder();
+    $builder = $this->getQueryBuilder('insert');
     $st = $builder
         ->insert(['first_name', 'last_name'])
         ->into('names')
@@ -1914,7 +1911,7 @@ Creating update queries is similar to both inserting and selecting:
 .. code-block:: php
 
     <?php
-    $builder = $this->getQueryBuilder();
+    $builder = $this->getQueryBuilder('update');
     $builder
         ->update('users')
         ->set('fname', 'Snow')
@@ -1930,7 +1927,7 @@ Finally, delete queries:
 .. code-block:: php
 
     <?php
-    $builder = $this->getQueryBuilder();
+    $builder = $this->getQueryBuilder('delete');
     $builder
         ->delete('users')
         ->where(['accepted_gdpr' => false])

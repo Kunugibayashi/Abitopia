@@ -22,8 +22,8 @@ use Authentication\AuthenticationServiceProviderInterface;
 use Authentication\Authenticator\AuthenticationRequiredException;
 use Authentication\Authenticator\StatelessInterface;
 use Authentication\Authenticator\UnauthenticatedException;
-use Cake\Core\InstanceConfigTrait;
-use InvalidArgumentException;
+use Cake\Core\ContainerApplicationInterface;
+use Cake\Core\ContainerInterface;
 use Laminas\Diactoros\Response;
 use Laminas\Diactoros\Response\RedirectResponse;
 use Laminas\Diactoros\Stream;
@@ -31,63 +31,39 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use RuntimeException;
 
 /**
  * Authentication Middleware
  */
 class AuthenticationMiddleware implements MiddlewareInterface
 {
-    use InstanceConfigTrait;
-
-    /**
-     * Configuration options
-     *
-     * The following keys are deprecated and should instead be set on the AuthenticationService
-     *
-     * - `identityAttribute` - The request attribute to store the identity in.
-     * - `unauthenticatedRedirect` - The URL to redirect unauthenticated errors to. See
-     *    AuthenticationComponent::allowUnauthenticated()
-     * - `queryParam` - The name of the query string parameter containing the previously blocked
-     *   URL in case of unauthenticated redirect, or null to disable appending the denied URL.
-     *
-     * @var array
-     */
-    protected $_defaultConfig = [];
-
     /**
      * Authentication service or application instance.
      *
      * @var \Authentication\AuthenticationServiceInterface|\Authentication\AuthenticationServiceProviderInterface
      */
-    protected $subject;
+    protected AuthenticationServiceInterface|AuthenticationServiceProviderInterface $subject;
+
+    /**
+     * The container instance from the application
+     *
+     * @var \Cake\Core\ContainerInterface|null
+     */
+    protected ?ContainerInterface $container;
 
     /**
      * Constructor
      *
      * @param \Authentication\AuthenticationServiceInterface|\Authentication\AuthenticationServiceProviderInterface $subject Authentication service or application instance.
-     * @param array $config Array of configuration settings.
+     * @param \Cake\Core\ContainerInterface|null $container The container instance from the application.
      * @throws \InvalidArgumentException When invalid subject has been passed.
      */
-    public function __construct($subject, $config = [])
-    {
-        $this->setConfig($config);
-
-        if (
-            !($subject instanceof AuthenticationServiceInterface) &&
-            !($subject instanceof AuthenticationServiceProviderInterface)
-        ) {
-            $expected = implode('` or `', [
-                AuthenticationServiceInterface::class,
-                AuthenticationServiceProviderInterface::class,
-            ]);
-            $type = is_object($subject) ? get_class($subject) : gettype($subject);
-            $message = sprintf('Subject must be an instance of `%s`, `%s` given.', $expected, $type);
-
-            throw new InvalidArgumentException($message);
-        }
-
+    public function __construct(
+        AuthenticationServiceInterface|AuthenticationServiceProviderInterface $subject,
+        ?ContainerInterface $container = null
+    ) {
         $this->subject = $subject;
+        $this->container = $container;
     }
 
     /**
@@ -101,13 +77,20 @@ class AuthenticationMiddleware implements MiddlewareInterface
     {
         $service = $this->getAuthenticationService($request);
 
+        if ($this->subject instanceof ContainerApplicationInterface) {
+            $container = $this->subject->getContainer();
+            $container->add(AuthenticationService::class, $service);
+        } elseif ($this->container) {
+            $this->container->add(AuthenticationService::class, $service);
+        }
+
         try {
             $result = $service->authenticate($request);
         } catch (AuthenticationRequiredException $e) {
             $body = new Stream('php://memory', 'rw');
             $body->write($e->getBody());
             $response = new Response();
-            $response = $response->withStatus((int)$e->getCode())
+            $response = $response->withStatus($e->getCode())
                 ->withBody($body);
             foreach ($e->getHeaders() as $header => $value) {
                 $response = $response->withHeader($header, $value);
@@ -125,6 +108,10 @@ class AuthenticationMiddleware implements MiddlewareInterface
             $authenticator = $service->getAuthenticationProvider();
 
             if ($authenticator !== null && !$authenticator instanceof StatelessInterface) {
+                /**
+                 * @psalm-suppress PossiblyNullArgument
+                 * @phpstan-ignore-next-line
+                 */
                 $return = $service->persistIdentity($request, $response, $result->getData());
                 $response = $return['response'];
             }
@@ -152,35 +139,6 @@ class AuthenticationMiddleware implements MiddlewareInterface
 
         if ($subject instanceof AuthenticationServiceProviderInterface) {
             $subject = $subject->getAuthenticationService($request);
-        }
-
-        if (!$subject instanceof AuthenticationServiceInterface) {
-            $type = is_object($subject) ? get_class($subject) : gettype($subject);
-            $message = sprintf(
-                'Service provided by a subject must be an instance of `%s`, `%s` given.',
-                AuthenticationServiceInterface::class,
-                $type
-            );
-
-            throw new RuntimeException($message);
-        }
-        $forwardKeys = ['identityAttribute', 'unauthenticatedRedirect', 'queryParam'];
-        foreach ($forwardKeys as $key) {
-            $value = $this->getConfig($key);
-            if ($value) {
-                deprecationWarning(
-                    "The `{$key}` configuration key on AuthenticationMiddleware is deprecated. " .
-                    "Instead set the `{$key}` on your AuthenticationService instance."
-                );
-                if ($subject instanceof AuthenticationService) {
-                    $subject->setConfig($key, $value);
-                } else {
-                    throw new RuntimeException(
-                        'Could not forward configuration to authentication service as ' .
-                        'it does not implement `getConfig()`'
-                    );
-                }
-            }
         }
 
         return $subject;

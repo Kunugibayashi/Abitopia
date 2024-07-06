@@ -12,7 +12,7 @@
  * @since         0.10.0
  * @license       https://opensource.org/licenses/mit-license.php MIT License
  * @var string $file
- * @var array<string> $paths
+ * @var list<string> $paths
  */
 use function Cake\Core\h;
 
@@ -34,7 +34,7 @@ $this->start('subheading');
 <ul>
 <?php
     foreach ($paths as $path):
-        if (strpos($path, CORE_PATH) !== false) {
+        if (str_contains($path, CORE_PATH)) {
             continue;
         }
         echo sprintf('<li>%s%s</li>', h($path), h($file));

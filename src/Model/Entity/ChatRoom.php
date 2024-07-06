@@ -14,8 +14,8 @@ use Cake\ORM\Entity;
  * @property int $published
  * @property int $readonly
  * @property int $displayno
- * @property \Cake\I18n\FrozenTime $modified
- * @property \Cake\I18n\FrozenTime $created
+ * @property \Cake\I18n\DateTime $modified
+ * @property \Cake\I18n\DateTime $created
  *
  * @property \App\Model\Entity\ChatEntry[] $chat_entries
  */
@@ -30,7 +30,7 @@ class ChatRoom extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'title' => true,
         'information' => true,
         'published' => true,

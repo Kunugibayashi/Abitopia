@@ -27,7 +27,20 @@ class AbstractMigration extends BaseAbstractMigration
      *
      * @var bool
      */
-    public $autoId = true;
+    public bool $autoId = true;
+
+    /**
+     * Hook method to decide if this migration should use transactions
+     *
+     * By default if your driver supports transactions, a transaction will be opened
+     * before the migration begins, and commit when the migration completes.
+     *
+     * @return bool
+     */
+    public function useTransactions(): bool
+    {
+        return $this->getAdapter()->hasTransactions();
+    }
 
     /**
      * Returns an instance of the Table class.
@@ -45,6 +58,7 @@ class AbstractMigration extends BaseAbstractMigration
         }
 
         $table = new Table($tableName, $options, $this->getAdapter());
+        $this->tables[] = $table;
 
         return $table;
     }

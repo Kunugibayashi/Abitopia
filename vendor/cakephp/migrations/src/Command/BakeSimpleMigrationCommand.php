@@ -21,28 +21,28 @@ use Cake\Console\Arguments;
 use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOptionParser;
 use Cake\Utility\Inflector;
-use Phinx\Util\Util;
+use Migrations\Util\Util;
 
 /**
  * Task class for generating migration snapshot files.
  */
 abstract class BakeSimpleMigrationCommand extends SimpleBakeCommand
 {
-    /**
-     * Console IO
-     *
-     * @var \Cake\Console\ConsoleIo
-     */
-    protected $io;
+    public const DEFAULT_MIGRATION_FOLDER = 'Migrations';
 
     /**
      * path to Migration directory
      *
      * @var string
      */
-    public $pathFragment = 'config';
+    public string $pathFragment = 'config';
 
-    public const DEFAULT_MIGRATION_FOLDER = 'Migrations';
+    /**
+     * Console IO
+     *
+     * @var \Cake\Console\ConsoleIo|null
+     */
+    protected ?ConsoleIo $io = null;
 
     /**
      * @inheritDoc
@@ -155,17 +155,18 @@ abstract class BakeSimpleMigrationCommand extends SimpleBakeCommand
      * @param string|null $name Name for the generated migration
      * @return string Name of the migration file
      */
-    protected function getMigrationName($name = null)
+    protected function getMigrationName(?string $name = null): string
     {
         if (empty($name)) {
+            /** @psalm-suppress PossiblyNullReference */
             $this->io->abort('Choose a migration name to bake in CamelCase format');
         }
 
-        /** @psalm-suppress PossiblyNullArgument */
         $name = $this->_getName($name);
         $name = Inflector::camelize($name);
 
         if (!preg_match('/^[A-Z]{1}[a-zA-Z0-9]+$/', $name)) {
+            /** @psalm-suppress PossiblyNullReference */
             $this->io->abort('The className is not correct. The className can only contain "A-Z" and "0-9".');
         }
 

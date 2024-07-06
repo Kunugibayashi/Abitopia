@@ -32,7 +32,7 @@ class TestEmailTransport extends DebugTransport
     /**
      * @var array
      */
-    private static $messages = [];
+    protected static array $messages = [];
 
     /**
      * Stores email for later assertions
@@ -69,7 +69,7 @@ class TestEmailTransport extends DebugTransport
      *
      * @return array<\Cake\Mailer\Message>
      */
-    public static function getMessages()
+    public static function getMessages(): array
     {
         return static::$messages;
     }

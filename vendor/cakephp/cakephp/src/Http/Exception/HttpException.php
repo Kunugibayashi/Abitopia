@@ -29,21 +29,21 @@ class HttpException extends CakeException
     /**
      * @inheritDoc
      */
-    protected $_defaultCode = 500;
+    protected int $_defaultCode = 500;
 
     /**
      * @var array<string, mixed>
      */
-    protected $headers = [];
+    protected array $headers = [];
 
     /**
      * Set a single HTTP response header.
      *
      * @param string $header Header name
-     * @param array<string>|string|null $value Header value
+     * @param list<string>|string|null $value Header value
      * @return void
      */
-    public function setHeader(string $header, $value = null): void
+    public function setHeader(string $header, array|string|null $value = null): void
     {
         $this->headers[$header] = $value;
     }

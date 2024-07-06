@@ -16,6 +16,7 @@ declare(strict_types=1);
  */
 namespace Authentication\Identifier;
 
+use ArrayAccess;
 use Authentication\Identifier\Resolver\ResolverAwareTrait;
 use Cake\Utility\Security;
 
@@ -26,12 +27,14 @@ class TokenIdentifier extends AbstractIdentifier
 {
     use ResolverAwareTrait;
 
+    public const CREDENTIAL_TOKEN = 'token';
+
     /**
      * Default configuration.
      *
      * @var array
      */
-    protected $_defaultConfig = [
+    protected array $_defaultConfig = [
         'tokenField' => 'token',
         'dataField' => self::CREDENTIAL_TOKEN,
         'resolver' => 'Authentication.Orm',
@@ -41,7 +44,7 @@ class TokenIdentifier extends AbstractIdentifier
     /**
      * @inheritDoc
      */
-    public function identify(array $credentials)
+    public function identify(array $credentials): ArrayAccess|array|null
     {
         $dataField = $this->getConfig('dataField');
         if (!isset($credentials[$dataField])) {

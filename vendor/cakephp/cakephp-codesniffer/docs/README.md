@@ -1,13 +1,14 @@
 # CakePHP ruleset
 
-The CakePHP standard contains 135 sniffs
+The CakePHP standard contains 144 sniffs
 
-CakePHP (19 sniffs)
+CakePHP (20 sniffs)
 -------------------
 - CakePHP.Classes.ReturnTypeHint
 - CakePHP.Commenting.DocBlockAlignment
 - CakePHP.Commenting.FunctionComment
 - CakePHP.Commenting.InheritDoc
+- CakePHP.Commenting.TypeHint
 - CakePHP.ControlStructures.ControlStructures
 - CakePHP.ControlStructures.ElseIfDeclaration
 - CakePHP.ControlStructures.WhileStructures
@@ -53,7 +54,7 @@ Generic (25 sniffs)
 - Generic.WhiteSpace.ScopeIndent
 
 PEAR (1 sniff)
----------------
+--------------
 - PEAR.Functions.ValidDefaultValue
 
 PSR1 (3 sniffs)
@@ -61,6 +62,18 @@ PSR1 (3 sniffs)
 - PSR1.Classes.ClassDeclaration
 - PSR1.Files.SideEffects
 - PSR1.Methods.CamelCapsMethodName
+
+PSR2 (9 sniffs)
+---------------
+- PSR2.Classes.ClassDeclaration
+- PSR2.Classes.PropertyDeclaration
+- PSR2.ControlStructures.ElseIfDeclaration
+- PSR2.ControlStructures.SwitchDeclaration
+- PSR2.Files.ClosingTag
+- PSR2.Files.EndFileNewline
+- PSR2.Methods.FunctionCallSignature
+- PSR2.Methods.FunctionClosingBrace
+- PSR2.Methods.MethodDeclaration
 
 PSR12 (17 sniffs)
 -----------------
@@ -82,24 +95,13 @@ PSR12 (17 sniffs)
 - PSR12.Properties.ConstantVisibility
 - PSR12.Traits.UseDeclaration
 
-PSR2 (9 sniffs)
----------------
-- PSR2.Classes.ClassDeclaration
-- PSR2.Classes.PropertyDeclaration
-- PSR2.ControlStructures.ElseIfDeclaration
-- PSR2.ControlStructures.SwitchDeclaration
-- PSR2.Files.ClosingTag
-- PSR2.Files.EndFileNewline
-- PSR2.Methods.FunctionCallSignature
-- PSR2.Methods.FunctionClosingBrace
-- PSR2.Methods.MethodDeclaration
-
-SlevomatCodingStandard (32 sniffs)
+SlevomatCodingStandard (40 sniffs)
 ----------------------------------
 - SlevomatCodingStandard.Arrays.TrailingArrayComma
 - SlevomatCodingStandard.Classes.ClassConstantVisibility
 - SlevomatCodingStandard.Classes.EmptyLinesAroundClassBraces
 - SlevomatCodingStandard.Classes.ModernClassNameReference
+- SlevomatCodingStandard.Classes.PropertyDeclaration
 - SlevomatCodingStandard.Commenting.DisallowOneLinePropertyDocComment
 - SlevomatCodingStandard.Commenting.DocCommentSpacing
 - SlevomatCodingStandard.Commenting.EmptyComment
@@ -111,9 +113,11 @@ SlevomatCodingStandard (32 sniffs)
 - SlevomatCodingStandard.ControlStructures.NewWithParentheses
 - SlevomatCodingStandard.ControlStructures.RequireNullCoalesceOperator
 - SlevomatCodingStandard.Exceptions.DeadCatch
+- SlevomatCodingStandard.Functions.ArrowFunctionDeclaration
 - SlevomatCodingStandard.Namespaces.AlphabeticallySortedUses
 - SlevomatCodingStandard.Namespaces.FullyQualifiedClassNameInAnnotation
 - SlevomatCodingStandard.Namespaces.NamespaceDeclaration
+- SlevomatCodingStandard.Namespaces.ReferenceUsedNamesOnly
 - SlevomatCodingStandard.Namespaces.UnusedUses
 - SlevomatCodingStandard.Namespaces.UseDoesNotStartWithBackslash
 - SlevomatCodingStandard.Namespaces.UseFromSameNamespace
@@ -125,9 +129,14 @@ SlevomatCodingStandard (32 sniffs)
 - SlevomatCodingStandard.TypeHints.DeclareStrictTypes
 - SlevomatCodingStandard.TypeHints.LongTypeHints
 - SlevomatCodingStandard.TypeHints.NullableTypeForNullDefaultValue
+- SlevomatCodingStandard.TypeHints.ParameterTypeHint
 - SlevomatCodingStandard.TypeHints.ParameterTypeHintSpacing
+- SlevomatCodingStandard.TypeHints.PropertyTypeHint
+- SlevomatCodingStandard.TypeHints.ReturnTypeHint
 - SlevomatCodingStandard.TypeHints.ReturnTypeHintSpacing
+- SlevomatCodingStandard.TypeHints.UnionTypeHintFormat
 - SlevomatCodingStandard.Variables.DuplicateAssignmentToVariable
+- SlevomatCodingStandard.Variables.UnusedVariable
 
 Squiz (28 sniffs)
 -----------------
@@ -161,5 +170,5 @@ Squiz (28 sniffs)
 - Squiz.WhiteSpace.SuperfluousWhitespace
 
 Zend (1 sniff)
----------------
+--------------
 - Zend.NamingConventions.ValidVariableName

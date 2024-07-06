@@ -21,13 +21,11 @@ use Symfony\Component\Console\Exception\LogicException;
  */
 class Question
 {
-    private string $question;
     private ?int $attempts = null;
     private bool $hidden = false;
     private bool $hiddenFallback = true;
     private ?\Closure $autocompleterCallback = null;
     private ?\Closure $validator = null;
-    private string|int|bool|null|float $default;
     private ?\Closure $normalizer = null;
     private bool $trimmable = true;
     private bool $multiline = false;
@@ -36,10 +34,10 @@ class Question
      * @param string                     $question The question to ask to the user
      * @param string|bool|int|float|null $default  The default answer to return if the user enters nothing
      */
-    public function __construct(string $question, string|bool|int|float $default = null)
-    {
-        $this->question = $question;
-        $this->default = $default;
+    public function __construct(
+        private string $question,
+        private string|bool|int|float|null $default = null,
+    ) {
     }
 
     /**
@@ -146,13 +144,12 @@ class Question
         if (\is_array($values)) {
             $values = $this->isAssoc($values) ? array_merge(array_keys($values), array_values($values)) : array_values($values);
 
-            $callback = static function () use ($values) {
-                return $values;
-            };
+            $callback = static fn () => $values;
         } elseif ($values instanceof \Traversable) {
-            $valueCache = null;
-            $callback = static function () use ($values, &$valueCache) {
-                return $valueCache ?? $valueCache = iterator_to_array($values, false);
+            $callback = static function () use ($values) {
+                static $valueCache;
+
+                return $valueCache ??= iterator_to_array($values, false);
             };
         } else {
             $callback = null;
@@ -176,13 +173,13 @@ class Question
      *
      * @return $this
      */
-    public function setAutocompleterCallback(callable $callback = null): static
+    public function setAutocompleterCallback(?callable $callback): static
     {
         if ($this->hidden && null !== $callback) {
             throw new LogicException('A hidden question cannot use the autocompleter.');
         }
 
-        $this->autocompleterCallback = null === $callback || $callback instanceof \Closure ? $callback : \Closure::fromCallable($callback);
+        $this->autocompleterCallback = null === $callback ? null : $callback(...);
 
         return $this;
     }
@@ -192,9 +189,9 @@ class Question
      *
      * @return $this
      */
-    public function setValidator(callable $validator = null): static
+    public function setValidator(?callable $validator): static
     {
-        $this->validator = null === $validator || $validator instanceof \Closure ? $validator : \Closure::fromCallable($validator);
+        $this->validator = null === $validator ? null : $validator(...);
 
         return $this;
     }
@@ -246,7 +243,7 @@ class Question
      */
     public function setNormalizer(callable $normalizer): static
     {
-        $this->normalizer = $normalizer instanceof \Closure ? $normalizer : \Closure::fromCallable($normalizer);
+        $this->normalizer = $normalizer(...);
 
         return $this;
     }
@@ -261,7 +258,7 @@ class Question
         return $this->normalizer;
     }
 
-    protected function isAssoc(array $array)
+    protected function isAssoc(array $array): bool
     {
         return (bool) \count(array_filter(array_keys($array), 'is_string'));
     }

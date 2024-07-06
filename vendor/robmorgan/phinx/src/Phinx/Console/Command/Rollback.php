@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /**
  * MIT License
@@ -20,6 +21,7 @@ class Rollback extends AbstractCommand
     /**
      * @var string|null
      */
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingNativeTypeHint
     protected static $defaultName = 'rollback';
 
     /**
@@ -77,32 +79,9 @@ EOT
         $force = (bool)$input->getOption('force');
         $fake = (bool)$input->getOption('fake');
 
-        $config = $this->getConfig();
-
-        if ($environment === null) {
-            $environment = $config->getDefaultEnvironment();
-            $output->writeln('<comment>warning</comment> no environment specified, defaulting to: ' . $environment, $this->verbosityLevel);
-        } else {
-            $output->writeln('<info>using environment</info> ' . $environment, $this->verbosityLevel);
-        }
-
-        if (!$this->getConfig()->hasEnvironment($environment)) {
-            $output->writeln(sprintf('<error>The environment "%s" does not exist</error>', $environment));
-
+        $success = $this->writeInformationOutput($environment, $output);
+        if (!$success) {
             return self::CODE_ERROR;
-        }
-
-        $envOptions = $config->getEnvironment($environment);
-        if (isset($envOptions['adapter'])) {
-            $output->writeln('<info>using adapter</info> ' . $envOptions['adapter'], $this->verbosityLevel);
-        }
-
-        if (isset($envOptions['wrapper'])) {
-            $output->writeln('<info>using wrapper</info> ' . $envOptions['wrapper'], $this->verbosityLevel);
-        }
-
-        if (isset($envOptions['name'])) {
-            $output->writeln('<info>using database</info> ' . $envOptions['name'], $this->verbosityLevel);
         }
 
         $versionOrder = $this->getConfig()->getVersionOrder();

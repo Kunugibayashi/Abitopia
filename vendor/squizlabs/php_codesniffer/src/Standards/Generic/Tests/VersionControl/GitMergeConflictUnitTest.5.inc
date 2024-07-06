@@ -3,11 +3,7 @@
 $string =
 <<<'EOD'
 Merge conflicts in nowdocs
-<<<<<<< HEAD
 can be problematic.
-=======
-should also be detected.
->>>>>>> ref/heads/other-branchname
 And now they are.
 EOD;
 

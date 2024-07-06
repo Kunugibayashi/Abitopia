@@ -5,7 +5,7 @@
 ?>
 <?php
 if (isset($chatRoomCss)) {
-    $this->Html->css($chatRoomCss, ['block' => true]);
+    $this->Html->css($chatRoomCss .'?date=' .CSS_UPDATE_DATE, ['block' => true]);
 }
 ?>
 <?= $this->fetch('css') ?>

@@ -21,7 +21,7 @@ use Cake\Event\EventInterface;
 /**
  * Error Handling Controller
  *
- * Controller used by ExceptionRenderer to render error responses.
+ * Controller used by WebExceptionRenderer to render error responses.
  */
 class ErrorController extends AppController
 {
@@ -32,7 +32,6 @@ class ErrorController extends AppController
      */
     public function initialize(): void
     {
-        $this->loadComponent('RequestHandler');
     }
 
     /**

@@ -19,6 +19,10 @@ namespace Authentication;
 use Cake\Core\InstanceConfigTrait;
 use Cake\Core\ObjectRegistry;
 
+/**
+ * @template TObject of \Authentication\Identifier\IdentifierInterface|\Authentication\Authenticator\AuthenticatorInterface
+ * @extends \Cake\Core\ObjectRegistry<TObject>
+ */
 abstract class AbstractCollection extends ObjectRegistry
 {
     use InstanceConfigTrait;
@@ -28,7 +32,7 @@ abstract class AbstractCollection extends ObjectRegistry
      *
      * @var array
      */
-    protected $_defaultConfig = [];
+    protected array $_defaultConfig = [];
 
     /**
      * Constructor

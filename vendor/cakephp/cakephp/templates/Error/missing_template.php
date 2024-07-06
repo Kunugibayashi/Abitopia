@@ -12,7 +12,7 @@
  * @since         0.10.0
  * @license       https://opensource.org/licenses/mit-license.php MIT License
  * @var string $file
- * @var array<string> $paths
+ * @var list<string> $paths
  */
 use Cake\Utility\Inflector;
 use function Cake\Core\h;
@@ -22,7 +22,7 @@ $this->layout = 'dev_error';
 $this->assign('title', 'Missing Template');
 $this->assign('templateName', 'missing_template.php');
 
-$isEmail = strpos($file, 'Email/') === 0;
+$isEmail = str_starts_with($file, 'Email/');
 
 $this->start('subheading');
 ?>
@@ -47,7 +47,7 @@ $this->start('subheading');
 <ul>
 <?php
     foreach ($paths as $path):
-        if (strpos($path, CORE_PATH) !== false) {
+        if (str_contains($path, CORE_PATH)) {
             continue;
         }
         echo sprintf('<li>%s%s</li>', h($path), h($file));

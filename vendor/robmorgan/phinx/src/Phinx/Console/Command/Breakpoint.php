@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /**
  * MIT License
@@ -19,6 +20,7 @@ class Breakpoint extends AbstractCommand
     /**
      * @var string|null
      */
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingNativeTypeHint
     protected static $defaultName = 'breakpoint';
 
     /**
@@ -69,16 +71,8 @@ EOT
         $set = $input->getOption('set');
         $unset = $input->getOption('unset');
 
-        if ($environment === null) {
-            $environment = $this->getConfig()->getDefaultEnvironment();
-            $output->writeln('<comment>warning</comment> no environment specified, defaulting to: ' . $environment, $this->verbosityLevel);
-        } else {
-            $output->writeln('<info>using environment</info> ' . $environment, $this->verbosityLevel);
-        }
-
-        if (!$this->getConfig()->hasEnvironment($environment)) {
-            $output->writeln(sprintf('<error>The environment "%s" does not exist</error>', $environment));
-
+        $success = $this->writeEnvironmentOutput($environment, $output);
+        if (!$success) {
             return self::CODE_ERROR;
         }
 

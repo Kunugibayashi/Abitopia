@@ -34,9 +34,7 @@ class SessionsController extends AppController
      */
     public function view($id = null)
     {
-        $session = $this->Sessions->get($id, [
-            'contain' => [],
-        ]);
+        $session = $this->Sessions->get($id, contain: []);
 
         $this->set(compact('session'));
     }
@@ -70,9 +68,7 @@ class SessionsController extends AppController
      */
     public function edit($id = null)
     {
-        $session = $this->Sessions->get($id, [
-            'contain' => [],
-        ]);
+        $session = $this->Sessions->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $session = $this->Sessions->patchEntity($session, $this->request->getData());
             if ($this->Sessions->save($session)) {

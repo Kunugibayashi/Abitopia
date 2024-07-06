@@ -27,17 +27,17 @@ abstract class ContentsBase extends Constraint
     /**
      * @var string
      */
-    protected $contents;
+    protected string $contents;
 
     /**
      * @var string
      */
-    protected $output;
+    protected string $output;
 
     /**
      * Constructor
      *
-     * @param array<string> $contents Contents
+     * @param list<string> $contents Contents
      * @param string $output Output type
      */
     public function __construct(array $contents, string $output)

@@ -17,6 +17,7 @@ declare(strict_types=1);
 namespace Authentication\Identifier\Ldap;
 
 use ErrorException;
+use LDAP\Connection;
 use RuntimeException;
 
 /**
@@ -32,9 +33,9 @@ class ExtensionAdapter implements AdapterInterface
     /**
      * LDAP Object
      *
-     * @var resource|null
+     * @var \LDAP\Connection|null
      */
-    protected $_connection;
+    protected ?Connection $_connection = null;
 
     /**
      * Constructor
@@ -71,12 +72,12 @@ class ExtensionAdapter implements AdapterInterface
     /**
      * Get the LDAP connection
      *
-     * @return resource
+     * @return \LDAP\Connection
      * @throws \RuntimeException If the connection is empty
      */
-    public function getConnection()
+    public function getConnection(): Connection
     {
-        if (empty($this->_connection)) {
+        if ($this->_connection === null) {
             throw new RuntimeException('You are not connected to a LDAP server.');
         }
 
@@ -94,7 +95,7 @@ class ExtensionAdapter implements AdapterInterface
     public function connect(string $host, int $port, array $options): void
     {
         $this->_setErrorHandler();
-        $resource = ldap_connect($host, $port);
+        $resource = ldap_connect("{$host}:{$port}");
         if ($resource === false) {
             throw new RuntimeException('Unable to connect to LDAP server.');
         }
@@ -120,7 +121,7 @@ class ExtensionAdapter implements AdapterInterface
      * @param mixed $value The new value for the specified option
      * @return void
      */
-    public function setOption(int $option, $value): void
+    public function setOption(int $option, mixed $value): void
     {
         $this->_setErrorHandler();
         ldap_set_option($this->getConnection(), $option, $value);
@@ -133,7 +134,7 @@ class ExtensionAdapter implements AdapterInterface
      * @param int $option Option to get
      * @return mixed This will be set to the option value.
      */
-    public function getOption(int $option)
+    public function getOption(int $option): mixed
     {
         $this->_setErrorHandler();
         ldap_get_option($this->getConnection(), $option, $returnValue);
@@ -159,7 +160,12 @@ class ExtensionAdapter implements AdapterInterface
      */
     public function unbind(): void
     {
+        if ($this->_connection === null) {
+            return;
+        }
+
         $this->_setErrorHandler();
+        /** @phpstan-ignore-next-line */
         ldap_unbind($this->_connection);
         $this->_unsetErrorHandler();
 
@@ -175,7 +181,7 @@ class ExtensionAdapter implements AdapterInterface
     protected function _setErrorHandler(): void
     {
         set_error_handler(
-            function ($errorNumber, $errorText) {
+            function ($errorNumber, $errorText): void {
                 throw new ErrorException($errorText);
             },
             E_ALL

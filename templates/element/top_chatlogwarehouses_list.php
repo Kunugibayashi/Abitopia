@@ -23,10 +23,10 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
-            clearInterval(this.getChatLogWarehousesObj);
-            this.getChatLogWarehousesObj = setInterval(function() {
-                getChatLogWarehouses();
-            }, 20 * 1000);
+            // clearInterval(this.getChatLogWarehousesObj);
+            // this.getChatLogWarehousesObj = setInterval(function() {
+            //     getChatLogWarehouses();
+            // }, 20 * 1000);
         });
     }
     getChatLogWarehouses();

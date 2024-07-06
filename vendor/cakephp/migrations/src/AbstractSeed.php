@@ -17,11 +17,14 @@ use Migrations\Command\Phinx\Seed;
 use Phinx\Seed\AbstractSeed as BaseAbstractSeed;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputInterface;
+use function Cake\Core\pluginSplit;
 
 /**
  * Class AbstractSeed
  * Extends Phinx base AbstractSeed class in order to extend the features the seed class
  * offers.
+ *
+ * @deprecated 4.5.0 You should use Migrations\BaseSeed for new seeds.
  */
 abstract class AbstractSeed extends BaseAbstractSeed
 {
@@ -30,7 +33,7 @@ abstract class AbstractSeed extends BaseAbstractSeed
      *
      * @var \Symfony\Component\Console\Input\InputInterface
      */
-    protected $input;
+    protected InputInterface $input;
 
     /**
      * Gives the ability to a seeder to call another seeder.
@@ -40,7 +43,7 @@ abstract class AbstractSeed extends BaseAbstractSeed
      * @param string $seeder Name of the seeder to call from the current seed
      * @return void
      */
-    public function call($seeder)
+    public function call(string $seeder): void
     {
         $this->getOutput()->writeln('');
         $this->getOutput()->writeln(
@@ -69,7 +72,7 @@ abstract class AbstractSeed extends BaseAbstractSeed
      * @param string $seeder Name of the seeder to call from the current seed
      * @return void
      */
-    protected function runCall($seeder)
+    protected function runCall(string $seeder): void
     {
         [$pluginName, $seeder] = pluginSplit($seeder);
 

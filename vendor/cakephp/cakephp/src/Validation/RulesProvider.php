@@ -31,14 +31,14 @@ class RulesProvider
      *
      * @var object|string
      */
-    protected $_class;
+    protected object|string $_class;
 
     /**
      * The proxied class' reflection
      *
-     * @var \ReflectionClass
+     * @var \ReflectionClass<object>
      */
-    protected $_reflection;
+    protected ReflectionClass $_reflection;
 
     /**
      * Constructor, sets the default class to use for calling methods
@@ -47,7 +47,7 @@ class RulesProvider
      * @throws \ReflectionException
      * @psalm-param object|class-string $class
      */
-    public function __construct($class = Validation::class)
+    public function __construct(object|string $class = Validation::class)
     {
         $this->_class = $class;
         $this->_reflection = new ReflectionClass($class);
@@ -65,11 +65,13 @@ class RulesProvider
      * @param array $arguments the list of arguments to pass to the method
      * @return bool Whether the validation rule passed
      */
-    public function __call(string $method, array $arguments)
+    public function __call(string $method, array $arguments): bool
     {
         $method = $this->_reflection->getMethod($method);
         $argumentList = $method->getParameters();
-        if (array_pop($argumentList)->getName() !== 'context') {
+        /** @var \ReflectionParameter $argument */
+        $argument = array_pop($argumentList);
+        if ($argument->getName() !== 'context') {
             $arguments = array_slice($arguments, 0, -1);
         }
         $object = is_string($this->_class) ? null : $this->_class;

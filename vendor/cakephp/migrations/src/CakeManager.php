@@ -14,8 +14,12 @@ declare(strict_types=1);
 namespace Migrations;
 
 use DateTime;
+use Exception;
+use InvalidArgumentException;
 use Phinx\Migration\Manager;
+use RuntimeException;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Overrides Phinx Manager class in order to provide an interface
@@ -26,21 +30,21 @@ class CakeManager extends Manager
     /**
      * @var int
      */
-    public $maxNameLength = 0;
+    public int $maxNameLength = 0;
 
     /**
      * Instance of InputInterface the Manager is dealing with for the current shell call
      *
      * @var \Symfony\Component\Console\Input\InputInterface
      */
-    protected $input;
+    protected InputInterface $input;
 
     /**
      * Reset the migrations stored in the object
      *
      * @return void
      */
-    public function resetMigrations()
+    public function resetMigrations(): void
     {
         $this->migrations = null;
     }
@@ -50,7 +54,7 @@ class CakeManager extends Manager
      *
      * @return void
      */
-    public function resetSeeds()
+    public function resetSeeds(): void
     {
         $this->seeds = null;
     }
@@ -152,7 +156,7 @@ class CakeManager extends Manager
     /**
      * @inheritDoc
      */
-    public function rollbackToDateTime(string $environment, \DateTime $dateTime, bool $force = false): void
+    public function rollbackToDateTime(string $environment, DateTime $dateTime, bool $force = false): void
     {
         $env = $this->getEnvironment($environment);
         $versions = $env->getVersions();
@@ -215,7 +219,7 @@ class CakeManager extends Manager
         $migrationFile = glob($path . DS . $version . '*');
 
         if (empty($migrationFile)) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 sprintf('A migration file matching version number `%s` could not be found', $version)
             );
         }
@@ -242,7 +246,7 @@ class CakeManager extends Manager
      * @throws \InvalidArgumentException If the `--exclude` or `--only` options are used without `--target`
      * or version not found
      */
-    public function getVersionsToMark($input): array
+    public function getVersionsToMark(InputInterface $input): array
     {
         $migrations = $this->getMigrations('default');
         $versions = array_keys($migrations);
@@ -258,7 +262,7 @@ class CakeManager extends Manager
 
         if ($input->getOption('only') || !empty($versionArg)) {
             if (!in_array($version, $versions)) {
-                throw new \InvalidArgumentException("Migration `$version` was not found !");
+                throw new InvalidArgumentException("Migration `$version` was not found !");
             }
 
             return [$version];
@@ -268,7 +272,7 @@ class CakeManager extends Manager
         $index = array_search($version, $versions);
 
         if ($index === false) {
-            throw new \InvalidArgumentException("Migration `$version` was not found !");
+            throw new InvalidArgumentException("Migration `$version` was not found !");
         }
 
         return array_slice($versions, 0, $index + $lengthIncrease);
@@ -285,7 +289,7 @@ class CakeManager extends Manager
      * the command output
      * @return void
      */
-    public function markVersionsAsMigrated($path, array $versions, $output)
+    public function markVersionsAsMigrated(string $path, array $versions, OutputInterface $output): void
     {
         $adapter = $this->getEnvironment('default')->getAdapter();
 
@@ -307,7 +311,7 @@ class CakeManager extends Manager
                 $output->writeln(
                     sprintf('<info>Migration `%s` successfully marked migrated !</info>', $version)
                 );
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $adapter->rollbackTransaction();
                 $output->writeln(
                     sprintf(
@@ -330,7 +334,7 @@ class CakeManager extends Manager
      * @param string $path Path to the migration file of which we want the class name
      * @return string Migration class name
      */
-    protected function getMigrationClassName($path)
+    protected function getMigrationClassName(string $path): string
     {
         $class = (string)preg_replace('/^[0-9]+_/', '', basename($path));
         $class = str_replace('_', ' ', $class);
@@ -375,7 +379,7 @@ class CakeManager extends Manager
             return [];
         }
 
-        foreach ($this->seeds as $class => $instance) {
+        foreach ($this->seeds as $instance) {
             if ($instance instanceof AbstractSeed) {
                 $instance->setInput($this->input);
             }

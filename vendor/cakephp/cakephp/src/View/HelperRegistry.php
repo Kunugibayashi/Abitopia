@@ -27,9 +27,13 @@ use Cake\View\Exception\MissingHelperException;
  * and constructing helper class objects.
  *
  * @extends \Cake\Core\ObjectRegistry<\Cake\View\Helper>
+ * @implements \Cake\Event\EventDispatcherInterface<\Cake\View\View>
  */
 class HelperRegistry extends ObjectRegistry implements EventDispatcherInterface
 {
+    /**
+     * @use \Cake\Event\EventDispatcherTrait<\Cake\View\View>
+     */
     use EventDispatcherTrait;
 
     /**
@@ -37,7 +41,7 @@ class HelperRegistry extends ObjectRegistry implements EventDispatcherInterface
      *
      * @var \Cake\View\View
      */
-    protected $_View;
+    protected View $_View;
 
     /**
      * Constructor
@@ -70,8 +74,8 @@ class HelperRegistry extends ObjectRegistry implements EventDispatcherInterface
             $this->load($helper);
         } catch (MissingHelperException $exception) {
             $plugin = $this->_View->getPlugin();
-            if (!empty($plugin)) {
-                $this->load($plugin . '.' . $helper);
+            if ($plugin) {
+                $this->load($helper, ['className' => $plugin . '.' . $helper]);
 
                 return true;
             }
@@ -90,12 +94,9 @@ class HelperRegistry extends ObjectRegistry implements EventDispatcherInterface
      * @param string $name Name of property to read
      * @return \Cake\View\Helper|null
      */
-    public function __get(string $name)
+    public function __get(string $name): ?Helper
     {
-        if (isset($this->_loaded[$name])) {
-            return $this->_loaded[$name];
-        }
-        /** @psalm-suppress NoValue */
+        // This calls __isset() and loading the named helper if it isn't already loaded.
         if (isset($this->{$name})) {
             return $this->_loaded[$name];
         }
@@ -109,11 +110,11 @@ class HelperRegistry extends ObjectRegistry implements EventDispatcherInterface
      * Part of the template method for Cake\Core\ObjectRegistry::load()
      *
      * @param string $class Partial classname to resolve.
-     * @return string|null Either the correct class name or null.
-     * @psalm-return class-string|null
+     * @return class-string<\Cake\View\Helper>|null Either the correct class name or null.
      */
     protected function _resolveClassName(string $class): ?string
     {
+        /** @var class-string<\Cake\View\Helper>|null */
         return App::className($class, 'View/Helper', 'Helper');
     }
 
@@ -142,19 +143,20 @@ class HelperRegistry extends ObjectRegistry implements EventDispatcherInterface
      * Part of the template method for Cake\Core\ObjectRegistry::load()
      * Enabled helpers will be registered with the event manager.
      *
-     * @param string $class The class to create.
+     * @param \Cake\View\Helper|class-string<\Cake\View\Helper> $class The class to create.
      * @param string $alias The alias of the loaded helper.
      * @param array<string, mixed> $config An array of settings to use for the helper.
      * @return \Cake\View\Helper The constructed helper class.
-     * @psalm-suppress MoreSpecificImplementedParamType
      */
-    protected function _create($class, string $alias, array $config): Helper
+    protected function _create(object|string $class, string $alias, array $config): Helper
     {
-        /** @var \Cake\View\Helper $instance */
+        if (is_object($class)) {
+            return $class;
+        }
+
         $instance = new $class($this->_View, $config);
 
-        $enable = $config['enabled'] ?? true;
-        if ($enable) {
+        if ($config['enabled'] ?? true) {
             $this->getEventManager()->on($instance);
         }
 

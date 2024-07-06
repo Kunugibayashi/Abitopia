@@ -26,9 +26,9 @@ class FixturizedTestCase extends TestCase
     /**
      * Fixtures to use in this test
      *
-     * @var array<string>
+     * @var list<string>
      */
-    protected $fixtures = ['core.Categories', 'core.Articles'];
+    protected array $fixtures = ['core.Categories', 'core.Articles'];
 
     /**
      * test that the shared fixture is correctly set
@@ -72,6 +72,7 @@ class FixturizedTestCase extends TestCase
     public function testSkipIfFalse(): void
     {
         $this->skipIf(false);
+        $this->assertTrue(true, 'Avoid phpunit warnings');
     }
 
     /**

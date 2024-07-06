@@ -60,7 +60,7 @@ class FormProtectionComponent extends Component
      *
      * @var array<string, mixed>
      */
-    protected $_defaultConfig = [
+    protected array $_defaultConfig = [
         'validate' => true,
         'unlockedFields' => [],
         'unlockedActions' => [],
@@ -86,7 +86,7 @@ class FormProtectionComponent extends Component
      *
      * Token check happens here.
      *
-     * @param \Cake\Event\EventInterface $event An Event instance
+     * @param \Cake\Event\EventInterface<\Cake\Controller\Controller> $event An Event instance
      * @return \Cake\Http\Response|null
      */
     public function startup(EventInterface $event): ?Response
@@ -168,7 +168,7 @@ class FormProtectionComponent extends Component
     /**
      * Execute callback.
      *
-     * @param \Closure $callback A valid callable
+     * @param \Closure $callback Callback
      * @param \Cake\Http\Exception\BadRequestException $exception Exception instance.
      * @return \Cake\Http\Response|null
      */

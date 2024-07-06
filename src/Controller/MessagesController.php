@@ -22,10 +22,10 @@ class MessagesController extends AppController
     {
         parent::initialize();
 
-        $this->loadModel('Users');
-        $this->loadModel('ChatCharacters');
-        $this->loadModel('ReceivedMessages');
-        $this->loadModel('SendMessages');
+        $this->Users = $this->fetchTable('Users');
+        $this->ChatCharacters = $this->fetchTable('ChatCharacters');
+        $this->ReceivedMessages = $this->fetchTable('ReceivedMessages');
+        $this->SendMessages = $this->fetchTable('SendMessages');
     }
 
     public function isCharacters()
@@ -211,6 +211,7 @@ class MessagesController extends AppController
 
     public function topListTable()
     {
+        $this->viewBuilder()->disableAutoLayout();
         $userId = $this->Authentication->getIdentityData('id');
 
         // 登録キャラがいない場合は表示しない

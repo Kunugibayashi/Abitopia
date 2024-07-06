@@ -17,11 +17,13 @@ declare(strict_types=1);
 namespace Cake\Database\Driver;
 
 use Cake\Database\Driver;
+use Cake\Database\DriverFeatureEnum;
 use Cake\Database\Expression\FunctionExpression;
 use Cake\Database\Expression\IdentifierExpression;
 use Cake\Database\Expression\StringExpression;
 use Cake\Database\PostgresCompiler;
-use Cake\Database\Query;
+use Cake\Database\Query\InsertQuery;
+use Cake\Database\Query\SelectQuery;
 use Cake\Database\QueryCompiler;
 use Cake\Database\Schema\PostgresSchemaDialect;
 use Cake\Database\Schema\SchemaDialect;
@@ -32,8 +34,6 @@ use PDO;
  */
 class Postgres extends Driver
 {
-    use SqlDialectTrait;
-
     /**
      * @inheritDoc
      */
@@ -44,7 +44,7 @@ class Postgres extends Driver
      *
      * @var array<string, mixed>
      */
-    protected $_baseConfig = [
+    protected array $_baseConfig = [
         'persistent' => true,
         'host' => 'localhost',
         'username' => 'root',
@@ -59,35 +59,26 @@ class Postgres extends Driver
     ];
 
     /**
-     * The schema dialect class for this driver
-     *
-     * @var \Cake\Database\Schema\PostgresSchemaDialect|null
-     */
-    protected $_schemaDialect;
-
-    /**
      * String used to start a database identifier quoting to make it safe
      *
      * @var string
      */
-    protected $_startQuote = '"';
+    protected string $_startQuote = '"';
 
     /**
      * String used to end a database identifier quoting to make it safe
      *
      * @var string
      */
-    protected $_endQuote = '"';
+    protected string $_endQuote = '"';
 
     /**
-     * Establishes a connection to the database server
-     *
-     * @return bool true on success
+     * @inheritDoc
      */
-    public function connect(): bool
+    public function connect(): void
     {
-        if ($this->_connection) {
-            return true;
+        if ($this->pdo !== null) {
+            return;
         }
         $config = $this->_config;
         $config['flags'] += [
@@ -101,8 +92,7 @@ class Postgres extends Driver
             $dsn = "pgsql:dbname={$config['database']}";
         }
 
-        $this->_connect($dsn, $config);
-        $this->_connection = $connection = $this->getConnection();
+        $this->pdo = $this->createPdo($dsn, $config);
         if (!empty($config['encoding'])) {
             $this->setEncoding($config['encoding']);
         }
@@ -112,14 +102,12 @@ class Postgres extends Driver
         }
 
         if (!empty($config['timezone'])) {
-            $config['init'][] = sprintf('SET timezone = %s', $connection->quote($config['timezone']));
+            $config['init'][] = sprintf('SET timezone = %s', $this->getPdo()->quote($config['timezone']));
         }
 
         foreach ($config['init'] as $command) {
-            $connection->exec($command);
+            $this->getPdo()->exec($command);
         }
-
-        return true;
     }
 
     /**
@@ -137,11 +125,7 @@ class Postgres extends Driver
      */
     public function schemaDialect(): SchemaDialect
     {
-        if ($this->_schemaDialect === null) {
-            $this->_schemaDialect = new PostgresSchemaDialect($this);
-        }
-
-        return $this->_schemaDialect;
+        return $this->_schemaDialect ?? ($this->_schemaDialect = new PostgresSchemaDialect($this));
     }
 
     /**
@@ -152,8 +136,8 @@ class Postgres extends Driver
      */
     public function setEncoding(string $encoding): void
     {
-        $this->connect();
-        $this->_connection->exec('SET NAMES ' . $this->_connection->quote($encoding));
+        $pdo = $this->getPdo();
+        $pdo->exec('SET NAMES ' . $pdo->quote($encoding));
     }
 
     /**
@@ -165,12 +149,14 @@ class Postgres extends Driver
      */
     public function setSchema(string $schema): void
     {
-        $this->connect();
-        $this->_connection->exec('SET search_path TO ' . $this->_connection->quote($schema));
+        $pdo = $this->getPdo();
+        $pdo->exec('SET search_path TO ' . $pdo->quote($schema));
     }
 
     /**
-     * @inheritDoc
+     * Get the SQL for disabling foreign keys.
+     *
+     * @return string
      */
     public function disableForeignKeySQL(): string
     {
@@ -188,34 +174,25 @@ class Postgres extends Driver
     /**
      * @inheritDoc
      */
-    public function supports(string $feature): bool
+    public function supports(DriverFeatureEnum $feature): bool
     {
-        switch ($feature) {
-            case static::FEATURE_CTE:
-            case static::FEATURE_JSON:
-            case static::FEATURE_TRUNCATE_WITH_CONSTRAINTS:
-            case static::FEATURE_WINDOW:
-                return true;
-
-            case static::FEATURE_DISABLE_CONSTRAINT_WITHOUT_TRANSACTION:
-                return false;
-        }
-
-        return parent::supports($feature);
+        return match ($feature) {
+            DriverFeatureEnum::CTE,
+            DriverFeatureEnum::JSON,
+            DriverFeatureEnum::SAVEPOINT,
+            DriverFeatureEnum::TRUNCATE_WITH_CONSTRAINTS,
+            DriverFeatureEnum::WINDOW => true,
+            DriverFeatureEnum::INTERSECT => true,
+            DriverFeatureEnum::INTERSECT_ALL => true,
+            DriverFeatureEnum::SET_OPERATIONS_ORDER_BY => true,
+            DriverFeatureEnum::DISABLE_CONSTRAINT_WITHOUT_TRANSACTION => false,
+        };
     }
 
     /**
      * @inheritDoc
      */
-    public function supportsDynamicConstraints(): bool
-    {
-        return true;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    protected function _transformDistinct(Query $query): Query
+    protected function _transformDistinct(SelectQuery $query): SelectQuery
     {
         return $query;
     }
@@ -223,7 +200,7 @@ class Postgres extends Driver
     /**
      * @inheritDoc
      */
-    protected function _insertQueryTranslator(Query $query): Query
+    protected function _insertQueryTranslator(InsertQuery $query): InsertQuery
     {
         if (!$query->clause('epilog')) {
             $query->epilog('RETURNING *');
@@ -308,7 +285,7 @@ class Postgres extends Driver
                     ->setConjunction(' + INTERVAL')
                     ->iterateParts(function ($p, $key) {
                         if ($key === 1) {
-                            $p = sprintf("'%s'", $p);
+                            return sprintf("'%s'", $p);
                         }
 
                         return $p;
@@ -320,6 +297,18 @@ class Postgres extends Driver
                     ->setConjunction(' ')
                     ->add(['DOW FROM' => 'literal'], [], true)
                     ->add([') + (1' => 'literal']); // Postgres starts on index 0 but Sunday should be 1
+                break;
+            case 'JSON_VALUE':
+                $expression->setName('JSONB_PATH_QUERY')
+                    ->iterateParts(function ($p, $key) {
+                        if ($key === 0) {
+                            $p = sprintf('%s::jsonb', $p);
+                        } elseif ($key === 1) {
+                            $p = sprintf("'%s'::jsonpath", $this->quoteIdentifier($p['value']));
+                        }
+
+                        return $p;
+                    });
                 break;
         }
     }

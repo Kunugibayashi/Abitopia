@@ -32,7 +32,7 @@ class BakeMigrationCommand extends BakeSimpleMigrationCommand
     /**
      * @var string
      */
-    protected $_name;
+    protected string $_name;
 
     /**
      * @inheritDoc
@@ -47,7 +47,7 @@ class BakeMigrationCommand extends BakeSimpleMigrationCommand
      */
     public function bake(string $name, Arguments $args, ConsoleIo $io): void
     {
-        EventManager::instance()->on('Bake.initialize', function (Event $event) {
+        EventManager::instance()->on('Bake.initialize', function (Event $event): void {
             $event->getSubject()->loadHelper('Migrations.Migration');
         });
         $this->_name = $name;
@@ -76,7 +76,20 @@ class BakeMigrationCommand extends BakeSimpleMigrationCommand
             $pluginPath = $this->plugin . '.';
         }
 
+        /** @var array<int, string> $args */
+        $args = $arguments->getArguments();
+        unset($args[0]);
+        $columnParser = new ColumnParser();
+        $fields = $columnParser->parseFields($args);
+        $indexes = $columnParser->parseIndexes($args);
+        $primaryKey = $columnParser->parsePrimaryKey($args);
+
         $action = $this->detectAction($className);
+
+        if (!$action && count($fields)) {
+            /** @psalm-suppress PossiblyNullReference */
+            $this->io->abort('When applying fields the migration name should start with one of the following prefixes: `Create`, `Drop`, `Add`, `Remove`, `Alter`. See: https://book.cakephp.org/migrations/4/en/index.html#migrations-file-name');
+        }
 
         if (empty($action)) {
             return [
@@ -86,17 +99,12 @@ class BakeMigrationCommand extends BakeSimpleMigrationCommand
                 'tables' => [],
                 'action' => null,
                 'name' => $className,
+                'backend' => Configure::read('Migrations.backend', 'builtin'),
             ];
         }
 
-        $arguments = $arguments->getArguments();
-        unset($arguments[0]);
-        $columnParser = new ColumnParser();
-        $fields = $columnParser->parseFields($arguments);
-        $indexes = $columnParser->parseIndexes($arguments);
-        $primaryKey = $columnParser->parsePrimaryKey($arguments);
-
         if (in_array($action[0], ['alter_table', 'add_field'], true) && !empty($primaryKey)) {
+            /** @psalm-suppress PossiblyNullReference */
             $this->io->abort('Adding a primary key to an already existing table is not supported.');
         }
 
@@ -114,6 +122,7 @@ class BakeMigrationCommand extends BakeSimpleMigrationCommand
                 'primaryKey' => $primaryKey,
             ],
             'name' => $className,
+            'backend' => Configure::read('Migrations.backend', 'builtin'),
         ];
     }
 
@@ -202,9 +211,9 @@ TEXT;
      * Detects the action and table from the name of a migration
      *
      * @param string $name Name of migration
-     * @return array
+     * @return array<string>
      */
-    public function detectAction($name)
+    public function detectAction(string $name): array
     {
         if (preg_match('/^(Create|Drop)(.*)/', $name, $matches)) {
             $action = strtolower($matches[1]) . '_table';

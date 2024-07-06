@@ -27,7 +27,7 @@ class ExitCode extends Constraint
     /**
      * @var int|null
      */
-    private $exitCode;
+    private ?int $exitCode = null;
 
     /**
      * Constructor
@@ -45,7 +45,7 @@ class ExitCode extends Constraint
      * @param mixed $other Constraint check
      * @return bool
      */
-    public function matches($other): bool
+    public function matches(mixed $other): bool
     {
         return $other === $this->exitCode;
     }
@@ -57,7 +57,18 @@ class ExitCode extends Constraint
      */
     public function toString(): string
     {
-        return sprintf('matches exit code %s', $this->exitCode ?? 'null');
+        return sprintf('matches exit code `%s`', $this->exitCode ?? 'null');
+    }
+
+    /**
+     * Returns the description of the failure.
+     *
+     * @param mixed $other Expected
+     * @return string
+     */
+    public function failureDescription(mixed $other): string
+    {
+        return '`' . $other . '` ' . $this->toString();
     }
 }
 

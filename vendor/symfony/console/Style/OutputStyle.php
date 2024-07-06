@@ -23,17 +23,12 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 abstract class OutputStyle implements OutputInterface, StyleInterface
 {
-    private $output;
-
-    public function __construct(OutputInterface $output)
-    {
-        $this->output = $output;
+    public function __construct(
+        private OutputInterface $output,
+    ) {
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function newLine(int $count = 1)
+    public function newLine(int $count = 1): void
     {
         $this->output->write(str_repeat(\PHP_EOL, $count));
     }
@@ -43,103 +38,73 @@ abstract class OutputStyle implements OutputInterface, StyleInterface
         return new ProgressBar($this->output, $max);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function write(string|iterable $messages, bool $newline = false, int $type = self::OUTPUT_NORMAL)
+    public function write(string|iterable $messages, bool $newline = false, int $type = self::OUTPUT_NORMAL): void
     {
         $this->output->write($messages, $newline, $type);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function writeln(string|iterable $messages, int $type = self::OUTPUT_NORMAL)
+    public function writeln(string|iterable $messages, int $type = self::OUTPUT_NORMAL): void
     {
         $this->output->writeln($messages, $type);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function setVerbosity(int $level)
+    public function setVerbosity(int $level): void
     {
         $this->output->setVerbosity($level);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getVerbosity(): int
     {
         return $this->output->getVerbosity();
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function setDecorated(bool $decorated)
+    public function setDecorated(bool $decorated): void
     {
         $this->output->setDecorated($decorated);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function isDecorated(): bool
     {
         return $this->output->isDecorated();
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function setFormatter(OutputFormatterInterface $formatter)
+    public function setFormatter(OutputFormatterInterface $formatter): void
     {
         $this->output->setFormatter($formatter);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getFormatter(): OutputFormatterInterface
     {
         return $this->output->getFormatter();
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    public function isSilent(): bool
+    {
+        // @deprecated since Symfony 7.2, change to $this->output->isSilent() in 8.0
+        return method_exists($this->output, 'isSilent') ? $this->output->isSilent() : self::VERBOSITY_SILENT === $this->output->getVerbosity();
+    }
+
     public function isQuiet(): bool
     {
         return $this->output->isQuiet();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function isVerbose(): bool
     {
         return $this->output->isVerbose();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function isVeryVerbose(): bool
     {
         return $this->output->isVeryVerbose();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function isDebug(): bool
     {
         return $this->output->isDebug();
     }
 
-    protected function getErrorOutput()
+    protected function getErrorOutput(): OutputInterface
     {
         if (!$this->output instanceof ConsoleOutputInterface) {
             return $this->output;

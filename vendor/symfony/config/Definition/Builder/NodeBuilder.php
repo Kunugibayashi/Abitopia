@@ -18,8 +18,8 @@ namespace Symfony\Component\Config\Definition\Builder;
  */
 class NodeBuilder implements NodeParentInterface
 {
-    protected $parent;
-    protected $nodeMapping;
+    protected (NodeDefinition&ParentNodeDefinitionInterface)|null $parent = null;
+    protected array $nodeMapping;
 
     public function __construct()
     {
@@ -31,6 +31,7 @@ class NodeBuilder implements NodeParentInterface
             'float' => FloatNodeDefinition::class,
             'array' => ArrayNodeDefinition::class,
             'enum' => EnumNodeDefinition::class,
+            'string' => StringNodeDefinition::class,
         ];
     }
 
@@ -39,7 +40,7 @@ class NodeBuilder implements NodeParentInterface
      *
      * @return $this
      */
-    public function setParent(ParentNodeDefinitionInterface $parent = null): static
+    public function setParent((NodeDefinition&ParentNodeDefinitionInterface)|null $parent): static
     {
         $this->parent = $parent;
 
@@ -103,11 +104,17 @@ class NodeBuilder implements NodeParentInterface
     }
 
     /**
-     * Returns the parent node.
-     *
-     * @return NodeDefinition&ParentNodeDefinitionInterface
+     * Creates a child string node.
      */
-    public function end()
+    public function stringNode(string $name): StringNodeDefinition
+    {
+        return $this->node($name, 'string');
+    }
+
+    /**
+     * Returns the parent node.
+     */
+    public function end(): NodeDefinition&ParentNodeDefinitionInterface
     {
         return $this->parent;
     }
@@ -187,13 +194,13 @@ class NodeBuilder implements NodeParentInterface
         $type = strtolower($type);
 
         if (!isset($this->nodeMapping[$type])) {
-            throw new \RuntimeException(sprintf('The node type "%s" is not registered.', $type));
+            throw new \RuntimeException(\sprintf('The node type "%s" is not registered.', $type));
         }
 
         $class = $this->nodeMapping[$type];
 
         if (!class_exists($class)) {
-            throw new \RuntimeException(sprintf('The node class "%s" does not exist.', $class));
+            throw new \RuntimeException(\sprintf('The node class "%s" does not exist.', $class));
         }
 
         return $class;

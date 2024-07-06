@@ -16,8 +16,8 @@ use Cake\ORM\Entity;
  * @property string $from_chat_character_fullname
  * @property string $title
  * @property string $message
- * @property \Cake\I18n\FrozenTime $modified
- * @property \Cake\I18n\FrozenTime $created
+ * @property \Cake\I18n\DateTime $modified
+ * @property \Cake\I18n\DateTime $created
  *
  * @property \App\Model\Entity\User $user
  */
@@ -32,7 +32,7 @@ class ReceivedMessage extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'user_id' => true,
         'chat_character_key' => true,
         'chat_character_fullname' => true,

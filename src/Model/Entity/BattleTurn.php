@@ -16,8 +16,8 @@ use Cake\ORM\Entity;
  * @property int $battle_turn_count
  * @property int $attack_chat_character_key
  * @property int $defense_chat_character_key
- * @property \Cake\I18n\FrozenTime $modified
- * @property \Cake\I18n\FrozenTime $created
+ * @property \Cake\I18n\DateTime $modified
+ * @property \Cake\I18n\DateTime $created
  *
  * @property \App\Model\Entity\BattleCharacter[] $battle_characters
  * @property \App\Model\Entity\BattleSaveSkill[] $battle_save_skills
@@ -33,7 +33,7 @@ class BattleTurn extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'vs_fukoku_key' => true,
         'vs_before_key' => true,
         'vs_after_key' => true,

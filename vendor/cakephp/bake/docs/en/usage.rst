@@ -31,9 +31,11 @@ You can get the list of available bake command by running ``bin/cake bake --help
     - bake behavior
     - bake cell
     - bake command
+    - bake command_helper
     - bake component
     - bake controller
     - bake controller all
+    - bake enum
     - bake fixture
     - bake fixture all
     - bake form
@@ -59,4 +61,4 @@ template files used when baking. To create your own templates, see the
 
 .. meta::
     :title lang=en: Code Generation with Bake
-    :keywords lang=en: command line interface,functional application,database,database configuration,bash script,basic ingredients,project,model,path path,code generation,scaffolding,windows users,configuration file,few minutes,config,iew,shell,models,running,mysql
+    :keywords lang=en: command line interface,functional application,database,database configuration,bash script,basic ingredients,project,model,path path,code generation,scaffolding,windows users,configuration file,few minutes,config,view,models,running,mysql

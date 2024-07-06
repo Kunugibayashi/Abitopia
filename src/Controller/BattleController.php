@@ -33,21 +33,22 @@ class BattleController extends AppController
         parent::initialize();
         $this->loadComponent('CheckChat');
         $this->loadComponent('PreparationBattle');
+        $this->loadComponent('PreparationBattle');
         $this->loadComponent('ChatSession');
         $this->loadComponent('CheckFile');
         $this->loadComponent('DetermineBattle');
         $this->loadComponent('ActionLog');
 
-        $this->loadModel('ChatEntries');
-        $this->loadModel('ChatCharacters');
-        $this->loadModel('ChatLogs');
-        $this->loadModel('ChatRooms');
+        $this->ChatEntries = $this->fetchTable('ChatEntries');
+        $this->ChatCharacters = $this->fetchTable('ChatCharacters');
+        $this->ChatLogs = $this->fetchTable('ChatLogs');
+        $this->ChatRooms = $this->fetchTable('ChatRooms');
 
-        $this->loadModel('BattleTurns');
-        $this->loadModel('BattleSaveSkills');
-        $this->loadModel('BattleCharacters');
-        $this->loadModel('BattleCharacterStatuses');
-        $this->loadModel('BattleLogs');
+        $this->BattleTurns = $this->fetchTable('BattleTurns');
+        $this->BattleSaveSkills = $this->fetchTable('BattleSaveSkills');
+        $this->BattleCharacters = $this->fetchTable('BattleCharacters');
+        $this->BattleCharacterStatuses = $this->fetchTable('BattleCharacterStatuses');
+        $this->BattleLogs = $this->fetchTable('BattleLogs');
 
         $this->session = $this->getRequest()->getSession();
         $this->ChatSession->set($this->session);

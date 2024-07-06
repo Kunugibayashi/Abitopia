@@ -44,9 +44,9 @@ $cakeDescription = 'CakePHP: the rapid development PHP framework';
     <link href="https://fonts.googleapis.com/css?family=Raleway:400,700" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.css">
 
-    <?= $this->Html->css('milligram.min.css') ?>
-    <?= $this->Html->css('cake.css') ?>
-    <?= $this->Html->css('home.css') ?>
+    <?= $this->Html->css('milligram.min.css' .'?date=' .CSS_UPDATE_DATE) ?>
+    <?= $this->Html->css('cake.css' .'?date=' .CSS_UPDATE_DATE) ?>
+    <?= $this->Html->css('home.css' .'?date=' .CSS_UPDATE_DATE) ?>
 
     <?= $this->fetch('meta') ?>
     <?= $this->fetch('css') ?>
@@ -129,7 +129,7 @@ $cakeDescription = 'CakePHP: the rapid development PHP framework';
                             <li class="bullet problem">Your logs directory is NOT writable.</li>
                         <?php endif; ?>
 
-                        <?php $settings = Cache::getConfig('_cake_core_'); ?>
+                        <?php $settings = Cache::getConfig('_cake_translations_'); ?>
                         <?php if (!empty($settings)) : ?>
                             <li class="bullet success">The <em><?php echo $settings['className'] ?>Engine</em> is being used for core caching. To change the config edit config/app.php</li>
                         <?php else : ?>

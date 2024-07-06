@@ -3,13 +3,13 @@ namespace App\Controller\Component;
 
 use Cake\Controller\Component;
 
-use Cake\Datasource\ModelAwareTrait;
+use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\Utility\Text;
 use Cake\Core\Configure;
 
 class ActionLogComponent extends Component
 {
-    use ModelAwareTrait;
+    use LocatorAwareTrait;
 
     public $ChatLogs = null;
     public $ChatRooms = null;
@@ -19,9 +19,9 @@ class ActionLogComponent extends Component
     {
         parent::initialize($config);
 
-        $this->loadModel('ChatLogs');
-        $this->loadModel('ChatRooms');
-        $this->loadModel('ChatCharacters');
+        $this->ChatLogs = $this->fetchTable('ChatLogs');
+        $this->ChatRooms = $this->fetchTable('ChatRooms');
+        $this->ChatCharacters = $this->fetchTable('ChatCharacters');
     }
 
     /**

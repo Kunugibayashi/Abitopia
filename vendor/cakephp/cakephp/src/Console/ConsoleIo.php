@@ -57,35 +57,35 @@ class ConsoleIo
      *
      * @var \Cake\Console\ConsoleOutput
      */
-    protected $_out;
+    protected ConsoleOutput $_out;
 
     /**
      * The error stream
      *
      * @var \Cake\Console\ConsoleOutput
      */
-    protected $_err;
+    protected ConsoleOutput $_err;
 
     /**
      * The input stream
      *
      * @var \Cake\Console\ConsoleInput
      */
-    protected $_in;
+    protected ConsoleInput $_in;
 
     /**
      * The helper registry.
      *
      * @var \Cake\Console\HelperRegistry
      */
-    protected $_helpers;
+    protected HelperRegistry $_helpers;
 
     /**
      * The current output level.
      *
      * @var int
      */
-    protected $_level = self::NORMAL;
+    protected int $_level = self::NORMAL;
 
     /**
      * The number of bytes last written to the output stream
@@ -93,19 +93,19 @@ class ConsoleIo
      *
      * @var int
      */
-    protected $_lastWritten = 0;
+    protected int $_lastWritten = 0;
 
     /**
      * Whether files should be overwritten
      *
      * @var bool
      */
-    protected $forceOverwrite = false;
+    protected bool $forceOverwrite = false;
 
     /**
      * @var bool
      */
-    protected $interactive = true;
+    protected bool $interactive = true;
 
     /**
      * Constructor
@@ -155,12 +155,12 @@ class ConsoleIo
     /**
      * Output at the verbose level.
      *
-     * @param array<string>|string $message A string or an array of strings to output
+     * @param list<string>|string $message A string or an array of strings to output
      * @param int $newlines Number of newlines to append
      * @return int|null The number of bytes returned from writing to stdout
      *   or null if current level is less than ConsoleIo::VERBOSE
      */
-    public function verbose($message, int $newlines = 1): ?int
+    public function verbose(array|string $message, int $newlines = 1): ?int
     {
         return $this->out($message, $newlines, self::VERBOSE);
     }
@@ -168,12 +168,12 @@ class ConsoleIo
     /**
      * Output at all levels.
      *
-     * @param array<string>|string $message A string or an array of strings to output
+     * @param list<string>|string $message A string or an array of strings to output
      * @param int $newlines Number of newlines to append
      * @return int|null The number of bytes returned from writing to stdout
      *   or null if current level is less than ConsoleIo::QUIET
      */
-    public function quiet($message, int $newlines = 1): ?int
+    public function quiet(array|string $message, int $newlines = 1): ?int
     {
         return $this->out($message, $newlines, self::QUIET);
     }
@@ -189,34 +189,34 @@ class ConsoleIo
      * present in most shells. Using ConsoleIo::QUIET for a message means it will always display.
      * While using ConsoleIo::VERBOSE means it will only display when verbose output is toggled.
      *
-     * @param array<string>|string $message A string or an array of strings to output
+     * @param list<string>|string $message A string or an array of strings to output
      * @param int $newlines Number of newlines to append
      * @param int $level The message's output level, see above.
      * @return int|null The number of bytes returned from writing to stdout
      *   or null if provided $level is greater than current level.
      */
-    public function out($message = '', int $newlines = 1, int $level = self::NORMAL): ?int
+    public function out(array|string $message = '', int $newlines = 1, int $level = self::NORMAL): ?int
     {
-        if ($level <= $this->_level) {
-            $this->_lastWritten = $this->_out->write($message, $newlines);
-
-            return $this->_lastWritten;
+        if ($level > $this->_level) {
+            return null;
         }
 
-        return null;
+        $this->_lastWritten = $this->_out->write($message, $newlines);
+
+        return $this->_lastWritten;
     }
 
     /**
      * Convenience method for out() that wraps message between <info> tag
      *
-     * @param array<string>|string $message A string or an array of strings to output
+     * @param list<string>|string $message A string or an array of strings to output
      * @param int $newlines Number of newlines to append
      * @param int $level The message's output level, see above.
      * @return int|null The number of bytes returned from writing to stdout
      *   or null if provided $level is greater than current level.
-     * @see https://book.cakephp.org/4/en/console-and-shells.html#ConsoleIo::out
+     * @see https://book.cakephp.org/5/en/console-and-shells.html#ConsoleIo::out
      */
-    public function info($message, int $newlines = 1, int $level = self::NORMAL): ?int
+    public function info(array|string $message, int $newlines = 1, int $level = self::NORMAL): ?int
     {
         $messageType = 'info';
         $message = $this->wrapMessageWithType($messageType, $message);
@@ -227,14 +227,14 @@ class ConsoleIo
     /**
      * Convenience method for out() that wraps message between <comment> tag
      *
-     * @param array<string>|string $message A string or an array of strings to output
+     * @param list<string>|string $message A string or an array of strings to output
      * @param int $newlines Number of newlines to append
      * @param int $level The message's output level, see above.
      * @return int|null The number of bytes returned from writing to stdout
      *   or null if provided $level is greater than current level.
-     * @see https://book.cakephp.org/4/en/console-and-shells.html#ConsoleIo::out
+     * @see https://book.cakephp.org/5/en/console-and-shells.html#ConsoleIo::out
      */
-    public function comment($message, int $newlines = 1, int $level = self::NORMAL): ?int
+    public function comment(array|string $message, int $newlines = 1, int $level = self::NORMAL): ?int
     {
         $messageType = 'comment';
         $message = $this->wrapMessageWithType($messageType, $message);
@@ -245,12 +245,12 @@ class ConsoleIo
     /**
      * Convenience method for err() that wraps message between <warning> tag
      *
-     * @param array<string>|string $message A string or an array of strings to output
+     * @param list<string>|string $message A string or an array of strings to output
      * @param int $newlines Number of newlines to append
      * @return int The number of bytes returned from writing to stderr.
-     * @see https://book.cakephp.org/4/en/console-and-shells.html#ConsoleIo::err
+     * @see https://book.cakephp.org/5/en/console-and-shells.html#ConsoleIo::err
      */
-    public function warning($message, int $newlines = 1): int
+    public function warning(array|string $message, int $newlines = 1): int
     {
         $messageType = 'warning';
         $message = $this->wrapMessageWithType($messageType, $message);
@@ -261,12 +261,12 @@ class ConsoleIo
     /**
      * Convenience method for err() that wraps message between <error> tag
      *
-     * @param array<string>|string $message A string or an array of strings to output
+     * @param list<string>|string $message A string or an array of strings to output
      * @param int $newlines Number of newlines to append
      * @return int The number of bytes returned from writing to stderr.
-     * @see https://book.cakephp.org/4/en/console-and-shells.html#ConsoleIo::err
+     * @see https://book.cakephp.org/5/en/console-and-shells.html#ConsoleIo::err
      */
-    public function error($message, int $newlines = 1): int
+    public function error(array|string $message, int $newlines = 1): int
     {
         $messageType = 'error';
         $message = $this->wrapMessageWithType($messageType, $message);
@@ -277,14 +277,14 @@ class ConsoleIo
     /**
      * Convenience method for out() that wraps message between <success> tag
      *
-     * @param array<string>|string $message A string or an array of strings to output
+     * @param list<string>|string $message A string or an array of strings to output
      * @param int $newlines Number of newlines to append
      * @param int $level The message's output level, see above.
      * @return int|null The number of bytes returned from writing to stdout
      *   or null if provided $level is greater than current level.
-     * @see https://book.cakephp.org/4/en/console-and-shells.html#ConsoleIo::out
+     * @see https://book.cakephp.org/5/en/console-and-shells.html#ConsoleIo::out
      */
-    public function success($message, int $newlines = 1, int $level = self::NORMAL): ?int
+    public function success(array|string $message, int $newlines = 1, int $level = self::NORMAL): ?int
     {
         $messageType = 'success';
         $message = $this->wrapMessageWithType($messageType, $message);
@@ -297,11 +297,10 @@ class ConsoleIo
      *
      * @param string $message Error message.
      * @param int $code Error code.
-     * @return void
-     * @psalm-return never-return
+     * @return never
      * @throws \Cake\Console\Exception\StopException
      */
-    public function abort($message, $code = CommandInterface::CODE_ERROR): void
+    public function abort(string $message, int $code = CommandInterface::CODE_ERROR): never
     {
         $this->error($message);
 
@@ -312,10 +311,10 @@ class ConsoleIo
      * Wraps a message with a given message type, e.g. <warning>
      *
      * @param string $messageType The message type, e.g. "warning".
-     * @param array<string>|string $message The message to wrap.
-     * @return array<string>|string The message wrapped with the given message type.
+     * @param list<string>|string $message The message to wrap.
+     * @return list<string>|string The message wrapped with the given message type.
      */
-    protected function wrapMessageWithType(string $messageType, $message)
+    protected function wrapMessageWithType(string $messageType, array|string $message): array|string
     {
         if (is_array($message)) {
             foreach ($message as $k => $v) {
@@ -336,13 +335,13 @@ class ConsoleIo
      *
      * **Warning** You cannot overwrite text that contains newlines.
      *
-     * @param array<string>|string $message The message to output.
+     * @param list<string>|string $message The message to output.
      * @param int $newlines Number of newlines to append.
      * @param int|null $size The number of bytes to overwrite. Defaults to the
      *    length of the last message output.
      * @return void
      */
-    public function overwrite($message, int $newlines = 1, ?int $size = null): void
+    public function overwrite(array|string $message, int $newlines = 1, ?int $size = null): void
     {
         $size = $size ?: $this->_lastWritten;
 
@@ -372,11 +371,11 @@ class ConsoleIo
      * Outputs a single or multiple error messages to stderr. If no parameters
      * are passed outputs just a newline.
      *
-     * @param array<string>|string $message A string or an array of strings to output
+     * @param list<string>|string $message A string or an array of strings to output
      * @param int $newlines Number of newlines to append
      * @return int The number of bytes returned from writing to stderr.
      */
-    public function err($message = '', int $newlines = 1): int
+    public function err(array|string $message = '', int $newlines = 1): int
     {
         return $this->_err->write($message, $newlines);
     }
@@ -470,16 +469,16 @@ class ConsoleIo
      * Prompts the user for input based on a list of options, and returns it.
      *
      * @param string $prompt Prompt text.
-     * @param array<string>|string $options Array or string of options.
+     * @param list<string>|string $options Array or string of options.
      * @param string|null $default Default input value.
      * @return string Either the default value, or the user-provided input.
      */
-    public function askChoice(string $prompt, $options, ?string $default = null): string
+    public function askChoice(string $prompt, array|string $options, ?string $default = null): string
     {
         if (is_string($options)) {
-            if (strpos($options, ',')) {
+            if (str_contains($options, ',')) {
                 $options = explode(',', $options);
-            } elseif (strpos($options, '/')) {
+            } elseif (str_contains($options, '/')) {
                 $options = explode('/', $options);
             } else {
                 $options = [$options];
@@ -515,15 +514,15 @@ class ConsoleIo
         }
 
         $optionsText = '';
-        if (isset($options)) {
-            $optionsText = " $options ";
+        if ($options !== null) {
+            $optionsText = " {$options} ";
         }
 
         $defaultText = '';
         if ($default !== null) {
-            $defaultText = "[$default] ";
+            $defaultText = "[{$default}] ";
         }
-        $this->_out->write('<question>' . $prompt . "</question>$optionsText\n$defaultText> ", 0);
+        $this->_out->write('<question>' . $prompt . "</question>{$optionsText}\n{$defaultText}> ", 0);
         $result = $this->_in->read();
 
         $result = $result === null ? '' : trim($result);
@@ -541,19 +540,32 @@ class ConsoleIo
      * If you don't wish all log output in stdout or stderr
      * through Cake's Log class, call this function with `$enable=false`.
      *
+     * If you would like to take full control of how console application logging
+     * to stdout works add a logger that uses `'className' => 'Console'`. By
+     * providing a console logger you replace the framework default behavior.
+     *
      * @param int|bool $enable Use a boolean to enable/toggle all logging. Use
      *   one of the verbosity constants (self::VERBOSE, self::QUIET, self::NORMAL)
      *   to control logging levels. VERBOSE enables debug logs, NORMAL does not include debug logs,
      *   QUIET disables notice, info and debug logs.
      * @return void
      */
-    public function setLoggers($enable): void
+    public function setLoggers(int|bool $enable): void
     {
         Log::drop('stdout');
         Log::drop('stderr');
         if ($enable === false) {
             return;
         }
+        // If the application has configured a console logger
+        // we don't add a redundant one.
+        foreach (Log::configured() as $loggerName) {
+            $log = Log::engine($loggerName);
+            if ($log instanceof ConsoleLog) {
+                return;
+            }
+        }
+
         $outLevels = ['notice', 'info'];
         if ($enable === static::VERBOSE || $enable === true) {
             $outLevels[] = 'debug';
@@ -586,6 +598,7 @@ class ConsoleIo
     {
         $name = ucfirst($name);
 
+        /** @var \Cake\Console\Helper */
         return $this->_helpers->load($name, $config);
     }
 
@@ -642,7 +655,7 @@ class ConsoleIo
             }
 
             $file = new SplFileObject($path, 'w');
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException) {
             $this->error("Could not write to `{$path}`. Permission denied.", 2);
 
             return false;

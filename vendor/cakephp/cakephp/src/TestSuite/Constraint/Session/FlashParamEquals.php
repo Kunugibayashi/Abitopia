@@ -30,22 +30,22 @@ class FlashParamEquals extends Constraint
     /**
      * @var \Cake\Http\Session
      */
-    protected $session;
+    protected Session $session;
 
     /**
      * @var string
      */
-    protected $key;
+    protected string $key;
 
     /**
      * @var string
      */
-    protected $param;
+    protected string $param;
 
     /**
      * @var int|null
      */
-    protected $at;
+    protected ?int $at = null;
 
     /**
      * Constructor
@@ -75,7 +75,7 @@ class FlashParamEquals extends Constraint
      * @param mixed $other Value to compare with
      * @return bool
      */
-    public function matches($other): bool
+    public function matches(mixed $other): bool
     {
         // Server::run calls Session::close at the end of the request.
         // Which means, that we cannot use Session object here to access the session data.
@@ -107,9 +107,9 @@ class FlashParamEquals extends Constraint
     public function toString(): string
     {
         if ($this->at !== null) {
-            return sprintf('is in \'%s\' %s #%d', $this->key, $this->param, $this->at);
+            return sprintf("is in '%s' %s #%d", $this->key, $this->param, $this->at);
         }
 
-        return sprintf('is in \'%s\' %s', $this->key, $this->param);
+        return sprintf("is in '%s' %s", $this->key, $this->param);
     }
 }

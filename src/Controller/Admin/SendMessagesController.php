@@ -37,9 +37,7 @@ class SendMessagesController extends AppController
      */
     public function view($id = null)
     {
-        $sendMessage = $this->SendMessages->get($id, [
-            'contain' => ['Users'],
-        ]);
+        $sendMessage = $this->SendMessages->get($id, contain: ['Users']);
 
         $this->set(compact('sendMessage'));
     }
@@ -74,9 +72,7 @@ class SendMessagesController extends AppController
      */
     public function edit($id = null)
     {
-        $sendMessage = $this->SendMessages->get($id, [
-            'contain' => [],
-        ]);
+        $sendMessage = $this->SendMessages->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $sendMessage = $this->SendMessages->patchEntity($sendMessage, $this->request->getData());
             if ($this->SendMessages->save($sendMessage)) {

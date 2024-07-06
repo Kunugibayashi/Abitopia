@@ -21,7 +21,7 @@ class ChatCharactersController extends AppController
     {
         parent::initialize();
 
-        $this->loadModel('BattleCharacterStatuses');
+        $this->BattleCharacterStatuses = $this->fetchTable('BattleCharacterStatuses');
     }
 
     public function search()
@@ -30,14 +30,12 @@ class ChatCharactersController extends AppController
 
         if ($this->request->is('post')) {
             $keyword = $this->request->getData('keyword');
-            $query = $this->ChatCharacters->find('all',[
-                'conditions' => [
-                    'OR' => [
-                        'fullname LIKE' => '%' .$keyword .'%',
-                        'sex LIKE' => '%' .$keyword .'%',
-                        'tag LIKE' => '%' .$keyword .'%',
-                        'detail LIKE' => '%' .$keyword .'%',
-                    ]
+            $query = $this->ChatCharacters->find('all',conditions: [
+                'OR' => [
+                    'fullname LIKE' => '%' .$keyword .'%',
+                    'sex LIKE' => '%' .$keyword .'%',
+                    'tag LIKE' => '%' .$keyword .'%',
+                    'detail LIKE' => '%' .$keyword .'%',
                 ]
             ]);
         } else {
@@ -46,7 +44,7 @@ class ChatCharactersController extends AppController
         }
 
         $query->contain(['BattleCharacterStatuses'])
-            ->order(['modified' => 'DESC']);
+            ->orderBy(['modified' => 'DESC']);
 
         $chatCharacters = $this->paginate($query);
 
@@ -143,7 +141,7 @@ class ChatCharactersController extends AppController
             ->contain(['BattleCharacterStatuses'])
             ->where(['user_id' => $userId])
             ->where(['ChatCharacters.id' => $id])
-            ->order(['ChatCharacters.id'])
+            ->orderBy(['ChatCharacters.id'])
             ->first();
         if (!$chatCharacter) {
             // キャラクターが見つからない場合はエラー
@@ -222,6 +220,7 @@ class ChatCharactersController extends AppController
 
     public function topListTable()
     {
+        $this->viewBuilder()->disableAutoLayout();
         $this->viewBuilder()->setLayout('none');
 
         $chatCharacters = $this->ChatCharacters
@@ -242,7 +241,7 @@ class ChatCharactersController extends AppController
                 'detailString' => $string,
             ])
             ->limit(3)
-            ->order(['modified' => 'DESC'])
+            ->orderBy(['modified' => 'DESC'])
             ->toArray();
 
         $this->set(compact('chatCharacters'));

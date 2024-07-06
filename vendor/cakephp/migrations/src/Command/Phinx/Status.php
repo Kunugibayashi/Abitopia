@@ -21,6 +21,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * @method \Migrations\CakeManager getManager()
+ * @deprecated 4.5.0 This command is deprecated alongside phinx compatibility.
  */
 class Status extends StatusCommand
 {
@@ -97,10 +98,10 @@ class Status extends StatusCommand
     /**
      * Will output the status of the migrations
      *
-     * @param array $migrations Migrations array.
+     * @param array<array<string, mixed>> $migrations Migrations array.
      * @return void
      */
-    protected function display(array $migrations)
+    protected function display(array $migrations): void
     {
         $output = $this->getManager()->getOutput();
 

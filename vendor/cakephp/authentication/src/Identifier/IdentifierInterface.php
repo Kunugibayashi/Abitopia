@@ -16,23 +16,17 @@ declare(strict_types=1);
  */
 namespace Authentication\Identifier;
 
+use ArrayAccess;
+
 interface IdentifierInterface
 {
-    public const CREDENTIAL_USERNAME = 'username';
-
-    public const CREDENTIAL_PASSWORD = 'password';
-
-    public const CREDENTIAL_TOKEN = 'token';
-
-    public const CREDENTIAL_JWT_SUBJECT = 'sub';
-
     /**
      * Identifies an user or service by the passed credentials
      *
      * @param array $credentials Authentication credentials
      * @return \ArrayAccess|array|null
      */
-    public function identify(array $credentials);
+    public function identify(array $credentials): ArrayAccess|array|null;
 
     /**
      * Gets a list of errors happened in the identification process

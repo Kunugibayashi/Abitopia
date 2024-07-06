@@ -1,4 +1,6 @@
 <?php
+use Cake\Core\Configure;
+
 /**
  * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
@@ -29,9 +31,9 @@ $cakeDescription = 'CakePHP: the rapid development php framework';
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.css">
 
     <?= $this->Html->css('milligram.min.css') ?>
-    <?= $this->Html->css('cake.css') ?>
-    <?= $this->Html->css('base.css') ?>
-    <?= $this->Html->css('modal.css') ?>
+    <?= $this->Html->css('cake.css' .'?date=' .CSS_UPDATE_DATE) ?>
+    <?= $this->Html->css('base.css' .'?date=' .CSS_UPDATE_DATE) ?>
+    <?= $this->Html->css('modal.css' .'?date=' .CSS_UPDATE_DATE) ?>
 
     <?= $this->Html->script('jquery-3.6.0.min.js') ?>
     <?= $this->Html->script('jquery-modal.js') ?>

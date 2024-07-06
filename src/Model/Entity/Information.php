@@ -11,8 +11,8 @@ use Cake\ORM\Entity;
  * @property int $id
  * @property string $title
  * @property string $detail
- * @property \Cake\I18n\FrozenTime $modified
- * @property \Cake\I18n\FrozenTime $created
+ * @property \Cake\I18n\DateTime $modified
+ * @property \Cake\I18n\DateTime $created
  */
 class Information extends Entity
 {
@@ -25,7 +25,7 @@ class Information extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'title' => true,
         'detail' => true,
         'modified' => true,

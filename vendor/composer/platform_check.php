@@ -4,8 +4,22 @@
 
 $issues = array();
 
-if (!(PHP_VERSION_ID >= 80002)) {
-    $issues[] = 'Your Composer dependencies require a PHP version ">= 8.0.2". You are running ' . PHP_VERSION . '.';
+if (!(PHP_VERSION_ID >= 80200)) {
+    $issues[] = 'Your Composer dependencies require a PHP version ">= 8.2.0". You are running ' . PHP_VERSION . '.';
+}
+
+if (PHP_INT_SIZE !== 8) {
+    $issues[] = 'Your Composer dependencies require a 64-bit build of PHP.';
+}
+
+$missingExtensions = array();
+extension_loaded('intl') || $missingExtensions[] = 'intl';
+extension_loaded('json') || $missingExtensions[] = 'json';
+extension_loaded('openssl') || $missingExtensions[] = 'openssl';
+extension_loaded('pcre') || $missingExtensions[] = 'pcre';
+
+if ($missingExtensions) {
+    $issues[] = 'Your Composer dependencies require the following PHP extensions to be installed: ' . implode(', ', $missingExtensions) . '.';
 }
 
 if ($issues) {

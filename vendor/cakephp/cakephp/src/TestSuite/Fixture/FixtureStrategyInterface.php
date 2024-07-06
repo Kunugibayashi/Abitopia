@@ -11,7 +11,7 @@ declare(strict_types=1);
  *
  * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  * @link          https://cakephp.org CakePHP(tm) Project
- * @since         4.3.0
+ * @since         5.0.0
  * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\TestSuite\Fixture;
@@ -24,7 +24,7 @@ interface FixtureStrategyInterface
     /**
      * Called before each test run in each TestCase.
      *
-     * @param array<string> $fixtureNames Name of fixtures used by test.
+     * @param list<string> $fixtureNames Name of fixtures used by test.
      * @return void
      */
     public function setupTest(array $fixtureNames): void;

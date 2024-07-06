@@ -17,7 +17,6 @@ declare(strict_types=1);
 namespace Authentication\UrlChecker;
 
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\UriInterface;
 
 /**
  * Checks if a request object contains a valid URL
@@ -32,7 +31,7 @@ class DefaultUrlChecker implements UrlCheckerInterface
      *
      * @var array
      */
-    protected $_defaultOptions = [
+    protected array $_defaultOptions = [
         'useRegex' => false,
         'checkFullUrl' => false,
     ];
@@ -52,7 +51,7 @@ class DefaultUrlChecker implements UrlCheckerInterface
 
         $checker = $this->_getChecker($options);
 
-        $url = $this->_getUrlFromRequest($request->getUri(), $options['checkFullUrl']);
+        $url = $this->_getUrlFromRequest($request, $options['checkFullUrl']);
 
         foreach ($urls as $validUrl) {
             if ($checker($validUrl, $url)) {
@@ -75,18 +74,18 @@ class DefaultUrlChecker implements UrlCheckerInterface
      */
     protected function _mergeDefaultOptions(array $options): array
     {
-        return $options += $this->_defaultOptions;
+        return $options + $this->_defaultOptions;
     }
 
     /**
      * Gets the checker function name or a callback
      *
      * @param array $options Array of options
-     * @return string|callable
+     * @return callable
      */
-    protected function _getChecker(array $options = [])
+    protected function _getChecker(array $options): callable
     {
-        if (isset($options['useRegex']) && $options['useRegex']) {
+        if (!empty($options['useRegex'])) {
             return 'preg_match';
         }
 
@@ -98,14 +97,17 @@ class DefaultUrlChecker implements UrlCheckerInterface
     /**
      * Returns current url.
      *
-     * @param \Psr\Http\Message\UriInterface $uri Server Request
+     * @param \Psr\Http\Message\ServerRequestInterface $request Server Request
      * @param bool $getFullUrl Get the full URL or just the path
      * @return string
      */
-    protected function _getUrlFromRequest(UriInterface $uri, bool $getFullUrl = false): string
+    protected function _getUrlFromRequest(ServerRequestInterface $request, bool $getFullUrl = false): string
     {
-        if (property_exists($uri, 'base')) {
-            $uri = $uri->withPath($uri->base . $uri->getPath());
+        $uri = $request->getUri();
+
+        $requestBase = $request->getAttribute('base');
+        if ($requestBase) {
+            $uri = $uri->withPath($requestBase . $uri->getPath());
         }
 
         if ($getFullUrl) {

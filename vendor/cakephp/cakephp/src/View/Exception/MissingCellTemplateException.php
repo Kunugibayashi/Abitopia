@@ -24,19 +24,19 @@ class MissingCellTemplateException extends MissingTemplateException
     /**
      * @var string
      */
-    protected $name;
+    protected string $name;
 
     /**
      * @var string
      */
-    protected $type = 'Cell template';
+    protected string $type = 'Cell template';
 
     /**
      * Constructor
      *
      * @param string $name The Cell name that is missing a view.
      * @param string $file The view filename.
-     * @param array<string> $paths The path list that template could not be found in.
+     * @param list<string> $paths The path list that template could not be found in.
      * @param int|null $code The code of the error.
      * @param \Throwable|null $previous the previous exception.
      */
@@ -55,8 +55,8 @@ class MissingCellTemplateException extends MissingTemplateException
     /**
      * Get the passed in attributes
      *
-     * @return array
-     * @psalm-return array{name: string, file: string, paths: array<string>}
+     * @return array<string, mixed>
+     * @psalm-return array{name: string, file: string, paths: list<string>}
      */
     public function getAttributes(): array
     {

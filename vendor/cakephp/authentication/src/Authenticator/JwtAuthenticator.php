@@ -18,6 +18,7 @@ namespace Authentication\Authenticator;
 
 use ArrayObject;
 use Authentication\Identifier\IdentifierInterface;
+use Authentication\Identifier\JwtSubjectIdentifier;
 use Cake\Utility\Security;
 use Exception;
 use Firebase\JWT\JWK;
@@ -32,14 +33,14 @@ class JwtAuthenticator extends TokenAuthenticator
     /**
      * @inheritDoc
      */
-    protected $_defaultConfig = [
+    protected array $_defaultConfig = [
         'header' => 'Authorization',
         'queryParam' => 'token',
         'tokenPrefix' => 'bearer',
         'algorithm' => 'HS256',
         'returnPayload' => true,
         'secretKey' => null,
-        'subjectKey' => IdentifierInterface::CREDENTIAL_JWT_SUBJECT,
+        'subjectKey' => JwtSubjectIdentifier::CREDENTIAL_JWT_SUBJECT,
         'jwks' => null,
     ];
 
@@ -48,7 +49,7 @@ class JwtAuthenticator extends TokenAuthenticator
      *
      * @var object|null
      */
-    protected $payload;
+    protected ?object $payload = null;
 
     /**
      * @inheritDoc
@@ -61,7 +62,7 @@ class JwtAuthenticator extends TokenAuthenticator
             if (!class_exists(Security::class)) {
                 throw new RuntimeException('You must set the `secretKey` config key for JWT authentication.');
             }
-            $this->setConfig('secretKey', \Cake\Utility\Security::getSalt());
+            $this->setConfig('secretKey', Security::getSalt());
         }
     }
 
@@ -91,6 +92,7 @@ class JwtAuthenticator extends TokenAuthenticator
             return new Result(null, Result::FAILURE_CREDENTIALS_INVALID);
         }
 
+        /** @phpstan-ignore-next-line */
         $result = json_decode(json_encode($result), true);
 
         $subjectKey = $this->getConfig('subjectKey');

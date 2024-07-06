@@ -3,12 +3,12 @@ namespace App\Controller\Component;
 
 use Cake\Controller\Component;
 
-use Cake\Datasource\ModelAwareTrait;
+use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\Utility\Text;
 
 class CheckChatComponent extends Component
 {
-    use ModelAwareTrait;
+    use LocatorAwareTrait;
 
     public $ChatEntries = null;
     public $ChatCharacters = null;
@@ -17,8 +17,8 @@ class CheckChatComponent extends Component
     {
         parent::initialize($config);
 
-        $this->loadModel('ChatEntries');
-        $this->loadModel('ChatCharacters');
+        $this->ChatEntries = $this->fetchTable('ChatEntries');
+        $this->ChatCharacters = $this->fetchTable('ChatCharacters');
     }
 
     /**

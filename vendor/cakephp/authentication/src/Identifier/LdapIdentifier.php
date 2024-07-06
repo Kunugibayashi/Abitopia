@@ -51,7 +51,7 @@ class LdapIdentifier extends AbstractIdentifier
      *
      * @var array
      */
-    protected $_defaultConfig = [
+    protected array $_defaultConfig = [
         'ldap' => ExtensionAdapter::class,
         'fields' => [
             self::CREDENTIAL_USERNAME => 'username',
@@ -68,14 +68,14 @@ class LdapIdentifier extends AbstractIdentifier
      *
      * @var array
      */
-    protected $_errors = [];
+    protected array $_errors = [];
 
     /**
      * LDAP connection object
      *
      * @var \Authentication\Identifier\Ldap\AdapterInterface
      */
-    protected $_ldap;
+    protected AdapterInterface $_ldap;
 
     /**
      * @inheritDoc
@@ -143,7 +143,7 @@ class LdapIdentifier extends AbstractIdentifier
     /**
      * @inheritDoc
      */
-    public function identify(array $credentials)
+    public function identify(array $credentials): ArrayAccess|array|null
     {
         $this->_connectLdap();
         $fields = $this->getConfig('fields');

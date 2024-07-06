@@ -13,8 +13,8 @@ use Cake\ORM\Entity;
  * @property string $chat_room_title
  * @property string|null $characters
  * @property string|null $logs
- * @property \Cake\I18n\FrozenTime $modified
- * @property \Cake\I18n\FrozenTime $created
+ * @property \Cake\I18n\DateTime $modified
+ * @property \Cake\I18n\DateTime $created
  */
 class ChatLogWarehouse extends Entity
 {
@@ -27,7 +27,7 @@ class ChatLogWarehouse extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'entry_key' => true,
         'chat_room_title' => true,
         'characters' => true,

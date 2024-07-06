@@ -33,14 +33,14 @@ class Collection implements CollectionInterface
      *
      * @var \Cake\Database\Connection
      */
-    protected $_connection;
+    protected Connection $_connection;
 
     /**
      * Schema dialect instance.
      *
      * @var \Cake\Database\Schema\SchemaDialect
      */
-    protected $_dialect;
+    protected SchemaDialect $_dialect;
 
     /**
      * Constructor.
@@ -56,7 +56,7 @@ class Collection implements CollectionInterface
     /**
      * Get the list of tables, excluding any views, available in the current connection.
      *
-     * @return array<string> The list of tables in the connected database/schema.
+     * @return list<string> The list of tables in the connected database/schema.
      */
     public function listTablesWithoutViews(): array
     {
@@ -66,7 +66,6 @@ class Collection implements CollectionInterface
         while ($row = $statement->fetch()) {
             $result[] = $row[0];
         }
-        $statement->closeCursor();
 
         return $result;
     }
@@ -74,7 +73,7 @@ class Collection implements CollectionInterface
     /**
      * Get the list of tables and views available in the current connection.
      *
-     * @return array<string> The list of tables and views in the connected database/schema.
+     * @return list<string> The list of tables and views in the connected database/schema.
      */
     public function listTables(): array
     {
@@ -84,7 +83,6 @@ class Collection implements CollectionInterface
         while ($row = $statement->fetch()) {
             $result[] = $row[0];
         }
-        $statement->closeCursor();
 
         return $result;
     }
@@ -104,19 +102,19 @@ class Collection implements CollectionInterface
      *
      * @param string $name The name of the table to describe.
      * @param array<string, mixed> $options The options to use, see above.
-     * @return \Cake\Database\Schema\TableSchema Object with column metadata.
+     * @return \Cake\Database\Schema\TableSchemaInterface Object with column metadata.
      * @throws \Cake\Database\Exception\DatabaseException when table cannot be described.
      */
     public function describe(string $name, array $options = []): TableSchemaInterface
     {
-        $config = $this->_connection->getDriver()->config();
-        if (strpos($name, '.')) {
+        $config = $this->_connection->config();
+        if (str_contains($name, '.')) {
             [$config['schema'], $name] = explode('.', $name);
         }
         $table = $this->_connection->getDriver()->newTableSchema($name);
 
         $this->_reflect('Column', $name, $config, $table);
-        if (count($table->columns()) === 0) {
+        if ($table->columns() === []) {
             throw new DatabaseException(sprintf('Cannot describe %s. It has 0 columns.', $name));
         }
 
@@ -133,7 +131,7 @@ class Collection implements CollectionInterface
      * @param string $stage The stage name.
      * @param string $name The table name.
      * @param array<string, mixed> $config The config data.
-     * @param \Cake\Database\Schema\TableSchema $schema The table schema instance.
+     * @param \Cake\Database\Schema\TableSchemaInterface $schema The table schema instance.
      * @return void
      * @throws \Cake\Database\Exception\DatabaseException on query failure.
      * @uses \Cake\Database\Schema\SchemaDialect::describeColumnSql
@@ -145,13 +143,13 @@ class Collection implements CollectionInterface
      * @uses \Cake\Database\Schema\SchemaDialect::convertForeignKeyDescription
      * @uses \Cake\Database\Schema\SchemaDialect::convertOptionsDescription
      */
-    protected function _reflect(string $stage, string $name, array $config, TableSchema $schema): void
+    protected function _reflect(string $stage, string $name, array $config, TableSchemaInterface $schema): void
     {
         $describeMethod = "describe{$stage}Sql";
         $convertMethod = "convert{$stage}Description";
 
         [$sql, $params] = $this->_dialect->{$describeMethod}($name, $config);
-        if (empty($sql)) {
+        if (!$sql) {
             return;
         }
         try {
@@ -159,10 +157,8 @@ class Collection implements CollectionInterface
         } catch (PDOException $e) {
             throw new DatabaseException($e->getMessage(), 500, $e);
         }
-        /** @psalm-suppress PossiblyFalseIterator */
         foreach ($statement->fetchAll('assoc') as $row) {
             $this->_dialect->{$convertMethod}($schema, $row);
         }
-        $statement->closeCursor();
     }
 }
