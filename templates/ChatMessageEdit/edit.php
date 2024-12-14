@@ -5,20 +5,23 @@
  */
 ?>
 <div class="row">
-    <aside class="column">
+    <aside class="column-side">
         <div class="side-nav">
             <h4 class="heading"><?= __('メニュー') ?></h4>
             <?= $this->Html->link(__('発言一覧'), ['action' => 'index'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column-responsive main-container">
         <div class="chatCharacters form content">
             <?php if(isset($chatLog)) { ?>
                 <?= $this->Form->create($chatLog) ?>
                 <fieldset>
                     <legend><?= __('発言編集') ?></legend>
                     <?php
-                        echo $this->Form->control('message', ['label' => '発言']);
+                        echo $this->Form->control('message', [
+                            'label' => '発言',
+                            'maxlength' => '3000',
+                        ]);
                     ?>
                 </fieldset>
                 <?= $this->Form->button(__('編集')) ?>

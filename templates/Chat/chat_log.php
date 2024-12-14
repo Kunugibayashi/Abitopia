@@ -26,6 +26,7 @@ body { color: #606c76; font-size: 1.6em; font-weight: 300; letter-spacing: .01em
 .battle-log-status { display: block; text-align: right; font-size: 1rem; opacity: 0.5; }
 .battle-log-narration { display: block; }
 .battle-log-memo { display: block; font-size: 1rem; opacity: 0.5; }
+.chat-log-title, .chat-log-information, .chat-log-contenar, .chat-log, .chat-log-message, .chat-log-fullname, .chat-log-note, .chat-log-date, .system, .battle-log-narration, .battle-log-memo { word-break: break-all; }
 .bold { font-weight: bold; }
 .oblique { font-style: oblique; }
 .line-through { text-decoration: line-through; }
@@ -36,7 +37,7 @@ body { color: #606c76; font-size: 1.6em; font-weight: 300; letter-spacing: .01em
 <?php
 if (isset($isChatLogWindow) && $isChatLogWindow) {
 ?>
-    <?= $this->Html->script('jquery-3.6.0.min.js') ?>
+    <?= $this->Html->script('jquery-3.7.1.min.js') ?>
     <script>
     // ブラウザによっては初回描画時にも beforeunload が動く
     // そのため、load も設定する
@@ -91,7 +92,7 @@ foreach ($chatLogs as $chatLog) {
         <p class="chat-log <?= $isSystem ?>" style="<?php echo $this->Html->style([
                 'color' => $chatLog->color,
                 'background-color' => $chatLog->backgroundcolor,
-             ]); ?>">
+            ]); ?>">
             <?php if (!$isSystem) { ?>
                 <span class="chat-log-fullname"><?php echo h($chatLog->fullname); ?></span>
                 <span class="chat-log-note">note: <?php echo h($chatLog->note); ?></span>

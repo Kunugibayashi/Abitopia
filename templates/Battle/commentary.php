@@ -55,17 +55,17 @@ if (!$battleTurn || $battleTurn->battle_status == BT_ST_KETYAKU) {
 <table>
     <tbody>
         <tr>
-            <th></th>
-            <th>名前</th>
-            <th>HP</th>
-            <th>SP</th>
-            <th>攻撃力</th>
-            <th>命中率</th>
-            <th>コンボ</th>
-            <th>覚醒</th>
+            <th class="table-column-turn"></th>
+            <th class="table-column-fullname">名前</th>
+            <th class="table-column-hp">HP</th>
+            <th class="table-column-sp">SP</th>
+            <th class="table-column-strength">攻撃力</th>
+            <th class="table-column-dexterity">命中率</th>
+            <th class="table-column-combo">コンボ</th>
+            <th class="table-column-limit-skill">覚醒</th>
         </tr>
         <tr>
-            <th><?= ($isBeforTurn) ? '▷' : '' ?></th>
+            <td><?= ($isBeforTurn) ? '▷' : '' ?></td>
             <td><?= h($beforeChatCharacter->fullname) ?></td>
             <td><?= h($beforeBattleCharacter->hp) ?></td>
             <td><?= h($beforeBattleCharacter->sp) ?></td>
@@ -93,7 +93,7 @@ if (!$battleTurn || $battleTurn->battle_status == BT_ST_KETYAKU) {
             <?php } ?>
         </tr>
         <tr>
-            <th><?= ($isAfterTurn) ? '▷' : '' ?></th>
+            <td><?= ($isAfterTurn) ? '▷' : '' ?></td>
             <td><?= h($afterChatCharacter->fullname) ?></td>
             <td><?= h($afterBattleCharacter->hp) ?></td>
             <td><?= h($afterBattleCharacter->sp) ?></td>

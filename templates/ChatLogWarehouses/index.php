@@ -10,9 +10,9 @@
         <table>
             <thead>
                 <tr>
-                    <th><?= $this->Paginator->sort('created', ['label' => '作成日', ]) ?></th>
-                    <th><?= $this->Paginator->sort('chat_room_title', ['label' => 'ルーム名', ]) ?></th>
-                    <th><?= $this->Paginator->sort('characters', ['label' => '参加者', ]) ?></th>
+                    <th class="table-column-date"><?= $this->Paginator->sort('created', ['label' => '作成日', ]) ?></th>
+                    <th class="table-column-chat-room-title"><?= $this->Paginator->sort('chat_room_title', ['label' => 'ルーム名', ]) ?></th>
+                    <th class="table-column-characters"><?= $this->Paginator->sort('characters', ['label' => '参加者', ]) ?></th>
                     <th class="actions"><?= __('') ?></th>
                 </tr>
             </thead>

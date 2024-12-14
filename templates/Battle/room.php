@@ -4,12 +4,12 @@ if ($chatRoomCss) {
 }
 ?>
 <?= $this->Form->create($chatLog, ['id' => "id-battleform", 'class'=> 'row']) ?>
-<aside class="column">
+<aside class="column-side" id="id-battle-entry-form-wrap">
     <div class="form content" >
         <?php echo $this->element('battle_form'); ?>
     </div>
 </aside>
-<div class="column-responsive column-75" >
+<div class="column-responsive main-container" >
     <div class="form content" >
         <?php echo $this->element('battle_chat_form'); ?>
     </div>
@@ -99,6 +99,12 @@ jQuery(function(){
             console.log(error);
         }).always(() => {
         });
+    });
+
+    jQuery('#id-display-change-button').on('click', function(){
+        jQuery('#note').parent('.input').toggle();
+        jQuery('#id-character-fullname').toggle();
+        jQuery('label[for="message"]').toggle();
     });
 });
 </script>

@@ -1,4 +1,4 @@
-<div class="column-responsive column">
+<div class="column-responsive main-container">
     <div class="content">
         <h3>戦闘の基本</h3>
         <div class="content-description">

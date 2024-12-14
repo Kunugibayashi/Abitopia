@@ -1,10 +1,10 @@
 <?php
 ?>
 <div class="row">
-    <aside class="column">
+    <aside class="column-side">
         <?php echo $this->element('manual_side_nav_item'); ?>
     </aside>
-    <div class="column-responsive column-75">
+    <div class="column-responsive main-container">
         <div class="content">
             <h3>設定</h3>
             <p>

@@ -11,7 +11,7 @@
             <thead>
                 <tr>
                     <th class="table-column-date"><?= $this->Paginator->sort('created', ['label' => '作成日', ]) ?></th>
-                    <th><?= $this->Paginator->sort('title', ['label' => '件名', ]) ?></th>
+                    <th class="table-column-information-title"><?= $this->Paginator->sort('title', ['label' => '件名', ]) ?></th>
                 </tr>
             </thead>
             <tbody>

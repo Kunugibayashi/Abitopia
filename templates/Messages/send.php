@@ -5,13 +5,13 @@
  */
 ?>
 <div class="row">
-    <aside class="column">
+    <aside class="column-side">
         <div class="side-nav">
             <h4 class="heading"><?= __('メニュー') ?></h4>
             <?= $this->Html->link(__('メッセージ一覧'), ['controller' => 'Messages', 'action' => 'index'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column-responsive main-container">
         <div class="messages form content">
             <?= $this->Form->create($receivedMessage) ?>
             <fieldset>
@@ -21,7 +21,7 @@
                     echo $this->Form->control('chat_character_fullname', ['label' => '宛先', 'readonly' => true]);
                     echo $this->Form->control('from_chat_character_key', ['label' => '差出人', 'options' => $fromCharacters]);
                     echo $this->Form->control('title', ['label' => '件名', ]);
-                    echo $this->Form->control('message', ['label' => '本文', ]);
+                    echo $this->Form->control('message', ['label' => '本文', 'maxlength' => '10000', ]);
                 ?>
             </fieldset>
             <?= $this->Form->button(__('送信')) ?>

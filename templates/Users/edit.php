@@ -1,7 +1,7 @@
 <?php
 ?>
 <div class="row">
-    <aside class="column">
+    <aside class="column-side">
         <div class="side-nav">
             <h4 class="heading"><?= __('Actions') ?></h4>
             <?= $this->Form->postLink(
@@ -11,7 +11,7 @@
             ) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column-responsive main-container">
         <div class="users form content">
             <?= $this->Flash->render() ?>
             <?= $this->Form->create($user) ?>

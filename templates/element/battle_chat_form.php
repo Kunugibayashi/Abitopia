@@ -4,15 +4,22 @@ if (!$battleTurn || $battleTurn->battle_status == BT_ST_KETYAKU) {
 }
 ?>
 <fieldset>
-    <legend><?php echo h($chatCharacter->fullname); ?></legend>
+    <legend id="id-character-fullname"><?php echo h($chatCharacter->fullname); ?></legend>
     <?php
         echo $this->Form->control('message', [
             'label' => '発言',
             'maxlength' => '3000',
             'placeholder' => 'Ctrl + Enter で 発言',
         ]);
-        echo $this->Html->link(__('使用可能タグ一覧'), ['controller' => 'Chat', 'action' => 'htmlTagList'], ['target' => '_blank']);
-        echo $this->Form->control('note', ['label' => '備考',]);
+        echo $this->Html->link(__('使用可能タグ一覧'), [
+            'controller' => 'Chat',
+            'action' => 'htmlTagList'
+        ], [
+            'target' => '_blank'
+        ]);
+        echo $this->Form->control('note', [
+            'label' => '備考',
+        ]);
 
         echo $this->Form->hidden('entry_key');
         echo $this->Form->hidden('chat_room_key');
@@ -28,6 +35,10 @@ if (!$battleTurn || $battleTurn->battle_status == BT_ST_KETYAKU) {
     <?= $this->Form->button(__('リロード'), [
             'type' => 'button',
             'id' => 'id-reload-log-button',
+        ]) ?>
+    <?= $this->Form->button(__('表示切替'), [
+            'type' => 'button',
+            'id' => 'id-display-change-button',
         ]) ?>
     <?= $this->Form->button(__('別ウィンドウでログを表示する'), [
             'type' => 'button',

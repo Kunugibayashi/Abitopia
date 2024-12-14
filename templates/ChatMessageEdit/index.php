@@ -7,9 +7,9 @@
         <table>
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>名前</th>
-                    <th>発言</th>
+                    <th class="table-column-id">ID</th>
+                    <th class="table-column-fullname">名前</th>
+                    <th class="table-column-message">発言</th>
                     <th class="table-column-date">発言日</th>
                     <th class="actions"><?= __('') ?></th>
                 </tr>

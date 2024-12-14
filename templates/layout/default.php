@@ -34,8 +34,9 @@ $cakeDescription = 'CakePHP: the rapid development php framework';
     <?= $this->Html->css('cake.css' .'?date=' .CSS_UPDATE_DATE) ?>
     <?= $this->Html->css('base.css' .'?date=' .CSS_UPDATE_DATE) ?>
     <?= $this->Html->css('modal.css' .'?date=' .CSS_UPDATE_DATE) ?>
+    <?= $this->Html->css('user-edit.css' .'?date=' .CSS_UPDATE_DATE) ?>
 
-    <?= $this->Html->script('jquery-3.6.0.min.js') ?>
+    <?= $this->Html->script('jquery-3.7.1.min.js') ?>
     <?= $this->Html->script('jquery-modal.js') ?>
 
     <?= $this->fetch('meta') ?>

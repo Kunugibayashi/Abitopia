@@ -5,7 +5,7 @@
  */
 ?>
 <div class="row">
-    <div class="column-responsive column">
+    <div class="column-responsive">
         <div class="chatRooms form content">
             <?= $this->Form->create($chatRoom) ?>
             <fieldset>

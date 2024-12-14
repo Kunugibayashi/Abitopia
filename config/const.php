@@ -1,6 +1,7 @@
 <?php
-// CSS更新用（形式はYYYYMMDD）
-define('CSS_UPDATE_DATE', '20241210');
+// CSS更新用文字列
+define('CSS_UPDATE_DATE', '202412101730'); // リリース時用文字列。'202412120101' など数値のみ日付推奨。
+// define('CSS_UPDATE_DATE', date("YmdHis")); // テスト用関数。読み込み毎に更新。
 // PHPメモリ上限
 define('PHP_MEMORY_LIMIT', '3072M');
 // 攻撃属性

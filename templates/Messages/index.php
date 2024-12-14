@@ -14,10 +14,10 @@
             <thead>
                 <tr>
                     <th class="table-column-date"><?= __('受信日') ?></th>
-                    <th><?= __('宛先') ?></th>
-                    <th><?= __('差出人') ?></th>
-                    <th><?= __('件名') ?></th>
-                    <th><?= __('') ?></th>
+                    <th class="table-column-fullname"><?= __('宛先') ?></th>
+                    <th class="table-column-fullname"><?= __('差出人') ?></th>
+                    <th class="table-column-message-title"><?= __('件名') ?></th>
+                    <th class="action"><?= __('') ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -50,10 +50,10 @@
             <thead>
                 <tr>
                     <th class="table-column-date"><?= __('送信日') ?></th>
-                    <th><?= __('宛先') ?></th>
-                    <th><?= __('差出人') ?></th>
-                    <th><?= __('件名') ?></th>
-                    <th><?= __('') ?></th>
+                    <th class="table-column-fullname"><?= __('宛先') ?></th>
+                    <th class="table-column-fullname"><?= __('差出人') ?></th>
+                    <th class="table-column-message-title"><?= __('件名') ?></th>
+                    <th class="actions"><?= __('') ?></th>
                 </tr>
             </thead>
             <tbody>

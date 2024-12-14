@@ -76,6 +76,7 @@ class ChatMessageEditController extends AppController
 
             $chatCharacters = $this->paginate($chatLogs);
             $this->set(compact('chatLogs'));
+            $this->set(compact('chatCharacters'));
         }
     }
 

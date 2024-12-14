@@ -1,10 +1,10 @@
 <?php
 ?>
 <div class="row">
-    <aside class="column">
+    <aside class="column-side">
         <?php echo $this->element('manual_side_nav_item'); ?>
     </aside>
-    <div class="column-responsive column-75">
+    <div class="column-responsive main-container">
         <div class="content">
             <h3 id="level">レベル</h3>
             <div class="content-description">
@@ -63,7 +63,7 @@
                     <dd>
                         <p>
                             ダメージに関係するステータスです。<br>
-                            腕力0で基本ダメージ５。1ずつ増やすごとに1加算されます。最大6で基本ダメージ11。<br>
+                            腕力0で基本ダメージ5。1ずつ増やすごとに1加算されます。最大6で基本ダメージ11。<br>
                         </p>
                     </dd>
                 </dl>
@@ -72,7 +72,7 @@
                     <dd>
                         <p>
                             命中率に関係するステータスです。<br>
-                            敏捷0で基本命中率20％。1ずつ増やすごとに10％加算されます。最大6で基本命中率80%。<br>
+                            敏捷0で基本命中率20%。1ずつ増やすごとに10%加算されます。最大6で基本命中率80%。<br>
                         </p>
                     </dd>
                 </dl>

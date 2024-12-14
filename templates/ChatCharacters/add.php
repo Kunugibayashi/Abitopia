@@ -5,13 +5,13 @@
  */
 ?>
 <div class="row">
-    <aside class="column">
+    <aside class="column-side">
         <div class="side-nav">
             <h4 class="heading"><?= __('メニュー') ?></h4>
             <?= $this->Html->link(__('名簿'), ['action' => 'index'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column-responsive main-container">
         <div class="chatCharacters form content">
             <?= $this->Form->create($chatCharacter) ?>
             <fieldset>

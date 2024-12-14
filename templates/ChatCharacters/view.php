@@ -22,27 +22,27 @@
             <h3><?= h($chatCharacter->fullname) ?></h3>
             <table>
                 <tr>
-                    <th><?= __('名前') ?></th>
+                    <th class="table-column-head"><?= __('名前') ?></th>
                     <td><?= h($chatCharacter->fullname) ?></td>
                 </tr>
                 <tr>
-                    <th><?= __('性別') ?></th>
+                    <th class="table-column-head"><?= __('性別') ?></th>
                     <td><?= h($chatCharacter->sex) ?></td>
                 </tr>
                 <tr>
-                    <th><?= __('色') ?></th>
+                    <th class="table-column-head"><?= __('色') ?></th>
                     <td><span style="color:<?= $chatCharacter->color ?>"><?= h($chatCharacter->color) ?></span></td>
                 </tr>
                 <tr>
-                    <th><?= __('背景色') ?></th>
+                    <th class="table-column-head"><?= __('背景色') ?></th>
                     <td><span style="color:<?= $chatCharacter->backgroundcolor ?>"><?= h($chatCharacter->backgroundcolor) ?></span></td>
                 </tr>
                 <tr>
-                    <th><?= __('タグ') ?></th>
+                    <th class="table-column-head"><?= __('タグ') ?></th>
                     <td><?= h($chatCharacter->tag) ?></td>
                 </tr>
                 <tr>
-                    <th><?= __('URL') ?></th>
+                    <th class="table-column-head"><?= __('URL') ?></th>
                     <td>
                         <?php
                         if (isset($chatCharacter->url) && !empty($chatCharacter->url)) {
@@ -52,39 +52,39 @@
                     </td>
                 </tr>
                 <tr>
-                    <th><?= __('レベル') ?></th>
+                    <th class="table-column-head"><?= __('レベル') ?></th>
                     <td><?= h($chatCharacter->battle_character_status->level) ?></td>
                 </tr>
                 <tr>
-                    <th><?= __('腕力') ?></th>
+                    <th class="table-column-head"><?= __('腕力') ?></th>
                     <td><?= h($chatCharacter->battle_character_status->strength) ?></td>
                 </tr>
                 <tr>
-                    <th><?= __('敏捷') ?></th>
+                    <th class="table-column-head"><?= __('敏捷') ?></th>
                     <td><?= h($chatCharacter->battle_character_status->dexterity) ?></td>
                 </tr>
                 <tr>
-                    <th><?= __('体力') ?></th>
+                    <th class="table-column-head"><?= __('体力') ?></th>
                     <td><?= h($chatCharacter->battle_character_status->stamina) ?></td>
                 </tr>
                 <tr>
-                    <th><?= __('精神') ?></th>
+                    <th class="table-column-head"><?= __('精神') ?></th>
                     <td><?= h($chatCharacter->battle_character_status->spirit) ?></td>
                 </tr>
                 <tr>
-                    <th><?= __('更新日') ?></th>
+                    <th class="table-column-head"><?= __('更新日') ?></th>
                     <td><?= h($chatCharacter->modified) ?></td>
                 </tr>
                 <tr>
-                    <th><?= __('作成日') ?></th>
+                    <th class="table-column-head"><?= __('作成日') ?></th>
                     <td><?= h($chatCharacter->created) ?></td>
                 </tr>
             </table>
-            <div class="text">
+            <div class="text-wrap">
                 <strong><?= __('詳細') ?></strong>
-                <blockquote>
+                <p class="detail-wrap">
                     <?php echo nl2br(h($chatCharacter->detail)); ?>
-                </blockquote>
+                </p>
             </div>
         </div>
     </div>

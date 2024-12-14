@@ -5,7 +5,7 @@
  */
 ?>
 <div class="row">
-    <aside class="column">
+    <aside class="column-side">
         <div class="side-nav">
             <h4 class="heading"><?= __('メニュー') ?></h4>
             <?= $this->Form->postLink(
@@ -16,7 +16,7 @@
             <?= $this->Html->link(__('登録キャラクター編集'), ['action' => 'index'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column-responsive main-container">
         <div class="chatCharacters form content">
             <?= $this->Form->create($chatCharacter) ?>
             <fieldset>
@@ -29,7 +29,10 @@
                     echo $this->Form->control('tag', ['label' => 'タグ']);
                     echo $this->Form->control('url', ['label' => 'URL']);
                     echo $this->element('battle_status_form_control');
-                    echo $this->Form->control('detail', ['label' => '詳細']);
+                    echo $this->Form->control('detail', [
+                        'label' => '詳細',
+                        'maxlength' => '10000',
+                    ]);
                 ?>
             </fieldset>
             <?= $this->Form->button(__('編集')) ?>

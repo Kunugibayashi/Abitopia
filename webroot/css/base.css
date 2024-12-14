@@ -4,15 +4,25 @@ body {
 h1, h2, h3, h4, h5, h6 {
     margin: 0;
     padding: 0;
+    word-break: break-all;
 }
 footer {
     display: flex;
 }
 ul {
     list-style: none;
+    word-break: break-all;
+}
+li {
+    word-break: break-all;
 }
 a {
     cursor: pointer;
+}
+a[href="#"] {
+    display: inline-block;
+    width: 5rem;
+    max-width: 5rem;
 }
 .button, button, input[type='button'], input[type='reset'], input[type='submit'] {
     text-transform: none;
@@ -20,13 +30,30 @@ a {
 label {
     font-size: 1.5rem;
     margin-bottom: 0.5rem;
+    word-break: break-all;
 }
 legend {
     font-size: 2rem;
     margin-bottom: 0.5rem;
+    word-break: break-all;
 }
 fieldset, input, select, textarea {
     margin-bottom: 1rem;
+}
+div {
+    word-break: break-all;
+}
+p {
+    word-break: break-all;
+}
+table, th, td {
+    word-break: break-all;
+}
+td {
+    overflow: hidden;
+}
+blockquote {
+    word-break: break-all;
 }
 .container {
     display: flex;
@@ -73,7 +100,10 @@ ul.manual-menu a {
     margin: 0;
     padding: 0;
 }
-/* button */
+
+/* ************************************************************************* */
+/* button                                                                    */
+/* ************************************************************************* */
 button {
     background-color: #b0c4de;
     color: #000000;
@@ -100,7 +130,10 @@ button.warning:focus {
 button + button {
     margin-left: 1rem;
 }
-/* footer */
+
+/* ************************************************************************* */
+/* footer                                                                    */
+/* ************************************************************************* */
 .site-footer {
     display: flex;
     flex-direction: column;
@@ -116,8 +149,17 @@ button + button {
     margin: 0 auto;
 }
 
-/* Nav bar */
+/* ************************************************************************* */
+/* Nav bar                                                                   */
+/* ************************************************************************* */
 .top-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 90vW;
+    padding: 2rem;
+    margin: 0 auto 2rem;
 }
 .top-nav-title a {
     display: inline-block;
@@ -142,7 +184,38 @@ button + button {
     color: #d33c43;
 }
 
-/* chat */
+
+/* ************************************************************************* */
+/* container                                                                 */
+/* ************************************************************************* */
+.container {
+    display: flex;
+    width: 90vW;
+    max-width: 90vW;
+    padding: 0 2rem;
+    margin: 0 auto 2rem;
+}
+.row .column.main-container,
+.row .column-responsive.main-container {
+    width: 100%;
+}
+.column-side {
+    width: 100%;
+}
+@media (min-width: 640px) {
+    .row .column-responsive.main-container {
+        width: calc(100% - 25rem); /* 100% - 再度メニュー幅rem */
+    }
+    .column-side {
+        width: 25rem;
+        max-width: 25rem;
+        min-width: 25rem;
+    }
+}
+
+/* ************************************************************************* */
+/* chat                                                                      */
+/* ************************************************************************* */
 .chat-chatroom-title {
     display: inline-block;
     padding: 0.2rem;
@@ -158,12 +231,16 @@ button + button {
     color: #ff0000;
 }
 
-/* form */
+/* ************************************************************************* */
+/* form                                                                      */
+/* ************************************************************************* */
 #chatentry-form {
     margin-top: 2rem;
 }
 
-/* top */
+/* ************************************************************************* */
+/* top                                                                       */
+/* ************************************************************************* */
 .chatroomlist-name {
     display: inline-block;
     padding: 0.2rem;
@@ -171,18 +248,23 @@ button + button {
     border-radius: 0.5rem;
 }
 
-/* modal */
+/* ************************************************************************* */
+/* modal                                                                     */
+/* ************************************************************************* */
 .modal-body {
     overflow: scroll;
     height: 60vh;
 }
 
-/* button */
+/* ************************************************************************* */
+/* button                                                                    */
+/* ************************************************************************* */
 .button-container {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
     align-content: flex-end;
+    flex-wrap: wrap;
 }
 .button-hidden {
     width: 1px;
@@ -199,18 +281,82 @@ button + button {
     display: flex;
 }
 
-/* table */
-.namelist-table {
-    width: 140rem;
-}
-.table-column-date {
-    width: 20rem;
+/* ************************************************************************* */
+/* table                                                                     */
+/* ************************************************************************* */
+.table-column-head {
+    width: 15rem;
+    min-width: 15rem;
 }
 .table-column-showlog {
     width: 10rem;
 }
+.table-column-date {
+    width: 20rem;
+    min-width: 20rem;
+}
+.table-column-fullname {
+    width: 30rem;
+    min-width: 30rem;
+}
+.table-column-chat-room-title {
+    width: 25rem;
+}
+.table-column-turn {
+    width: 2rem;
+}
+.table-column-hp,
+.table-column-sp {
+    width: 8rem;
+}
+.table-column-strength,
+.table-column-dexterity,
+.table-column-combo {
+    width: 10rem;
+}
+.table-column-tag-name,
+.table-column-class-name {
+    width: 25rem;
+}
+.table-column-sample {
+    width: 25rem;
+}
+.table-column-id {
+    width: 5rem;
+    min-width: 5rem;
+}
+.table-column-sex {
+    width: 15rem;
+    min-width: 15rem;
+}
+.table-column-tag {
+    min-width: 25rem;
+}
+.table-column-url {
+    width: 5rem;
+}
+.table-column-color,
+.table-column-backgroundcolor {
+    width: 12rem;
+    min-width: 12rem;
+}
+.table-column-level {
+    width: 5rem;
+    min-width: 5rem;
+}
+.table-column-status {
+    width: 10rem;
+    min-width: 10rem;
+}
+.text-wrap strong,
+.message-wrap strong {
+    display: block;
+    padding: 12px 0;
+}
 
-/* 戦闘用 */
+/* ************************************************************************* */
+/* 戦闘用                                                                    */
+/* ************************************************************************* */
 .battle-skill-label {
     font-weight: normal;
 }
@@ -240,7 +386,9 @@ button + button {
     text-align: center;
 }
 
-/* commentary */
+/* ************************************************************************* */
+/* commentary                                                                */
+/* ************************************************************************* */
 .commentary-comment {
     margin: 1rem 0;
 }
