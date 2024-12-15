@@ -1,0 +1,10 @@
+@charset "utf-8";
+/* チャットルームデザインサンプルCSS */
+
+body {
+    background-color: #d3d3d3; /* 背景色 */
+    background-image: url('../../img/room/sample.png'); /* 背景画像 */
+    background-position-x: left;
+    background-position-y: top;
+    background-repeat: no-repeat;
+}

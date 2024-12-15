@@ -3,6 +3,7 @@ webroot/css/room/*.css
 webroot/img/room/*.png
 webroot/img/room/*.gif
 webroot/img/room/*.jpg
+webroot/css/user-edit.css
 
 # CakePHP specific files #
 ##########################
@@ -47,3 +48,8 @@ nbproject/*
 .vscode
 # Sass preprocessor
 .sass-cache/
+
+# Not excluded        #
+#######################
+!webroot/css/room/sample.css
+!webroot/img/room/sample.png

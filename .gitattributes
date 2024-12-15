@@ -48,6 +48,11 @@
 *.webm binary
 *.mp4 binary
 *.ogv binary
+*.otf binary
+*.eot binary
+*.svg binary
+*.ttf binary
+*.woff binary
 
 # Remove files for archives generated using `git archive`
 phpstan.neon export-ignore
