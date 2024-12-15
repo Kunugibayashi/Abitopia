@@ -4,8 +4,8 @@
         <div class="content-more" id="view-count"></div>
     </header>
     <div class="table-responsive" id="id-chatroomlist-table">
-
     </div>
+    <div id="id-chatroomlist-reload">（自動更新）</div>
 </div>
 <script>
 jQuery(function(){
@@ -20,10 +20,14 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
-            // clearInterval(this.getChatRoomListObj);
-            // this.getChatRoomListObj = setInterval(function() {
-            //     getChatRoomList();
-            // }, 20 * 1000);
+            // 自動更新を有効にする場合はコメントアウトを外してください
+            // ここから
+            jQuery('#id-chatroomlist-reload').show();
+            clearInterval(this.getChatRoomListObj);
+            this.getChatRoomListObj = setInterval(function() {
+                getChatRoomList();
+            }, 20 * 1000);
+            // ここまで
         });
     }
     getChatRoomList();

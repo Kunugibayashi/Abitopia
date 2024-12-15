@@ -9,6 +9,7 @@
     </header>
     <div class="table-responsive" id="id-chatlogwarehouses-table">
     </div>
+    <div id="id-chatlogwarehouses-reload">（自動更新）</div>
 </div>
 <script>
 jQuery(function(){
@@ -23,10 +24,14 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
+            // 自動更新を有効にする場合はコメントアウトを外してください
+            // ここから
+            // jQuery('#id-chatlogwarehouses-reload').show();
             // clearInterval(this.getChatLogWarehousesObj);
             // this.getChatLogWarehousesObj = setInterval(function() {
             //     getChatLogWarehouses();
             // }, 20 * 1000);
+            // ここまで
         });
     }
     getChatLogWarehouses();

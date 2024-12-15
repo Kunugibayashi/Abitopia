@@ -9,6 +9,7 @@
     </header>
     <div class="table-responsive" id="id-information-table">
     </div>
+    <div id="id-information-reload">（自動更新）</div>
 </div>
 <script>
 jQuery(function(){
@@ -23,10 +24,14 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
+            // 自動更新を有効にする場合はコメントアウトを外してください
+            // ここから
+            // jQuery('#id-information-reload').show();
             // clearInterval(this.getInformationTimerObj);
             // this.getInformationTimerObj = setInterval(function() {
             //     getInformation();
             // }, 20 * 1000);
+            // ここまで
         });
     }
     getInformation();

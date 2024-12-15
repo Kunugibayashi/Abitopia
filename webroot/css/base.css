@@ -392,3 +392,19 @@ button + button {
 .commentary-comment {
     margin: 1rem 0;
 }
+
+/* ************************************************************************* */
+/* index                                                                     */
+/* ************************************************************************* */
+#id-information-reload,
+#id-messages-reload,
+#id-namelist-reload,
+#id-chatroomlist-reload,
+#id-chathistory-reload,
+#id-chatlogwarehouses-reload {
+    display: none;
+    margin: 1rem 0;
+    font-size: 1rem;
+    text-align: right;
+    opacity: 0.5;
+}
