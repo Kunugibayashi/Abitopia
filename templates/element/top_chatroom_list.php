@@ -22,11 +22,11 @@ jQuery(function(){
         }).always(() => {
             // 自動更新を有効にする場合はコメントアウトを外してください
             // ここから
-            jQuery('#id-chatroomlist-reload').show();
-            clearInterval(this.getChatRoomListObj);
-            this.getChatRoomListObj = setInterval(function() {
-                getChatRoomList();
-            }, 20 * 1000);
+            // jQuery('#id-chatroomlist-reload').show();
+            // clearInterval(this.getChatRoomListObj);
+            // this.getChatRoomListObj = setInterval(function() {
+            //     getChatRoomList();
+            // }, 20 * 1000);
             // ここまで
         });
     }

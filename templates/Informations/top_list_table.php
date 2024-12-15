@@ -1,4 +1,4 @@
-<table>
+<table class="index-table">
     <tbody>
         <?php foreach ($informations as $key => $information) { ?>
         <tr>

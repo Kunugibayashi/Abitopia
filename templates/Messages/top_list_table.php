@@ -1,6 +1,6 @@
 <?php
 ?>
-<table>
+<table class="index-table">
     <tbody>
         <?php if (isset($receivedMessages) && $receivedMessages) { ?>
             <?php foreach ($receivedMessages as $key => $receivedMessage) { ?>

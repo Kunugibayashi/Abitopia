@@ -1,4 +1,4 @@
-<table>
+<table class="index-table">
     <tbody>
         <?php foreach ($chatCharacters as $key => $chatCharacter) { ?>
         <tr>

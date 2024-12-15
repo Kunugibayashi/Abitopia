@@ -49,9 +49,6 @@ p {
 table, th, td {
     word-break: break-all;
 }
-td {
-    overflow: hidden;
-}
 blockquote {
     word-break: break-all;
 }
@@ -202,6 +199,7 @@ button + button {
 .column-side {
     width: 100%;
 }
+/* 通常画面設定 */
 @media (min-width: 640px) {
     .row .column-responsive.main-container {
         width: calc(100% - 25rem); /* 100% - 再度メニュー幅rem */
@@ -288,70 +286,145 @@ button + button {
     width: 15rem;
     min-width: 15rem;
 }
-.table-column-showlog {
-    width: 10rem;
-}
-.table-column-date {
-    width: 20rem;
-    min-width: 20rem;
-}
-.table-column-fullname {
-    width: 30rem;
-    min-width: 30rem;
-}
-.table-column-chat-room-title {
-    width: 25rem;
-}
-.table-column-turn {
-    width: 2rem;
-}
-.table-column-hp,
-.table-column-sp {
-    width: 8rem;
-}
-.table-column-strength,
-.table-column-dexterity,
-.table-column-combo {
-    width: 10rem;
-}
-.table-column-tag-name,
-.table-column-class-name {
-    width: 25rem;
-}
-.table-column-sample {
-    width: 25rem;
-}
-.table-column-id {
-    width: 5rem;
-    min-width: 5rem;
-}
-.table-column-sex {
-    width: 15rem;
-    min-width: 15rem;
-}
-.table-column-tag {
-    min-width: 25rem;
-}
-.table-column-url {
-    width: 5rem;
-}
-.table-column-color,
-.table-column-backgroundcolor {
-    width: 12rem;
-    min-width: 12rem;
-}
-.table-column-level {
-    width: 5rem;
-    min-width: 5rem;
-}
-.table-column-status {
-    width: 10rem;
-    min-width: 10rem;
-}
 .text-wrap strong,
 .message-wrap strong {
     display: block;
     padding: 12px 0;
+}
+table tbody {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+}
+table tbody tr {
+    width: 100%;
+    border-right: none;
+}
+table tbody tr td {
+    width: 100%;
+    border-bottom: none;
+}
+table tbody tr td:last-of-type {
+    width: 100%;
+    border-bottom: 0.1rem solid #e1e1e1;
+}
+/* 通常画面設定 */
+@media (min-width: 640px) {
+    table {
+        width: 100%;
+        border-spacing: 0;
+        display: table;
+        border-collapse: separate;
+        text-indent: initial;
+        unicode-bidi: isolate;
+        border-color: gray;
+    }
+    table tbody {
+        width: auto;
+        display: table-row-group;
+        vertical-align: middle;
+        unicode-bidi: isolate;
+        border-color: inherit;
+        vertical-align: top;
+    }
+    table tbody tr {
+        width: auto;
+        display: table-row;
+        vertical-align: inherit;
+        unicode-bidi: isolate;
+        border-color: inherit;
+    }
+    table tbody tr td,
+    table tbody tr td:last-of-type {
+        width: auto;
+        border-bottom: 0.1rem solid #e1e1e1;
+        padding: 1.2rem 1.5rem;
+        text-align: left;
+    }
+
+    .table-column-date {
+        width: 20rem;
+        min-width: 20rem;
+    }
+    .table-column-fullname {
+        width: 30rem;
+        min-width: 30rem;
+    }
+    .table-column-chat-room-title {
+        width: 25rem;
+        min-width: 25rem;
+    }
+    .table-column-turn {
+        width: 2rem;
+        min-width: 2rem;
+    }
+    .table-column-hp,
+    .table-column-sp {
+        width: 8rem;
+        min-width: 8rem;
+    }
+    .table-column-strength,
+    .table-column-dexterity,
+    .table-column-combo {
+        width: 10rem;
+        min-width: 10rem;
+    }
+    .table-column-tag-name,
+    .table-column-class-name {
+        width: 25rem;
+        min-width: 25rem;
+    }
+    .table-column-sample {
+        width: 25rem;
+        min-width: 25rem;
+    }
+    .table-column-id {
+        width: 5rem;
+        min-width: 5rem;
+    }
+    .table-column-sex {
+        width: 15rem;
+        min-width: 15rem;
+    }
+    .table-column-tag {
+        width: 25rem;
+        min-width: 25rem;
+    }
+    .table-column-url {
+        width: 5rem;
+        min-width: 5rem;
+    }
+    .table-column-color,
+    .table-column-backgroundcolor {
+        width: 12rem;
+        min-width: 12rem;
+    }
+    .table-column-level {
+        width: 5rem;
+        min-width: 5rem;
+    }
+    .table-column-status {
+        width: 10rem;
+        min-width: 10rem;
+    }
+    .table-column-action1button {
+        width: 7rem;
+        min-width: 7rem;
+    }
+    .table-column-message-title {
+        width: 25rem;
+        min-width: 25rem;
+    }
+    .table-column-detail {
+        width: 25rem;
+        min-width: 25rem;
+        word-break: normal;
+    }
+    .table-column-characters {
+        width: 25rem;
+        min-width: 25rem;
+        word-break: normal;
+    }
 }
 
 /* ************************************************************************* */

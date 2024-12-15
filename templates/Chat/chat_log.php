@@ -33,6 +33,14 @@ body { color: #606c76; font-size: 1.6em; font-weight: 300; letter-spacing: .01em
 .font50 { font-size: 50%; } .font150 { font-size: 150%; } .font200 { font-size: 200%; }
 <?php foreach ($colorCodes as $value) { ?><?php echo "." .$value['name'] ?> { color: <?= $value['code'] ?>; } <?php } ?>
 
+<?php
+// 上記改行用空白
+if (isset($chatRoomCssString)) {
+    echo $chatRoomCssString;
+}
+// 下記改行用空白
+?>
+
 </style>
 <?php
 if (isset($isChatLogWindow) && $isChatLogWindow) {

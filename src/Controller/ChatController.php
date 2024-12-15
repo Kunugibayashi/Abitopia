@@ -485,6 +485,8 @@ class ChatController extends AppController
             $chatRoom = $chatLogs[0];
         }
 
+        $chatRoomCssString = $this->CheckFile->getChatRoomCssString($chatRoomId);
+
         $colorCodes = Configure::read('ColorCodes');
 
         $this->set(compact('chatLogs'));
@@ -492,6 +494,7 @@ class ChatController extends AppController
         $this->set(compact('chatRoomId'));
         $this->set(compact('chatEntryKey'));
         $this->set(compact('colorCodes'));
+        $this->set(compact('chatRoomCssString'));
 
         return $this->render('chatLog');
     }

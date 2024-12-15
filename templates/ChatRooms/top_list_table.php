@@ -1,6 +1,6 @@
 <?php
 ?>
-<table>
+<table class="index-table">
     <tbody>
         <?php foreach ($chatRooms as $key => $chatRoom) { ?>
         <tr>
