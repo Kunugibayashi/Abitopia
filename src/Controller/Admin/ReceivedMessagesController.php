@@ -9,7 +9,6 @@ use App\Controller\AppController;
  * ReceivedMessages Controller
  *
  * @property \App\Model\Table\ReceivedMessagesTable $ReceivedMessages
- * @method \App\Model\Entity\ReceivedMessage[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class ReceivedMessagesController extends AppController
 {
@@ -20,10 +19,9 @@ class ReceivedMessagesController extends AppController
      */
     public function index()
     {
-        $this->paginate = [
-            'contain' => ['Users'],
-        ];
-        $receivedMessages = $this->paginate($this->ReceivedMessages);
+        $query = $this->ReceivedMessages->find()
+            ->contain(['Users']);
+        $receivedMessages = $this->paginate($query);
 
         $this->set(compact('receivedMessages'));
     }
@@ -38,7 +36,6 @@ class ReceivedMessagesController extends AppController
     public function view($id = null)
     {
         $receivedMessage = $this->ReceivedMessages->get($id, contain: ['Users']);
-
         $this->set(compact('receivedMessage'));
     }
 
@@ -59,7 +56,7 @@ class ReceivedMessagesController extends AppController
             }
             $this->Flash->error(__('The received message could not be saved. Please, try again.'));
         }
-        $users = $this->ReceivedMessages->Users->find('list', ['limit' => 200]);
+        $users = $this->ReceivedMessages->Users->find('list', limit: 200)->all();
         $this->set(compact('receivedMessage', 'users'));
     }
 
@@ -82,7 +79,7 @@ class ReceivedMessagesController extends AppController
             }
             $this->Flash->error(__('The received message could not be saved. Please, try again.'));
         }
-        $users = $this->ReceivedMessages->Users->find('list', ['limit' => 200]);
+        $users = $this->ReceivedMessages->Users->find('list', limit: 200)->all();
         $this->set(compact('receivedMessage', 'users'));
     }
 
@@ -90,7 +87,7 @@ class ReceivedMessagesController extends AppController
      * Delete method
      *
      * @param string|null $id Received Message id.
-     * @return \Cake\Http\Response|null|void Redirects to index.
+     * @return \Cake\Http\Response|null Redirects to index.
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function delete($id = null)

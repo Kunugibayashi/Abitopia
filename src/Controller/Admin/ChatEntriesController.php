@@ -9,7 +9,6 @@ use App\Controller\AppController;
  * ChatEntries Controller
  *
  * @property \App\Model\Table\ChatEntriesTable $ChatEntries
- * @method \App\Model\Entity\ChatEntry[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class ChatEntriesController extends AppController
 {
@@ -20,10 +19,9 @@ class ChatEntriesController extends AppController
      */
     public function index()
     {
-        $this->paginate = [
-            'contain' => ['ChatRooms', 'Users', 'ChatCharacters'],
-        ];
-        $chatEntries = $this->paginate($this->ChatEntries);
+        $query = $this->ChatEntries->find()
+            ->contain(['ChatRooms', 'Users', 'ChatCharacters']);
+        $chatEntries = $this->paginate($query);
 
         $this->set(compact('chatEntries'));
     }
@@ -38,7 +36,6 @@ class ChatEntriesController extends AppController
     public function view($id = null)
     {
         $chatEntry = $this->ChatEntries->get($id, contain: ['ChatRooms', 'Users', 'ChatCharacters']);
-
         $this->set(compact('chatEntry'));
     }
 
@@ -59,9 +56,9 @@ class ChatEntriesController extends AppController
             }
             $this->Flash->error(__('The chat entry could not be saved. Please, try again.'));
         }
-        $chatRooms = $this->ChatEntries->ChatRooms->find('list', ['limit' => 200]);
-        $users = $this->ChatEntries->Users->find('list', ['limit' => 200]);
-        $chatCharacters = $this->ChatEntries->ChatCharacters->find('list', ['limit' => 200]);
+        $chatRooms = $this->ChatEntries->ChatRooms->find('list', limit: 200)->all();
+        $users = $this->ChatEntries->Users->find('list', limit: 200)->all();
+        $chatCharacters = $this->ChatEntries->ChatCharacters->find('list', limit: 200)->all();
         $this->set(compact('chatEntry', 'chatRooms', 'users', 'chatCharacters'));
     }
 
@@ -84,9 +81,9 @@ class ChatEntriesController extends AppController
             }
             $this->Flash->error(__('The chat entry could not be saved. Please, try again.'));
         }
-        $chatRooms = $this->ChatEntries->ChatRooms->find('list', ['limit' => 200]);
-        $users = $this->ChatEntries->Users->find('list', ['limit' => 200]);
-        $chatCharacters = $this->ChatEntries->ChatCharacters->find('list', ['limit' => 200]);
+        $chatRooms = $this->ChatEntries->ChatRooms->find('list', limit: 200)->all();
+        $users = $this->ChatEntries->Users->find('list', limit: 200)->all();
+        $chatCharacters = $this->ChatEntries->ChatCharacters->find('list', limit: 200)->all();
         $this->set(compact('chatEntry', 'chatRooms', 'users', 'chatCharacters'));
     }
 
@@ -94,7 +91,7 @@ class ChatEntriesController extends AppController
      * Delete method
      *
      * @param string|null $id Chat Entry id.
-     * @return \Cake\Http\Response|null|void Redirects to index.
+     * @return \Cake\Http\Response|null Redirects to index.
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function delete($id = null)

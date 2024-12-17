@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
-use Cake\ORM\Query;
+use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -15,17 +15,17 @@ use Cake\Validation\Validator;
  *
  * @method \App\Model\Entity\SendMessage newEmptyEntity()
  * @method \App\Model\Entity\SendMessage newEntity(array $data, array $options = [])
- * @method \App\Model\Entity\SendMessage[] newEntities(array $data, array $options = [])
- * @method \App\Model\Entity\SendMessage get($primaryKey, $options = [])
- * @method \App\Model\Entity\SendMessage findOrCreate($search, ?callable $callback = null, $options = [])
+ * @method array<\App\Model\Entity\SendMessage> newEntities(array $data, array $options = [])
+ * @method \App\Model\Entity\SendMessage get(mixed $primaryKey, array|string $finder = 'all', \Psr\SimpleCache\CacheInterface|string|null $cache = null, \Closure|string|null $cacheKey = null, mixed ...$args)
+ * @method \App\Model\Entity\SendMessage findOrCreate($search, ?callable $callback = null, array $options = [])
  * @method \App\Model\Entity\SendMessage patchEntity(\Cake\Datasource\EntityInterface $entity, array $data, array $options = [])
- * @method \App\Model\Entity\SendMessage[] patchEntities(iterable $entities, array $data, array $options = [])
- * @method \App\Model\Entity\SendMessage|false save(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\SendMessage saveOrFail(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\SendMessage[]|\Cake\Datasource\ResultSetInterface|false saveMany(iterable $entities, $options = [])
- * @method \App\Model\Entity\SendMessage[]|\Cake\Datasource\ResultSetInterface saveManyOrFail(iterable $entities, $options = [])
- * @method \App\Model\Entity\SendMessage[]|\Cake\Datasource\ResultSetInterface|false deleteMany(iterable $entities, $options = [])
- * @method \App\Model\Entity\SendMessage[]|\Cake\Datasource\ResultSetInterface deleteManyOrFail(iterable $entities, $options = [])
+ * @method array<\App\Model\Entity\SendMessage> patchEntities(iterable $entities, array $data, array $options = [])
+ * @method \App\Model\Entity\SendMessage|false save(\Cake\Datasource\EntityInterface $entity, array $options = [])
+ * @method \App\Model\Entity\SendMessage saveOrFail(\Cake\Datasource\EntityInterface $entity, array $options = [])
+ * @method iterable<\App\Model\Entity\SendMessage>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\SendMessage>|false saveMany(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\SendMessage>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\SendMessage> saveManyOrFail(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\SendMessage>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\SendMessage>|false deleteMany(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\SendMessage>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\SendMessage> deleteManyOrFail(iterable $entities, array $options = [])
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
@@ -34,7 +34,7 @@ class SendMessagesTable extends Table
     /**
      * Initialize method
      *
-     * @param array $config The configuration for the Table.
+     * @param array<string, mixed> $config The configuration for the Table.
      * @return void
      */
     public function initialize(array $config): void
@@ -62,8 +62,8 @@ class SendMessagesTable extends Table
     public function validationDefault(Validator $validator): Validator
     {
         $validator
-            ->nonNegativeInteger('id')
-            ->allowEmptyString('id', null, 'create');
+            ->nonNegativeInteger('user_id')
+            ->notEmptyString('user_id');
 
         $validator
             ->nonNegativeInteger('chat_character_key')
@@ -110,7 +110,7 @@ class SendMessagesTable extends Table
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add($rules->existsIn(['user_id'], 'Users'));
+        $rules->add($rules->existsIn(['user_id'], 'Users'), ['errorField' => 'user_id']);
 
         return $rules;
     }

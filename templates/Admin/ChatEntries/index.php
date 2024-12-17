@@ -1,7 +1,7 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\ChatEntry[]|\Cake\Collection\CollectionInterface $chatEntries
+ * @var iterable<\App\Model\Entity\ChatEntry> $chatEntries
  */
 ?>
 <div class="chatEntries index content">
@@ -25,9 +25,9 @@
                 <?php foreach ($chatEntries as $chatEntry): ?>
                 <tr>
                     <td><?= $this->Number->format($chatEntry->id) ?></td>
-                    <td><?= $chatEntry->has('chat_room') ? $this->Html->link($chatEntry->chat_room->title, ['controller' => 'ChatRooms', 'action' => 'view', $chatEntry->chat_room->id]) : '' ?></td>
-                    <td><?= $chatEntry->has('user') ? $this->Html->link($chatEntry->user->id, ['controller' => 'Users', 'action' => 'view', $chatEntry->user->id]) : '' ?></td>
-                    <td><?= $chatEntry->has('chat_character') ? $this->Html->link($chatEntry->chat_character->id, ['controller' => 'ChatCharacters', 'action' => 'view', $chatEntry->chat_character->id]) : '' ?></td>
+                    <td><?= $chatEntry->hasValue('chat_room') ? $this->Html->link($chatEntry->chat_room->title, ['controller' => 'ChatRooms', 'action' => 'view', $chatEntry->chat_room->id]) : '' ?></td>
+                    <td><?= $chatEntry->hasValue('user') ? $this->Html->link($chatEntry->user->id, ['controller' => 'Users', 'action' => 'view', $chatEntry->user->id]) : '' ?></td>
+                    <td><?= $chatEntry->hasValue('chat_character') ? $this->Html->link($chatEntry->chat_character->id, ['controller' => 'ChatCharacters', 'action' => 'view', $chatEntry->chat_character->id]) : '' ?></td>
                     <td><?= h($chatEntry->entry_key) ?></td>
                     <td><?= h($chatEntry->modified) ?></td>
                     <td><?= h($chatEntry->created) ?></td>

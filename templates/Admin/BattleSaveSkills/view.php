@@ -14,17 +14,17 @@
             <?= $this->Html->link(__('New Battle Save Skill'), ['action' => 'add'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="battleSaveSkills view content">
             <h3><?= h($battleSaveSkill->id) ?></h3>
             <table>
                 <tr>
                     <th><?= __('Battle Turn') ?></th>
-                    <td><?= $battleSaveSkill->has('battle_turn') ? $this->Html->link($battleSaveSkill->battle_turn->id, ['controller' => 'BattleTurns', 'action' => 'view', $battleSaveSkill->battle_turn->id]) : '' ?></td>
+                    <td><?= $battleSaveSkill->hasValue('battle_turn') ? $this->Html->link($battleSaveSkill->battle_turn->id, ['controller' => 'BattleTurns', 'action' => 'view', $battleSaveSkill->battle_turn->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Chat Character') ?></th>
-                    <td><?= $battleSaveSkill->has('chat_character') ? $this->Html->link($battleSaveSkill->chat_character->id, ['controller' => 'ChatCharacters', 'action' => 'view', $battleSaveSkill->chat_character->id]) : '' ?></td>
+                    <td><?= $battleSaveSkill->hasValue('chat_character') ? $this->Html->link($battleSaveSkill->chat_character->id, ['controller' => 'ChatCharacters', 'action' => 'view', $battleSaveSkill->chat_character->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Id') ?></th>
@@ -32,7 +32,7 @@
                 </tr>
                 <tr>
                     <th><?= __('Enemy Chat Character Key') ?></th>
-                    <td><?= $this->Number->format($battleSaveSkill->enemy_chat_character_key) ?></td>
+                    <td><?= $battleSaveSkill->enemy_chat_character_key === null ? '' : $this->Number->format($battleSaveSkill->enemy_chat_character_key) ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Limit Skill Code') ?></th>

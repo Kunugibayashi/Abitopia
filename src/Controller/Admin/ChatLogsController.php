@@ -9,7 +9,6 @@ use App\Controller\AppController;
  * ChatLogs Controller
  *
  * @property \App\Model\Table\ChatLogsTable $ChatLogs
- * @method \App\Model\Entity\ChatLog[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class ChatLogsController extends AppController
 {
@@ -20,7 +19,8 @@ class ChatLogsController extends AppController
      */
     public function index()
     {
-        $chatLogs = $this->paginate($this->ChatLogs);
+        $query = $this->ChatLogs->find();
+        $chatLogs = $this->paginate($query);
 
         $this->set(compact('chatLogs'));
     }
@@ -35,7 +35,6 @@ class ChatLogsController extends AppController
     public function view($id = null)
     {
         $chatLog = $this->ChatLogs->get($id, contain: ['BattleLogs']);
-
         $this->set(compact('chatLog'));
     }
 
@@ -85,7 +84,7 @@ class ChatLogsController extends AppController
      * Delete method
      *
      * @param string|null $id Chat Log id.
-     * @return \Cake\Http\Response|null|void Redirects to index.
+     * @return \Cake\Http\Response|null Redirects to index.
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function delete($id = null)

@@ -44,7 +44,7 @@ class ChatCharactersController extends AppController
         }
 
         $query->contain(['BattleCharacterStatuses'])
-            ->orderBy(['modified' => 'DESC']);
+            ->orderBy(['ChatCharacters.modified' => 'DESC']);
 
         $chatCharacters = $this->paginate($query);
 

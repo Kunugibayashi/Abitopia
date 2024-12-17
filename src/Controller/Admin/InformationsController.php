@@ -9,7 +9,6 @@ use App\Controller\AppController;
  * Informations Controller
  *
  * @property \App\Model\Table\InformationsTable $Informations
- * @method \App\Model\Entity\Information[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class InformationsController extends AppController
 {
@@ -20,7 +19,8 @@ class InformationsController extends AppController
      */
     public function index()
     {
-        $informations = $this->paginate($this->Informations);
+        $query = $this->Informations->find();
+        $informations = $this->paginate($query);
 
         $this->set(compact('informations'));
     }
@@ -35,7 +35,6 @@ class InformationsController extends AppController
     public function view($id = null)
     {
         $information = $this->Informations->get($id, contain: []);
-
         $this->set(compact('information'));
     }
 
@@ -85,7 +84,7 @@ class InformationsController extends AppController
      * Delete method
      *
      * @param string|null $id Information id.
-     * @return \Cake\Http\Response|null|void Redirects to index.
+     * @return \Cake\Http\Response|null Redirects to index.
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function delete($id = null)

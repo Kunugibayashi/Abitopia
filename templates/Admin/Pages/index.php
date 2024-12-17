@@ -38,6 +38,9 @@
             <?php echo $this->Html->link('Sessions', '/admin/Sessions'); ?>
         </li>
         <li>
+            <?php echo $this->Html->link('SiteSystemConfigs', '/admin/SiteSystemConfigs'); ?>
+        </li>
+        <li>
             <?php echo $this->Html->link('Users', '/admin/Users'); ?>
         </li>
     </ul>

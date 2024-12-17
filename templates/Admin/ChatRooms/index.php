@@ -1,7 +1,7 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\ChatRoom[]|\Cake\Collection\CollectionInterface $chatRooms
+ * @var iterable<\App\Model\Entity\ChatRoom> $chatRooms
  */
 ?>
 <div class="chatRooms index content">
@@ -17,6 +17,14 @@
                     <th><?= $this->Paginator->sort('published') ?></th>
                     <th><?= $this->Paginator->sort('readonly') ?></th>
                     <th><?= $this->Paginator->sort('displayno') ?></th>
+                    <th><?= $this->Paginator->sort('omikuji1flg') ?></th>
+                    <th><?= $this->Paginator->sort('omikuji1name') ?></th>
+                    <th><?= $this->Paginator->sort('omikuji2flg') ?></th>
+                    <th><?= $this->Paginator->sort('omikuji2name') ?></th>
+                    <th><?= $this->Paginator->sort('omikuji3flg') ?></th>
+                    <th><?= $this->Paginator->sort('omikuji3name') ?></th>
+                    <th><?= $this->Paginator->sort('deck1flg') ?></th>
+                    <th><?= $this->Paginator->sort('deck1name') ?></th>
                     <th><?= $this->Paginator->sort('modified') ?></th>
                     <th><?= $this->Paginator->sort('created') ?></th>
                     <th class="actions"><?= __('Actions') ?></th>
@@ -31,6 +39,14 @@
                     <td><?= $this->Number->format($chatRoom->published) ?></td>
                     <td><?= $this->Number->format($chatRoom->readonly) ?></td>
                     <td><?= $this->Number->format($chatRoom->displayno) ?></td>
+                    <td><?= $this->Number->format($chatRoom->omikuji1flg) ?></td>
+                    <td><?= h($chatRoom->omikuji1name) ?></td>
+                    <td><?= $this->Number->format($chatRoom->omikuji2flg) ?></td>
+                    <td><?= h($chatRoom->omikuji2name) ?></td>
+                    <td><?= $this->Number->format($chatRoom->omikuji3flg) ?></td>
+                    <td><?= h($chatRoom->omikuji3name) ?></td>
+                    <td><?= $this->Number->format($chatRoom->deck1flg) ?></td>
+                    <td><?= h($chatRoom->deck1name) ?></td>
                     <td><?= h($chatRoom->modified) ?></td>
                     <td><?= h($chatRoom->created) ?></td>
                     <td class="actions">

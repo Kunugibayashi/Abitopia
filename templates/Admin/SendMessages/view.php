@@ -14,13 +14,13 @@
             <?= $this->Html->link(__('New Send Message'), ['action' => 'add'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="sendMessages view content">
             <h3><?= h($sendMessage->title) ?></h3>
             <table>
                 <tr>
                     <th><?= __('User') ?></th>
-                    <td><?= $sendMessage->has('user') ? $this->Html->link($sendMessage->user->id, ['controller' => 'Users', 'action' => 'view', $sendMessage->user->id]) : '' ?></td>
+                    <td><?= $sendMessage->hasValue('user') ? $this->Html->link($sendMessage->user->id, ['controller' => 'Users', 'action' => 'view', $sendMessage->user->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Chat Character Fullname') ?></th>

@@ -295,6 +295,7 @@ class TemplateCommand extends BakeCommand
             $fields = $schema->columns();
             $hidden = $modelObject->newEmptyEntity()->getHidden() ?: ['token', 'password', 'passwd'];
             $modelClass = $this->modelName;
+            $columnComments = $this->getColumnComment($modelObject->getTable());
         } catch (Exception $exception) {
             $io->error($exception->getMessage());
             $this->abort();
@@ -331,8 +332,24 @@ class TemplateCommand extends BakeCommand
             'hidden',
             'associations',
             'keyFields',
+            'columnComments',
             'namespace'
         );
+    }
+
+    public function getColumnComment(String $tableName): array
+    {
+        $connection = ConnectionManager::get('default');
+        $results = $connection
+            ->execute('SELECT column_name, column_comment FROM information_schema.columns WHERE table_name = :tableName', ['tableName' => $tableName])
+            ->fetchAll();
+
+        $comments = array();
+        foreach($results as $value) {
+            $comments[$value[0]] = $value[1];
+        }
+
+        return $comments;
     }
 
     /**

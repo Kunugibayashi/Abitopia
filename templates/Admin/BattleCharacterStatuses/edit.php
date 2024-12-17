@@ -16,18 +16,18 @@
             <?= $this->Html->link(__('List Battle Character Statuses'), ['action' => 'index'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="battleCharacterStatuses form content">
             <?= $this->Form->create($battleCharacterStatus) ?>
             <fieldset>
                 <legend><?= __('Edit Battle Character Status') ?></legend>
                 <?php
-                    echo $this->Form->control('chat_character_id');
-                    echo $this->Form->control('level');
-                    echo $this->Form->control('strength');
-                    echo $this->Form->control('dexterity');
-                    echo $this->Form->control('stamina');
-                    echo $this->Form->control('spirit');
+                        echo 'チャットキャラクターID';                    echo $this->Form->control('chat_character_id');
+                        echo 'レベル';                    echo $this->Form->control('level');
+                        echo '腕力';                    echo $this->Form->control('strength');
+                        echo '敏捷';                    echo $this->Form->control('dexterity');
+                        echo '体力';                    echo $this->Form->control('stamina');
+                        echo '精神';                    echo $this->Form->control('spirit');
                 ?>
             </fieldset>
             <?= $this->Form->button(__('Submit')) ?>

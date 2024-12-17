@@ -9,7 +9,6 @@ use App\Controller\AppController;
  * BattleTurns Controller
  *
  * @property \App\Model\Table\BattleTurnsTable $BattleTurns
- * @method \App\Model\Entity\BattleTurn[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class BattleTurnsController extends AppController
 {
@@ -20,7 +19,8 @@ class BattleTurnsController extends AppController
      */
     public function index()
     {
-        $battleTurns = $this->paginate($this->BattleTurns);
+        $query = $this->BattleTurns->find();
+        $battleTurns = $this->paginate($query);
 
         $this->set(compact('battleTurns'));
     }
@@ -35,7 +35,6 @@ class BattleTurnsController extends AppController
     public function view($id = null)
     {
         $battleTurn = $this->BattleTurns->get($id, contain: ['BattleCharacters', 'BattleSaveSkills']);
-
         $this->set(compact('battleTurn'));
     }
 
@@ -85,7 +84,7 @@ class BattleTurnsController extends AppController
      * Delete method
      *
      * @param string|null $id Battle Turn id.
-     * @return \Cake\Http\Response|null|void Redirects to index.
+     * @return \Cake\Http\Response|null Redirects to index.
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function delete($id = null)

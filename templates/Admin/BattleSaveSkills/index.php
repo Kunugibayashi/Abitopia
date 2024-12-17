@@ -1,7 +1,7 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\BattleSaveSkill[]|\Cake\Collection\CollectionInterface $battleSaveSkills
+ * @var iterable<\App\Model\Entity\BattleSaveSkill> $battleSaveSkills
  */
 ?>
 <div class="battleSaveSkills index content">
@@ -33,9 +33,9 @@
                 <?php foreach ($battleSaveSkills as $battleSaveSkill): ?>
                 <tr>
                     <td><?= $this->Number->format($battleSaveSkill->id) ?></td>
-                    <td><?= $battleSaveSkill->has('battle_turn') ? $this->Html->link($battleSaveSkill->battle_turn->id, ['controller' => 'BattleTurns', 'action' => 'view', $battleSaveSkill->battle_turn->id]) : '' ?></td>
-                    <td><?= $battleSaveSkill->has('chat_character') ? $this->Html->link($battleSaveSkill->chat_character->id, ['controller' => 'ChatCharacters', 'action' => 'view', $battleSaveSkill->chat_character->id]) : '' ?></td>
-                    <td><?= $this->Number->format($battleSaveSkill->enemy_chat_character_key) ?></td>
+                    <td><?= $battleSaveSkill->hasValue('battle_turn') ? $this->Html->link($battleSaveSkill->battle_turn->id, ['controller' => 'BattleTurns', 'action' => 'view', $battleSaveSkill->battle_turn->id]) : '' ?></td>
+                    <td><?= $battleSaveSkill->hasValue('chat_character') ? $this->Html->link($battleSaveSkill->chat_character->id, ['controller' => 'ChatCharacters', 'action' => 'view', $battleSaveSkill->chat_character->id]) : '' ?></td>
+                    <td><?= $battleSaveSkill->enemy_chat_character_key === null ? '' : $this->Number->format($battleSaveSkill->enemy_chat_character_key) ?></td>
                     <td><?= $this->Number->format($battleSaveSkill->limit_skill_code) ?></td>
                     <td><?= $this->Number->format($battleSaveSkill->passive_skill_code) ?></td>
                     <td><?= $this->Number->format($battleSaveSkill->battle_skill1_code) ?></td>

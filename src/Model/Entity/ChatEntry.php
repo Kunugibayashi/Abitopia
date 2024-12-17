@@ -13,8 +13,8 @@ use Cake\ORM\Entity;
  * @property int $user_id
  * @property int $chat_character_id
  * @property string $entry_key
- * @property \Cake\I18n\DateTime|null $modified
- * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime $modified
+ * @property \Cake\I18n\DateTime $created
  *
  * @property \App\Model\Entity\ChatRoom $chat_room
  * @property \App\Model\Entity\User $user
@@ -29,7 +29,7 @@ class ChatEntry extends Entity
      * be mass assigned. For security purposes, it is advised to set '*' to false
      * (or remove it), and explicitly make individual fields accessible as needed.
      *
-     * @var array
+     * @var array<string, bool>
      */
     protected array $_accessible = [
         'chat_room_id' => true,

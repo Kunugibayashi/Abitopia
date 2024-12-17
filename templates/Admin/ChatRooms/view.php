@@ -14,7 +14,7 @@
             <?= $this->Html->link(__('New Chat Room'), ['action' => 'add'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="chatRooms view content">
             <h3><?= h($chatRoom->title) ?></h3>
             <table>
@@ -25,6 +25,22 @@
                 <tr>
                     <th><?= __('Information') ?></th>
                     <td><?= h($chatRoom->information) ?></td>
+                </tr>
+                <tr>
+                    <th><?= __('Omikuji1name') ?></th>
+                    <td><?= h($chatRoom->omikuji1name) ?></td>
+                </tr>
+                <tr>
+                    <th><?= __('Omikuji2name') ?></th>
+                    <td><?= h($chatRoom->omikuji2name) ?></td>
+                </tr>
+                <tr>
+                    <th><?= __('Omikuji3name') ?></th>
+                    <td><?= h($chatRoom->omikuji3name) ?></td>
+                </tr>
+                <tr>
+                    <th><?= __('Deck1name') ?></th>
+                    <td><?= h($chatRoom->deck1name) ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Id') ?></th>
@@ -43,6 +59,22 @@
                     <td><?= $this->Number->format($chatRoom->displayno) ?></td>
                 </tr>
                 <tr>
+                    <th><?= __('Omikuji1flg') ?></th>
+                    <td><?= $this->Number->format($chatRoom->omikuji1flg) ?></td>
+                </tr>
+                <tr>
+                    <th><?= __('Omikuji2flg') ?></th>
+                    <td><?= $this->Number->format($chatRoom->omikuji2flg) ?></td>
+                </tr>
+                <tr>
+                    <th><?= __('Omikuji3flg') ?></th>
+                    <td><?= $this->Number->format($chatRoom->omikuji3flg) ?></td>
+                </tr>
+                <tr>
+                    <th><?= __('Deck1flg') ?></th>
+                    <td><?= $this->Number->format($chatRoom->deck1flg) ?></td>
+                </tr>
+                <tr>
                     <th><?= __('Modified') ?></th>
                     <td><?= h($chatRoom->modified) ?></td>
                 </tr>
@@ -51,6 +83,30 @@
                     <td><?= h($chatRoom->created) ?></td>
                 </tr>
             </table>
+            <div class="text">
+                <strong><?= __('Omikuji1text') ?></strong>
+                <blockquote>
+                    <?= $this->Text->autoParagraph(h($chatRoom->omikuji1text)); ?>
+                </blockquote>
+            </div>
+            <div class="text">
+                <strong><?= __('Omikuji2text') ?></strong>
+                <blockquote>
+                    <?= $this->Text->autoParagraph(h($chatRoom->omikuji2text)); ?>
+                </blockquote>
+            </div>
+            <div class="text">
+                <strong><?= __('Omikuji3text') ?></strong>
+                <blockquote>
+                    <?= $this->Text->autoParagraph(h($chatRoom->omikuji3text)); ?>
+                </blockquote>
+            </div>
+            <div class="text">
+                <strong><?= __('Deck1text') ?></strong>
+                <blockquote>
+                    <?= $this->Text->autoParagraph(h($chatRoom->deck1text)); ?>
+                </blockquote>
+            </div>
             <div class="related">
                 <h4><?= __('Related Chat Entries') ?></h4>
                 <?php if (!empty($chatRoom->chat_entries)) : ?>
@@ -66,19 +122,19 @@
                             <th><?= __('Created') ?></th>
                             <th class="actions"><?= __('Actions') ?></th>
                         </tr>
-                        <?php foreach ($chatRoom->chat_entries as $chatEntries) : ?>
+                        <?php foreach ($chatRoom->chat_entries as $chatEntry) : ?>
                         <tr>
-                            <td><?= h($chatEntries->id) ?></td>
-                            <td><?= h($chatEntries->chat_room_id) ?></td>
-                            <td><?= h($chatEntries->user_id) ?></td>
-                            <td><?= h($chatEntries->chat_character_id) ?></td>
-                            <td><?= h($chatEntries->entry_key) ?></td>
-                            <td><?= h($chatEntries->modified) ?></td>
-                            <td><?= h($chatEntries->created) ?></td>
+                            <td><?= h($chatEntry->id) ?></td>
+                            <td><?= h($chatEntry->chat_room_id) ?></td>
+                            <td><?= h($chatEntry->user_id) ?></td>
+                            <td><?= h($chatEntry->chat_character_id) ?></td>
+                            <td><?= h($chatEntry->entry_key) ?></td>
+                            <td><?= h($chatEntry->modified) ?></td>
+                            <td><?= h($chatEntry->created) ?></td>
                             <td class="actions">
-                                <?= $this->Html->link(__('View'), ['controller' => 'ChatEntries', 'action' => 'view', $chatEntries->id]) ?>
-                                <?= $this->Html->link(__('Edit'), ['controller' => 'ChatEntries', 'action' => 'edit', $chatEntries->id]) ?>
-                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'ChatEntries', 'action' => 'delete', $chatEntries->id], ['confirm' => __('Are you sure you want to delete # {0}?', $chatEntries->id)]) ?>
+                                <?= $this->Html->link(__('View'), ['controller' => 'ChatEntries', 'action' => 'view', $chatEntry->id]) ?>
+                                <?= $this->Html->link(__('Edit'), ['controller' => 'ChatEntries', 'action' => 'edit', $chatEntry->id]) ?>
+                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'ChatEntries', 'action' => 'delete', $chatEntry->id], ['confirm' => __('Are you sure you want to delete # {0}?', $chatEntry->id)]) ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>

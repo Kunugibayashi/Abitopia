@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
-use Cake\ORM\Query;
+use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -13,17 +13,17 @@ use Cake\Validation\Validator;
  *
  * @method \App\Model\Entity\ChatLogWarehouse newEmptyEntity()
  * @method \App\Model\Entity\ChatLogWarehouse newEntity(array $data, array $options = [])
- * @method \App\Model\Entity\ChatLogWarehouse[] newEntities(array $data, array $options = [])
- * @method \App\Model\Entity\ChatLogWarehouse get($primaryKey, $options = [])
- * @method \App\Model\Entity\ChatLogWarehouse findOrCreate($search, ?callable $callback = null, $options = [])
+ * @method array<\App\Model\Entity\ChatLogWarehouse> newEntities(array $data, array $options = [])
+ * @method \App\Model\Entity\ChatLogWarehouse get(mixed $primaryKey, array|string $finder = 'all', \Psr\SimpleCache\CacheInterface|string|null $cache = null, \Closure|string|null $cacheKey = null, mixed ...$args)
+ * @method \App\Model\Entity\ChatLogWarehouse findOrCreate($search, ?callable $callback = null, array $options = [])
  * @method \App\Model\Entity\ChatLogWarehouse patchEntity(\Cake\Datasource\EntityInterface $entity, array $data, array $options = [])
- * @method \App\Model\Entity\ChatLogWarehouse[] patchEntities(iterable $entities, array $data, array $options = [])
- * @method \App\Model\Entity\ChatLogWarehouse|false save(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\ChatLogWarehouse saveOrFail(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\ChatLogWarehouse[]|\Cake\Datasource\ResultSetInterface|false saveMany(iterable $entities, $options = [])
- * @method \App\Model\Entity\ChatLogWarehouse[]|\Cake\Datasource\ResultSetInterface saveManyOrFail(iterable $entities, $options = [])
- * @method \App\Model\Entity\ChatLogWarehouse[]|\Cake\Datasource\ResultSetInterface|false deleteMany(iterable $entities, $options = [])
- * @method \App\Model\Entity\ChatLogWarehouse[]|\Cake\Datasource\ResultSetInterface deleteManyOrFail(iterable $entities, $options = [])
+ * @method array<\App\Model\Entity\ChatLogWarehouse> patchEntities(iterable $entities, array $data, array $options = [])
+ * @method \App\Model\Entity\ChatLogWarehouse|false save(\Cake\Datasource\EntityInterface $entity, array $options = [])
+ * @method \App\Model\Entity\ChatLogWarehouse saveOrFail(\Cake\Datasource\EntityInterface $entity, array $options = [])
+ * @method iterable<\App\Model\Entity\ChatLogWarehouse>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\ChatLogWarehouse>|false saveMany(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\ChatLogWarehouse>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\ChatLogWarehouse> saveManyOrFail(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\ChatLogWarehouse>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\ChatLogWarehouse>|false deleteMany(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\ChatLogWarehouse>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\ChatLogWarehouse> deleteManyOrFail(iterable $entities, array $options = [])
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
@@ -32,7 +32,7 @@ class ChatLogWarehousesTable extends Table
     /**
      * Initialize method
      *
-     * @param array $config The configuration for the Table.
+     * @param array<string, mixed> $config The configuration for the Table.
      * @return void
      */
     public function initialize(array $config): void
@@ -55,10 +55,6 @@ class ChatLogWarehousesTable extends Table
     public function validationDefault(Validator $validator): Validator
     {
         $validator
-            ->nonNegativeInteger('id')
-            ->allowEmptyString('id', null, 'create');
-
-        $validator
             ->scalar('entry_key')
             ->maxLength('entry_key', 40)
             ->requirePresence('entry_key', 'create')
@@ -76,6 +72,7 @@ class ChatLogWarehousesTable extends Table
 
         $validator
             ->scalar('logs')
+            ->maxLength('logs', 4294967295)
             ->allowEmptyString('logs');
 
         return $validator;

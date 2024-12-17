@@ -16,19 +16,19 @@
             <?= $this->Html->link(__('List Battle Turns'), ['action' => 'index'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="battleTurns form content">
             <?= $this->Form->create($battleTurn) ?>
             <fieldset>
                 <legend><?= __('Edit Battle Turn') ?></legend>
                 <?php
-                    echo $this->Form->control('vs_fukoku_key');
-                    echo $this->Form->control('vs_before_key');
-                    echo $this->Form->control('vs_after_key');
-                    echo $this->Form->control('battle_status');
-                    echo $this->Form->control('battle_turn_count');
-                    echo $this->Form->control('attack_chat_character_key');
-                    echo $this->Form->control('defense_chat_character_key');
+                        echo '対戦相手キャラクターID';                    echo $this->Form->control('vs_fukoku_key');
+                        echo '先攻キャラクターID';                    echo $this->Form->control('vs_before_key');
+                        echo '後攻キャラクターID';                    echo $this->Form->control('vs_after_key');
+                        echo '戦闘ステータス';                    echo $this->Form->control('battle_status');
+                        echo '戦闘ターン数';                    echo $this->Form->control('battle_turn_count');
+                        echo '攻撃キャラクターID';                    echo $this->Form->control('attack_chat_character_key');
+                        echo '防御キャラクターID';                    echo $this->Form->control('defense_chat_character_key');
                 ?>
             </fieldset>
             <?= $this->Form->button(__('Submit')) ?>

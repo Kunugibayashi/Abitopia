@@ -11,16 +11,16 @@
             <?= $this->Html->link(__('List Battle Logs'), ['action' => 'index'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="battleLogs form content">
             <?= $this->Form->create($battleLog) ?>
             <fieldset>
                 <legend><?= __('Add Battle Log') ?></legend>
                 <?php
-                    echo $this->Form->control('chat_log_id');
-                    echo $this->Form->control('status');
-                    echo $this->Form->control('narration');
-                    echo $this->Form->control('memo');
+                        echo 'チャットログID';                    echo $this->Form->control('chat_log_id');
+                        echo 'ステータス';                    echo $this->Form->control('status');
+                        echo 'ナレーション';                    echo $this->Form->control('narration');
+                        echo '判定結果メモ';                    echo $this->Form->control('memo');
                 ?>
             </fieldset>
             <?= $this->Form->button(__('Submit')) ?>

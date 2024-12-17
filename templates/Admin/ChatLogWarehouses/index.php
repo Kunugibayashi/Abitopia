@@ -1,7 +1,7 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\ChatLogWarehouse[]|\Cake\Collection\CollectionInterface $chatLogWarehouses
+ * @var iterable<\App\Model\Entity\ChatLogWarehouse> $chatLogWarehouses
  */
 ?>
 <div class="chatLogWarehouses index content">

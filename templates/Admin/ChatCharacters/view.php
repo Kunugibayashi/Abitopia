@@ -14,13 +14,13 @@
             <?= $this->Html->link(__('New Chat Character'), ['action' => 'add'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="chatCharacters view content">
             <h3><?= h($chatCharacter->id) ?></h3>
             <table>
                 <tr>
                     <th><?= __('User') ?></th>
-                    <td><?= $chatCharacter->has('user') ? $this->Html->link($chatCharacter->user->id, ['controller' => 'Users', 'action' => 'view', $chatCharacter->user->id]) : '' ?></td>
+                    <td><?= $chatCharacter->hasValue('user') ? $this->Html->link($chatCharacter->user->id, ['controller' => 'Users', 'action' => 'view', $chatCharacter->user->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Fullname') ?></th>
@@ -39,6 +39,14 @@
                     <td><?= h($chatCharacter->backgroundcolor) ?></td>
                 </tr>
                 <tr>
+                    <th><?= __('Nickname') ?></th>
+                    <td><?= h($chatCharacter->nickname) ?></td>
+                </tr>
+                <tr>
+                    <th><?= __('Team') ?></th>
+                    <td><?= h($chatCharacter->team) ?></td>
+                </tr>
+                <tr>
                     <th><?= __('Tag') ?></th>
                     <td><?= h($chatCharacter->tag) ?></td>
                 </tr>
@@ -47,12 +55,12 @@
                     <td><?= h($chatCharacter->url) ?></td>
                 </tr>
                 <tr>
-                    <th><?= __('Battle Character Status') ?></th>
-                    <td><?= $chatCharacter->has('battle_character_status') ? $this->Html->link($chatCharacter->battle_character_status->id, ['controller' => 'BattleCharacterStatuses', 'action' => 'view', $chatCharacter->battle_character_status->id]) : '' ?></td>
+                    <th><?= __('Chat Entry') ?></th>
+                    <td><?= $chatCharacter->hasValue('chat_entry') ? $this->Html->link($chatCharacter->chat_entry->id, ['controller' => 'ChatEntries', 'action' => 'view', $chatCharacter->chat_entry->id]) : '' ?></td>
                 </tr>
                 <tr>
-                    <th><?= __('Chat Entry') ?></th>
-                    <td><?= $chatCharacter->has('chat_entry') ? $this->Html->link($chatCharacter->chat_entry->id, ['controller' => 'ChatEntries', 'action' => 'view', $chatCharacter->chat_entry->id]) : '' ?></td>
+                    <th><?= __('Battle Character Status') ?></th>
+                    <td><?= $chatCharacter->hasValue('battle_character_status') ? $this->Html->link($chatCharacter->battle_character_status->id, ['controller' => 'BattleCharacterStatuses', 'action' => 'view', $chatCharacter->battle_character_status->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Id') ?></th>
@@ -67,6 +75,12 @@
                     <td><?= h($chatCharacter->created) ?></td>
                 </tr>
             </table>
+            <div class="text">
+                <strong><?= __('Free1') ?></strong>
+                <blockquote>
+                    <?= $this->Text->autoParagraph(h($chatCharacter->free1)); ?>
+                </blockquote>
+            </div>
             <div class="text">
                 <strong><?= __('Detail') ?></strong>
                 <blockquote>
@@ -104,35 +118,35 @@
                             <th><?= __('Created') ?></th>
                             <th class="actions"><?= __('Actions') ?></th>
                         </tr>
-                        <?php foreach ($chatCharacter->battle_characters as $battleCharacters) : ?>
+                        <?php foreach ($chatCharacter->battle_characters as $battleCharacter) : ?>
                         <tr>
-                            <td><?= h($battleCharacters->id) ?></td>
-                            <td><?= h($battleCharacters->battle_turn_id) ?></td>
-                            <td><?= h($battleCharacters->chat_character_id) ?></td>
-                            <td><?= h($battleCharacters->strength) ?></td>
-                            <td><?= h($battleCharacters->dexterity) ?></td>
-                            <td><?= h($battleCharacters->stamina) ?></td>
-                            <td><?= h($battleCharacters->spirit) ?></td>
-                            <td><?= h($battleCharacters->hp) ?></td>
-                            <td><?= h($battleCharacters->sp) ?></td>
-                            <td><?= h($battleCharacters->combo) ?></td>
-                            <td><?= h($battleCharacters->continuous_turn_count) ?></td>
-                            <td><?= h($battleCharacters->is_limit) ?></td>
-                            <td><?= h($battleCharacters->limit_skill_code) ?></td>
-                            <td><?= h($battleCharacters->permanent_strength) ?></td>
-                            <td><?= h($battleCharacters->temporary_strength) ?></td>
-                            <td><?= h($battleCharacters->permanent_hit_rate) ?></td>
-                            <td><?= h($battleCharacters->temporary_hit_rate) ?></td>
-                            <td><?= h($battleCharacters->permanent_dodge_rate) ?></td>
-                            <td><?= h($battleCharacters->temporary_dodge_rate) ?></td>
-                            <td><?= h($battleCharacters->defense_skill_code) ?></td>
-                            <td><?= h($battleCharacters->defense_skill_attribute) ?></td>
-                            <td><?= h($battleCharacters->modified) ?></td>
-                            <td><?= h($battleCharacters->created) ?></td>
+                            <td><?= h($battleCharacter->id) ?></td>
+                            <td><?= h($battleCharacter->battle_turn_id) ?></td>
+                            <td><?= h($battleCharacter->chat_character_id) ?></td>
+                            <td><?= h($battleCharacter->strength) ?></td>
+                            <td><?= h($battleCharacter->dexterity) ?></td>
+                            <td><?= h($battleCharacter->stamina) ?></td>
+                            <td><?= h($battleCharacter->spirit) ?></td>
+                            <td><?= h($battleCharacter->hp) ?></td>
+                            <td><?= h($battleCharacter->sp) ?></td>
+                            <td><?= h($battleCharacter->combo) ?></td>
+                            <td><?= h($battleCharacter->continuous_turn_count) ?></td>
+                            <td><?= h($battleCharacter->is_limit) ?></td>
+                            <td><?= h($battleCharacter->limit_skill_code) ?></td>
+                            <td><?= h($battleCharacter->permanent_strength) ?></td>
+                            <td><?= h($battleCharacter->temporary_strength) ?></td>
+                            <td><?= h($battleCharacter->permanent_hit_rate) ?></td>
+                            <td><?= h($battleCharacter->temporary_hit_rate) ?></td>
+                            <td><?= h($battleCharacter->permanent_dodge_rate) ?></td>
+                            <td><?= h($battleCharacter->temporary_dodge_rate) ?></td>
+                            <td><?= h($battleCharacter->defense_skill_code) ?></td>
+                            <td><?= h($battleCharacter->defense_skill_attribute) ?></td>
+                            <td><?= h($battleCharacter->modified) ?></td>
+                            <td><?= h($battleCharacter->created) ?></td>
                             <td class="actions">
-                                <?= $this->Html->link(__('View'), ['controller' => 'BattleCharacters', 'action' => 'view', $battleCharacters->id]) ?>
-                                <?= $this->Html->link(__('Edit'), ['controller' => 'BattleCharacters', 'action' => 'edit', $battleCharacters->id]) ?>
-                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'BattleCharacters', 'action' => 'delete', $battleCharacters->id], ['confirm' => __('Are you sure you want to delete # {0}?', $battleCharacters->id)]) ?>
+                                <?= $this->Html->link(__('View'), ['controller' => 'BattleCharacters', 'action' => 'view', $battleCharacter->id]) ?>
+                                <?= $this->Html->link(__('Edit'), ['controller' => 'BattleCharacters', 'action' => 'edit', $battleCharacter->id]) ?>
+                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'BattleCharacters', 'action' => 'delete', $battleCharacter->id], ['confirm' => __('Are you sure you want to delete # {0}?', $battleCharacter->id)]) ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -163,27 +177,27 @@
                             <th><?= __('Created') ?></th>
                             <th class="actions"><?= __('Actions') ?></th>
                         </tr>
-                        <?php foreach ($chatCharacter->battle_save_skills as $battleSaveSkills) : ?>
+                        <?php foreach ($chatCharacter->battle_save_skills as $battleSaveSkill) : ?>
                         <tr>
-                            <td><?= h($battleSaveSkills->id) ?></td>
-                            <td><?= h($battleSaveSkills->battle_turn_id) ?></td>
-                            <td><?= h($battleSaveSkills->chat_character_id) ?></td>
-                            <td><?= h($battleSaveSkills->enemy_chat_character_key) ?></td>
-                            <td><?= h($battleSaveSkills->limit_skill_code) ?></td>
-                            <td><?= h($battleSaveSkills->passive_skill_code) ?></td>
-                            <td><?= h($battleSaveSkills->battle_skill1_code) ?></td>
-                            <td><?= h($battleSaveSkills->battle_skill2_code) ?></td>
-                            <td><?= h($battleSaveSkills->battle_skill3_code) ?></td>
-                            <td><?= h($battleSaveSkills->battle_skill4_code) ?></td>
-                            <td><?= h($battleSaveSkills->battle_skill5_code) ?></td>
-                            <td><?= h($battleSaveSkills->battle_skill6_code) ?></td>
-                            <td><?= h($battleSaveSkills->battle_skill7_code) ?></td>
-                            <td><?= h($battleSaveSkills->modified) ?></td>
-                            <td><?= h($battleSaveSkills->created) ?></td>
+                            <td><?= h($battleSaveSkill->id) ?></td>
+                            <td><?= h($battleSaveSkill->battle_turn_id) ?></td>
+                            <td><?= h($battleSaveSkill->chat_character_id) ?></td>
+                            <td><?= h($battleSaveSkill->enemy_chat_character_key) ?></td>
+                            <td><?= h($battleSaveSkill->limit_skill_code) ?></td>
+                            <td><?= h($battleSaveSkill->passive_skill_code) ?></td>
+                            <td><?= h($battleSaveSkill->battle_skill1_code) ?></td>
+                            <td><?= h($battleSaveSkill->battle_skill2_code) ?></td>
+                            <td><?= h($battleSaveSkill->battle_skill3_code) ?></td>
+                            <td><?= h($battleSaveSkill->battle_skill4_code) ?></td>
+                            <td><?= h($battleSaveSkill->battle_skill5_code) ?></td>
+                            <td><?= h($battleSaveSkill->battle_skill6_code) ?></td>
+                            <td><?= h($battleSaveSkill->battle_skill7_code) ?></td>
+                            <td><?= h($battleSaveSkill->modified) ?></td>
+                            <td><?= h($battleSaveSkill->created) ?></td>
                             <td class="actions">
-                                <?= $this->Html->link(__('View'), ['controller' => 'BattleSaveSkills', 'action' => 'view', $battleSaveSkills->id]) ?>
-                                <?= $this->Html->link(__('Edit'), ['controller' => 'BattleSaveSkills', 'action' => 'edit', $battleSaveSkills->id]) ?>
-                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'BattleSaveSkills', 'action' => 'delete', $battleSaveSkills->id], ['confirm' => __('Are you sure you want to delete # {0}?', $battleSaveSkills->id)]) ?>
+                                <?= $this->Html->link(__('View'), ['controller' => 'BattleSaveSkills', 'action' => 'view', $battleSaveSkill->id]) ?>
+                                <?= $this->Html->link(__('Edit'), ['controller' => 'BattleSaveSkills', 'action' => 'edit', $battleSaveSkill->id]) ?>
+                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'BattleSaveSkills', 'action' => 'delete', $battleSaveSkill->id], ['confirm' => __('Are you sure you want to delete # {0}?', $battleSaveSkill->id)]) ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>

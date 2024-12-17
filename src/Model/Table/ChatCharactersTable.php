@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
-use Cake\ORM\Query;
+use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -12,24 +12,24 @@ use Cake\Validation\Validator;
  * ChatCharacters Model
  *
  * @property \App\Model\Table\UsersTable&\Cake\ORM\Association\BelongsTo $Users
+ * @property \App\Model\Table\ChatEntriesTable&\Cake\ORM\Association\HasOne $ChatEntries
  * @property \App\Model\Table\BattleCharacterStatusesTable&\Cake\ORM\Association\HasMany $BattleCharacterStatuses
  * @property \App\Model\Table\BattleCharactersTable&\Cake\ORM\Association\HasMany $BattleCharacters
  * @property \App\Model\Table\BattleSaveSkillsTable&\Cake\ORM\Association\HasMany $BattleSaveSkills
- * @property \App\Model\Table\ChatEntriesTable&\Cake\ORM\Association\HasMany $ChatEntries
  *
  * @method \App\Model\Entity\ChatCharacter newEmptyEntity()
  * @method \App\Model\Entity\ChatCharacter newEntity(array $data, array $options = [])
- * @method \App\Model\Entity\ChatCharacter[] newEntities(array $data, array $options = [])
- * @method \App\Model\Entity\ChatCharacter get($primaryKey, $options = [])
- * @method \App\Model\Entity\ChatCharacter findOrCreate($search, ?callable $callback = null, $options = [])
+ * @method array<\App\Model\Entity\ChatCharacter> newEntities(array $data, array $options = [])
+ * @method \App\Model\Entity\ChatCharacter get(mixed $primaryKey, array|string $finder = 'all', \Psr\SimpleCache\CacheInterface|string|null $cache = null, \Closure|string|null $cacheKey = null, mixed ...$args)
+ * @method \App\Model\Entity\ChatCharacter findOrCreate($search, ?callable $callback = null, array $options = [])
  * @method \App\Model\Entity\ChatCharacter patchEntity(\Cake\Datasource\EntityInterface $entity, array $data, array $options = [])
- * @method \App\Model\Entity\ChatCharacter[] patchEntities(iterable $entities, array $data, array $options = [])
- * @method \App\Model\Entity\ChatCharacter|false save(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\ChatCharacter saveOrFail(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\ChatCharacter[]|\Cake\Datasource\ResultSetInterface|false saveMany(iterable $entities, $options = [])
- * @method \App\Model\Entity\ChatCharacter[]|\Cake\Datasource\ResultSetInterface saveManyOrFail(iterable $entities, $options = [])
- * @method \App\Model\Entity\ChatCharacter[]|\Cake\Datasource\ResultSetInterface|false deleteMany(iterable $entities, $options = [])
- * @method \App\Model\Entity\ChatCharacter[]|\Cake\Datasource\ResultSetInterface deleteManyOrFail(iterable $entities, $options = [])
+ * @method array<\App\Model\Entity\ChatCharacter> patchEntities(iterable $entities, array $data, array $options = [])
+ * @method \App\Model\Entity\ChatCharacter|false save(\Cake\Datasource\EntityInterface $entity, array $options = [])
+ * @method \App\Model\Entity\ChatCharacter saveOrFail(\Cake\Datasource\EntityInterface $entity, array $options = [])
+ * @method iterable<\App\Model\Entity\ChatCharacter>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\ChatCharacter>|false saveMany(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\ChatCharacter>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\ChatCharacter> saveManyOrFail(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\ChatCharacter>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\ChatCharacter>|false deleteMany(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\ChatCharacter>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\ChatCharacter> deleteManyOrFail(iterable $entities, array $options = [])
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
@@ -38,7 +38,7 @@ class ChatCharactersTable extends Table
     /**
      * Initialize method
      *
-     * @param array $config The configuration for the Table.
+     * @param array<string, mixed> $config The configuration for the Table.
      * @return void
      */
     public function initialize(array $config): void
@@ -55,6 +55,10 @@ class ChatCharactersTable extends Table
             'foreignKey' => 'user_id',
             'joinType' => 'INNER',
         ]);
+        $this->hasOne('ChatEntries', [
+            'foreignKey' => 'chat_character_id',
+            'joinType' => 'INNER',
+        ]);
         $this->hasOne('BattleCharacterStatuses', [
             'foreignKey' => 'chat_character_id',
             'joinType' => 'INNER',
@@ -64,10 +68,6 @@ class ChatCharactersTable extends Table
         ]);
         $this->hasMany('BattleSaveSkills', [
             'foreignKey' => 'chat_character_id',
-        ]);
-        $this->hasOne('ChatEntries', [
-            'foreignKey' => 'chat_character_id',
-            'joinType' => 'INNER',
         ]);
     }
 
@@ -80,8 +80,8 @@ class ChatCharactersTable extends Table
     public function validationDefault(Validator $validator): Validator
     {
         $validator
-            ->nonNegativeInteger('id')
-            ->allowEmptyString('id', null, 'create');
+            ->nonNegativeInteger('user_id')
+            ->notEmptyString('user_id');
 
         $validator
             ->scalar('fullname')
@@ -106,6 +106,16 @@ class ChatCharactersTable extends Table
             ->notEmptyString('backgroundcolor');
 
         $validator
+            ->scalar('nickname')
+            ->maxLength('nickname', 20)
+            ->allowEmptyString('nickname');
+
+        $validator
+            ->scalar('team')
+            ->maxLength('team', 20)
+            ->allowEmptyString('team');
+
+        $validator
             ->scalar('tag')
             ->maxLength('tag', 255)
             ->allowEmptyString('tag');
@@ -114,6 +124,10 @@ class ChatCharactersTable extends Table
             ->scalar('url')
             ->maxLength('url', 255)
             ->allowEmptyString('url');
+
+        $validator
+            ->scalar('free1')
+            ->allowEmptyString('free1');
 
         $validator
             ->scalar('detail')
@@ -131,7 +145,7 @@ class ChatCharactersTable extends Table
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add($rules->existsIn(['user_id'], 'Users'));
+        $rules->add($rules->existsIn(['user_id'], 'Users'), ['errorField' => 'user_id']);
 
         return $rules;
     }

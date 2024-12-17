@@ -14,6 +14,18 @@ use Cake\ORM\Entity;
  * @property int $published
  * @property int $readonly
  * @property int $displayno
+ * @property int $omikuji1flg
+ * @property string $omikuji1name
+ * @property string|null $omikuji1text
+ * @property int $omikuji2flg
+ * @property string $omikuji2name
+ * @property string|null $omikuji2text
+ * @property int $omikuji3flg
+ * @property string $omikuji3name
+ * @property string|null $omikuji3text
+ * @property int $deck1flg
+ * @property string $deck1name
+ * @property string|null $deck1text
  * @property \Cake\I18n\DateTime $modified
  * @property \Cake\I18n\DateTime $created
  *
@@ -28,7 +40,7 @@ class ChatRoom extends Entity
      * be mass assigned. For security purposes, it is advised to set '*' to false
      * (or remove it), and explicitly make individual fields accessible as needed.
      *
-     * @var array
+     * @var array<string, bool>
      */
     protected array $_accessible = [
         'title' => true,
@@ -36,6 +48,18 @@ class ChatRoom extends Entity
         'published' => true,
         'readonly' => true,
         'displayno' => true,
+        'omikuji1flg' => true,
+        'omikuji1name' => true,
+        'omikuji1text' => true,
+        'omikuji2flg' => true,
+        'omikuji2name' => true,
+        'omikuji2text' => true,
+        'omikuji3flg' => true,
+        'omikuji3name' => true,
+        'omikuji3text' => true,
+        'deck1flg' => true,
+        'deck1name' => true,
+        'deck1text' => true,
         'modified' => true,
         'created' => true,
         'chat_entries' => true,

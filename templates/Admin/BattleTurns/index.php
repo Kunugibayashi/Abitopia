@@ -1,7 +1,7 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\BattleTurn[]|\Cake\Collection\CollectionInterface $battleTurns
+ * @var iterable<\App\Model\Entity\BattleTurn> $battleTurns
  */
 ?>
 <div class="battleTurns index content">

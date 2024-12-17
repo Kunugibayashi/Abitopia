@@ -14,7 +14,7 @@
             <?= $this->Html->link(__('New Information'), ['action' => 'add'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="informations view content">
             <h3><?= h($information->title) ?></h3>
             <table>

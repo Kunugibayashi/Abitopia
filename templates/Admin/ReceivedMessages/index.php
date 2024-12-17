@@ -1,7 +1,7 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\ReceivedMessage[]|\Cake\Collection\CollectionInterface $receivedMessages
+ * @var iterable<\App\Model\Entity\ReceivedMessage> $receivedMessages
  */
 ?>
 <div class="receivedMessages index content">
@@ -27,7 +27,7 @@
                 <?php foreach ($receivedMessages as $receivedMessage): ?>
                 <tr>
                     <td><?= $this->Number->format($receivedMessage->id) ?></td>
-                    <td><?= $receivedMessage->has('user') ? $this->Html->link($receivedMessage->user->id, ['controller' => 'Users', 'action' => 'view', $receivedMessage->user->id]) : '' ?></td>
+                    <td><?= $receivedMessage->hasValue('user') ? $this->Html->link($receivedMessage->user->id, ['controller' => 'Users', 'action' => 'view', $receivedMessage->user->id]) : '' ?></td>
                     <td><?= $this->Number->format($receivedMessage->chat_character_key) ?></td>
                     <td><?= h($receivedMessage->chat_character_fullname) ?></td>
                     <td><?= $this->Number->format($receivedMessage->from_chat_character_key) ?></td>

@@ -9,7 +9,6 @@ use App\Controller\AppController;
  * BattleLogs Controller
  *
  * @property \App\Model\Table\BattleLogsTable $BattleLogs
- * @method \App\Model\Entity\BattleLog[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class BattleLogsController extends AppController
 {
@@ -20,7 +19,9 @@ class BattleLogsController extends AppController
      */
     public function index()
     {
-        $battleLogs = $this->paginate($this->BattleLogs);
+        $query = $this->BattleLogs->find()
+            ->contain(['ChatLogs']);
+        $battleLogs = $this->paginate($query);
 
         $this->set(compact('battleLogs'));
     }
@@ -35,7 +36,6 @@ class BattleLogsController extends AppController
     public function view($id = null)
     {
         $battleLog = $this->BattleLogs->get($id, contain: ['ChatLogs']);
-
         $this->set(compact('battleLog'));
     }
 
@@ -56,7 +56,8 @@ class BattleLogsController extends AppController
             }
             $this->Flash->error(__('The battle log could not be saved. Please, try again.'));
         }
-        $this->set(compact('battleLog'));
+        $chatLogs = $this->BattleLogs->ChatLogs->find('list', limit: 200)->all();
+        $this->set(compact('battleLog', 'chatLogs'));
     }
 
     /**
@@ -78,14 +79,15 @@ class BattleLogsController extends AppController
             }
             $this->Flash->error(__('The battle log could not be saved. Please, try again.'));
         }
-        $this->set(compact('battleLog'));
+        $chatLogs = $this->BattleLogs->ChatLogs->find('list', limit: 200)->all();
+        $this->set(compact('battleLog', 'chatLogs'));
     }
 
     /**
      * Delete method
      *
      * @param string|null $id Battle Log id.
-     * @return \Cake\Http\Response|null|void Redirects to index.
+     * @return \Cake\Http\Response|null Redirects to index.
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function delete($id = null)

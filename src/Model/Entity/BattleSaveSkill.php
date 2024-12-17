@@ -21,8 +21,8 @@ use Cake\ORM\Entity;
  * @property int $battle_skill5_code
  * @property int $battle_skill6_code
  * @property int $battle_skill7_code
- * @property \Cake\I18n\DateTime|null $modified
- * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime $modified
+ * @property \Cake\I18n\DateTime $created
  *
  * @property \App\Model\Entity\BattleTurn $battle_turn
  * @property \App\Model\Entity\ChatCharacter $chat_character
@@ -36,7 +36,7 @@ class BattleSaveSkill extends Entity
      * be mass assigned. For security purposes, it is advised to set '*' to false
      * (or remove it), and explicitly make individual fields accessible as needed.
      *
-     * @var array
+     * @var array<string, bool>
      */
     protected array $_accessible = [
         'battle_turn_id' => true,

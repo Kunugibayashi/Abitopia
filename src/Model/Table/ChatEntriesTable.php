@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
-use Cake\ORM\Query;
+use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -17,17 +17,17 @@ use Cake\Validation\Validator;
  *
  * @method \App\Model\Entity\ChatEntry newEmptyEntity()
  * @method \App\Model\Entity\ChatEntry newEntity(array $data, array $options = [])
- * @method \App\Model\Entity\ChatEntry[] newEntities(array $data, array $options = [])
- * @method \App\Model\Entity\ChatEntry get($primaryKey, $options = [])
- * @method \App\Model\Entity\ChatEntry findOrCreate($search, ?callable $callback = null, $options = [])
+ * @method array<\App\Model\Entity\ChatEntry> newEntities(array $data, array $options = [])
+ * @method \App\Model\Entity\ChatEntry get(mixed $primaryKey, array|string $finder = 'all', \Psr\SimpleCache\CacheInterface|string|null $cache = null, \Closure|string|null $cacheKey = null, mixed ...$args)
+ * @method \App\Model\Entity\ChatEntry findOrCreate($search, ?callable $callback = null, array $options = [])
  * @method \App\Model\Entity\ChatEntry patchEntity(\Cake\Datasource\EntityInterface $entity, array $data, array $options = [])
- * @method \App\Model\Entity\ChatEntry[] patchEntities(iterable $entities, array $data, array $options = [])
- * @method \App\Model\Entity\ChatEntry|false save(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\ChatEntry saveOrFail(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\ChatEntry[]|\Cake\Datasource\ResultSetInterface|false saveMany(iterable $entities, $options = [])
- * @method \App\Model\Entity\ChatEntry[]|\Cake\Datasource\ResultSetInterface saveManyOrFail(iterable $entities, $options = [])
- * @method \App\Model\Entity\ChatEntry[]|\Cake\Datasource\ResultSetInterface|false deleteMany(iterable $entities, $options = [])
- * @method \App\Model\Entity\ChatEntry[]|\Cake\Datasource\ResultSetInterface deleteManyOrFail(iterable $entities, $options = [])
+ * @method array<\App\Model\Entity\ChatEntry> patchEntities(iterable $entities, array $data, array $options = [])
+ * @method \App\Model\Entity\ChatEntry|false save(\Cake\Datasource\EntityInterface $entity, array $options = [])
+ * @method \App\Model\Entity\ChatEntry saveOrFail(\Cake\Datasource\EntityInterface $entity, array $options = [])
+ * @method iterable<\App\Model\Entity\ChatEntry>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\ChatEntry>|false saveMany(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\ChatEntry>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\ChatEntry> saveManyOrFail(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\ChatEntry>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\ChatEntry>|false deleteMany(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\ChatEntry>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\ChatEntry> deleteManyOrFail(iterable $entities, array $options = [])
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
@@ -36,7 +36,7 @@ class ChatEntriesTable extends Table
     /**
      * Initialize method
      *
-     * @param array $config The configuration for the Table.
+     * @param array<string, mixed> $config The configuration for the Table.
      * @return void
      */
     public function initialize(array $config): void
@@ -72,8 +72,17 @@ class ChatEntriesTable extends Table
     public function validationDefault(Validator $validator): Validator
     {
         $validator
-            ->nonNegativeInteger('id')
-            ->allowEmptyString('id', null, 'create');
+            ->nonNegativeInteger('chat_room_id')
+            ->notEmptyString('chat_room_id');
+
+        $validator
+            ->nonNegativeInteger('user_id')
+            ->notEmptyString('user_id');
+
+        $validator
+            ->nonNegativeInteger('chat_character_id')
+            ->notEmptyString('chat_character_id')
+            ->add('chat_character_id', 'unique', ['rule' => 'validateUnique', 'provider' => 'table']);
 
         $validator
             ->scalar('entry_key')
@@ -93,9 +102,10 @@ class ChatEntriesTable extends Table
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add($rules->existsIn(['chat_character_id'], 'ChatCharacters'));
-        $rules->add($rules->existsIn(['chat_room_id'], 'ChatRooms'));
-        $rules->add($rules->existsIn(['user_id'], 'Users'));
+        $rules->add($rules->isUnique(['chat_character_id']), ['errorField' => 'chat_character_id']);
+        $rules->add($rules->existsIn(['chat_room_id'], 'ChatRooms'), ['errorField' => 'chat_room_id']);
+        $rules->add($rules->existsIn(['user_id'], 'Users'), ['errorField' => 'user_id']);
+        $rules->add($rules->existsIn(['chat_character_id'], 'ChatCharacters'), ['errorField' => 'chat_character_id']);
 
         return $rules;
     }

@@ -2,6 +2,7 @@
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\SendMessage $sendMessage
+ * @var \Cake\Collection\CollectionInterface|string[] $users
  */
 ?>
 <div class="row">
@@ -11,19 +12,19 @@
             <?= $this->Html->link(__('List Send Messages'), ['action' => 'index'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="sendMessages form content">
             <?= $this->Form->create($sendMessage) ?>
             <fieldset>
                 <legend><?= __('Add Send Message') ?></legend>
                 <?php
                     echo $this->Form->control('user_id', ['options' => $users]);
-                    echo $this->Form->control('chat_character_key');
-                    echo $this->Form->control('chat_character_fullname');
-                    echo $this->Form->control('to_chat_character_key');
-                    echo $this->Form->control('to_chat_character_fullname');
-                    echo $this->Form->control('title');
-                    echo $this->Form->control('message');
+                        echo '差出人チャットキャラクターID';                    echo $this->Form->control('chat_character_key');
+                        echo '差出人キャラクター名';                    echo $this->Form->control('chat_character_fullname');
+                        echo '宛先チャットキャラクターID';                    echo $this->Form->control('to_chat_character_key');
+                        echo '宛先キャラクター名';                    echo $this->Form->control('to_chat_character_fullname');
+                        echo '私書タイトル';                    echo $this->Form->control('title');
+                        echo '私書メッセージ';                    echo $this->Form->control('message');
                 ?>
             </fieldset>
             <?= $this->Form->button(__('Submit')) ?>

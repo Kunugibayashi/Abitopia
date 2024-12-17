@@ -14,13 +14,13 @@
             <?= $this->Html->link(__('New Battle Character Status'), ['action' => 'add'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="battleCharacterStatuses view content">
             <h3><?= h($battleCharacterStatus->id) ?></h3>
             <table>
                 <tr>
                     <th><?= __('Chat Character') ?></th>
-                    <td><?= $battleCharacterStatus->has('chat_character') ? $this->Html->link($battleCharacterStatus->chat_character->id, ['controller' => 'ChatCharacters', 'action' => 'view', $battleCharacterStatus->chat_character->id]) : '' ?></td>
+                    <td><?= $battleCharacterStatus->hasValue('chat_character') ? $this->Html->link($battleCharacterStatus->chat_character->id, ['controller' => 'ChatCharacters', 'action' => 'view', $battleCharacterStatus->chat_character->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Id') ?></th>
@@ -49,6 +49,14 @@
                 <tr>
                     <th><?= __('Spirit') ?></th>
                     <td><?= $this->Number->format($battleCharacterStatus->spirit) ?></td>
+                </tr>
+                <tr>
+                    <th><?= __('Modified') ?></th>
+                    <td><?= h($battleCharacterStatus->modified) ?></td>
+                </tr>
+                <tr>
+                    <th><?= __('Created') ?></th>
+                    <td><?= h($battleCharacterStatus->created) ?></td>
                 </tr>
             </table>
         </div>

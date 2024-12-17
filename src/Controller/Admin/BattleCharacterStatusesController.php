@@ -9,7 +9,6 @@ use App\Controller\AppController;
  * BattleCharacterStatuses Controller
  *
  * @property \App\Model\Table\BattleCharacterStatusesTable $BattleCharacterStatuses
- * @method \App\Model\Entity\BattleCharacterStatus[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class BattleCharacterStatusesController extends AppController
 {
@@ -20,7 +19,8 @@ class BattleCharacterStatusesController extends AppController
      */
     public function index()
     {
-        $battleCharacterStatuses = $this->paginate($this->BattleCharacterStatuses);
+        $query = $this->BattleCharacterStatuses->find();
+        $battleCharacterStatuses = $this->paginate($query);
 
         $this->set(compact('battleCharacterStatuses'));
     }
@@ -35,7 +35,6 @@ class BattleCharacterStatusesController extends AppController
     public function view($id = null)
     {
         $battleCharacterStatus = $this->BattleCharacterStatuses->get($id, contain: ['ChatCharacters']);
-
         $this->set(compact('battleCharacterStatus'));
     }
 
@@ -85,7 +84,7 @@ class BattleCharacterStatusesController extends AppController
      * Delete method
      *
      * @param string|null $id Battle Character Status id.
-     * @return \Cake\Http\Response|null|void Redirects to index.
+     * @return \Cake\Http\Response|null Redirects to index.
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function delete($id = null)

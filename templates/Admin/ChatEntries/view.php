@@ -14,21 +14,21 @@
             <?= $this->Html->link(__('New Chat Entry'), ['action' => 'add'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="chatEntries view content">
             <h3><?= h($chatEntry->id) ?></h3>
             <table>
                 <tr>
                     <th><?= __('Chat Room') ?></th>
-                    <td><?= $chatEntry->has('chat_room') ? $this->Html->link($chatEntry->chat_room->title, ['controller' => 'ChatRooms', 'action' => 'view', $chatEntry->chat_room->id]) : '' ?></td>
+                    <td><?= $chatEntry->hasValue('chat_room') ? $this->Html->link($chatEntry->chat_room->title, ['controller' => 'ChatRooms', 'action' => 'view', $chatEntry->chat_room->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('User') ?></th>
-                    <td><?= $chatEntry->has('user') ? $this->Html->link($chatEntry->user->id, ['controller' => 'Users', 'action' => 'view', $chatEntry->user->id]) : '' ?></td>
+                    <td><?= $chatEntry->hasValue('user') ? $this->Html->link($chatEntry->user->id, ['controller' => 'Users', 'action' => 'view', $chatEntry->user->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Chat Character') ?></th>
-                    <td><?= $chatEntry->has('chat_character') ? $this->Html->link($chatEntry->chat_character->id, ['controller' => 'ChatCharacters', 'action' => 'view', $chatEntry->chat_character->id]) : '' ?></td>
+                    <td><?= $chatEntry->hasValue('chat_character') ? $this->Html->link($chatEntry->chat_character->id, ['controller' => 'ChatCharacters', 'action' => 'view', $chatEntry->chat_character->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Entry Key') ?></th>

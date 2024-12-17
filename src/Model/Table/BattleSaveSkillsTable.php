@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
-use Cake\ORM\Query;
+use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -16,17 +16,17 @@ use Cake\Validation\Validator;
  *
  * @method \App\Model\Entity\BattleSaveSkill newEmptyEntity()
  * @method \App\Model\Entity\BattleSaveSkill newEntity(array $data, array $options = [])
- * @method \App\Model\Entity\BattleSaveSkill[] newEntities(array $data, array $options = [])
- * @method \App\Model\Entity\BattleSaveSkill get($primaryKey, $options = [])
- * @method \App\Model\Entity\BattleSaveSkill findOrCreate($search, ?callable $callback = null, $options = [])
+ * @method array<\App\Model\Entity\BattleSaveSkill> newEntities(array $data, array $options = [])
+ * @method \App\Model\Entity\BattleSaveSkill get(mixed $primaryKey, array|string $finder = 'all', \Psr\SimpleCache\CacheInterface|string|null $cache = null, \Closure|string|null $cacheKey = null, mixed ...$args)
+ * @method \App\Model\Entity\BattleSaveSkill findOrCreate($search, ?callable $callback = null, array $options = [])
  * @method \App\Model\Entity\BattleSaveSkill patchEntity(\Cake\Datasource\EntityInterface $entity, array $data, array $options = [])
- * @method \App\Model\Entity\BattleSaveSkill[] patchEntities(iterable $entities, array $data, array $options = [])
- * @method \App\Model\Entity\BattleSaveSkill|false save(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\BattleSaveSkill saveOrFail(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\BattleSaveSkill[]|\Cake\Datasource\ResultSetInterface|false saveMany(iterable $entities, $options = [])
- * @method \App\Model\Entity\BattleSaveSkill[]|\Cake\Datasource\ResultSetInterface saveManyOrFail(iterable $entities, $options = [])
- * @method \App\Model\Entity\BattleSaveSkill[]|\Cake\Datasource\ResultSetInterface|false deleteMany(iterable $entities, $options = [])
- * @method \App\Model\Entity\BattleSaveSkill[]|\Cake\Datasource\ResultSetInterface deleteManyOrFail(iterable $entities, $options = [])
+ * @method array<\App\Model\Entity\BattleSaveSkill> patchEntities(iterable $entities, array $data, array $options = [])
+ * @method \App\Model\Entity\BattleSaveSkill|false save(\Cake\Datasource\EntityInterface $entity, array $options = [])
+ * @method \App\Model\Entity\BattleSaveSkill saveOrFail(\Cake\Datasource\EntityInterface $entity, array $options = [])
+ * @method iterable<\App\Model\Entity\BattleSaveSkill>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\BattleSaveSkill>|false saveMany(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\BattleSaveSkill>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\BattleSaveSkill> saveManyOrFail(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\BattleSaveSkill>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\BattleSaveSkill>|false deleteMany(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\BattleSaveSkill>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\BattleSaveSkill> deleteManyOrFail(iterable $entities, array $options = [])
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
@@ -35,7 +35,7 @@ class BattleSaveSkillsTable extends Table
     /**
      * Initialize method
      *
-     * @param array $config The configuration for the Table.
+     * @param array<string, mixed> $config The configuration for the Table.
      * @return void
      */
     public function initialize(array $config): void
@@ -67,8 +67,12 @@ class BattleSaveSkillsTable extends Table
     public function validationDefault(Validator $validator): Validator
     {
         $validator
-            ->nonNegativeInteger('id')
-            ->allowEmptyString('id', null, 'create');
+            ->nonNegativeInteger('battle_turn_id')
+            ->notEmptyString('battle_turn_id');
+
+        $validator
+            ->nonNegativeInteger('chat_character_id')
+            ->notEmptyString('chat_character_id');
 
         $validator
             ->nonNegativeInteger('enemy_chat_character_key')
@@ -131,8 +135,8 @@ class BattleSaveSkillsTable extends Table
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add($rules->existsIn(['battle_turn_id'], 'BattleTurns'));
-        $rules->add($rules->existsIn(['chat_character_id'], 'ChatCharacters'));
+        $rules->add($rules->existsIn(['battle_turn_id'], 'BattleTurns'), ['errorField' => 'battle_turn_id']);
+        $rules->add($rules->existsIn(['chat_character_id'], 'ChatCharacters'), ['errorField' => 'chat_character_id']);
 
         return $rules;
     }

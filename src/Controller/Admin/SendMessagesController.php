@@ -9,7 +9,6 @@ use App\Controller\AppController;
  * SendMessages Controller
  *
  * @property \App\Model\Table\SendMessagesTable $SendMessages
- * @method \App\Model\Entity\SendMessage[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class SendMessagesController extends AppController
 {
@@ -20,10 +19,9 @@ class SendMessagesController extends AppController
      */
     public function index()
     {
-        $this->paginate = [
-            'contain' => ['Users'],
-        ];
-        $sendMessages = $this->paginate($this->SendMessages);
+        $query = $this->SendMessages->find()
+            ->contain(['Users']);
+        $sendMessages = $this->paginate($query);
 
         $this->set(compact('sendMessages'));
     }
@@ -38,7 +36,6 @@ class SendMessagesController extends AppController
     public function view($id = null)
     {
         $sendMessage = $this->SendMessages->get($id, contain: ['Users']);
-
         $this->set(compact('sendMessage'));
     }
 
@@ -59,7 +56,7 @@ class SendMessagesController extends AppController
             }
             $this->Flash->error(__('The send message could not be saved. Please, try again.'));
         }
-        $users = $this->SendMessages->Users->find('list', ['limit' => 200]);
+        $users = $this->SendMessages->Users->find('list', limit: 200)->all();
         $this->set(compact('sendMessage', 'users'));
     }
 
@@ -82,7 +79,7 @@ class SendMessagesController extends AppController
             }
             $this->Flash->error(__('The send message could not be saved. Please, try again.'));
         }
-        $users = $this->SendMessages->Users->find('list', ['limit' => 200]);
+        $users = $this->SendMessages->Users->find('list', limit: 200)->all();
         $this->set(compact('sendMessage', 'users'));
     }
 
@@ -90,7 +87,7 @@ class SendMessagesController extends AppController
      * Delete method
      *
      * @param string|null $id Send Message id.
-     * @return \Cake\Http\Response|null|void Redirects to index.
+     * @return \Cake\Http\Response|null Redirects to index.
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function delete($id = null)

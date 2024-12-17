@@ -14,13 +14,13 @@
             <?= $this->Html->link(__('New Battle Log'), ['action' => 'add'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="battleLogs view content">
             <h3><?= h($battleLog->id) ?></h3>
             <table>
                 <tr>
                     <th><?= __('Chat Log') ?></th>
-                    <td><?= $battleLog->has('chat_log') ? $this->Html->link($battleLog->chat_log->id, ['controller' => 'ChatLogs', 'action' => 'view', $battleLog->chat_log->id]) : '' ?></td>
+                    <td><?= $battleLog->hasValue('chat_log') ? $this->Html->link($battleLog->chat_log->id, ['controller' => 'ChatLogs', 'action' => 'view', $battleLog->chat_log->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Id') ?></th>

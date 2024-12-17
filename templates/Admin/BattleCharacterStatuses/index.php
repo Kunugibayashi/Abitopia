@@ -1,7 +1,7 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\BattleCharacterStatus[]|\Cake\Collection\CollectionInterface $battleCharacterStatuses
+ * @var iterable<\App\Model\Entity\BattleCharacterStatus> $battleCharacterStatuses
  */
 ?>
 <div class="battleCharacterStatuses index content">
@@ -18,6 +18,8 @@
                     <th><?= $this->Paginator->sort('dexterity') ?></th>
                     <th><?= $this->Paginator->sort('stamina') ?></th>
                     <th><?= $this->Paginator->sort('spirit') ?></th>
+                    <th><?= $this->Paginator->sort('modified') ?></th>
+                    <th><?= $this->Paginator->sort('created') ?></th>
                     <th class="actions"><?= __('Actions') ?></th>
                 </tr>
             </thead>
@@ -31,6 +33,8 @@
                     <td><?= $this->Number->format($battleCharacterStatus->dexterity) ?></td>
                     <td><?= $this->Number->format($battleCharacterStatus->stamina) ?></td>
                     <td><?= $this->Number->format($battleCharacterStatus->spirit) ?></td>
+                    <td><?= h($battleCharacterStatus->modified) ?></td>
+                    <td><?= h($battleCharacterStatus->created) ?></td>
                     <td class="actions">
                         <?= $this->Html->link(__('View'), ['action' => 'view', $battleCharacterStatus->id]) ?>
                         <?= $this->Html->link(__('Edit'), ['action' => 'edit', $battleCharacterStatus->id]) ?>

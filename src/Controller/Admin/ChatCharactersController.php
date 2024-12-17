@@ -9,7 +9,6 @@ use App\Controller\AppController;
  * ChatCharacters Controller
  *
  * @property \App\Model\Table\ChatCharactersTable $ChatCharacters
- * @method \App\Model\Entity\ChatCharacter[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class ChatCharactersController extends AppController
 {
@@ -20,10 +19,9 @@ class ChatCharactersController extends AppController
      */
     public function index()
     {
-        $this->paginate = [
-            'contain' => ['Users'],
-        ];
-        $chatCharacters = $this->paginate($this->ChatCharacters);
+        $query = $this->ChatCharacters->find()
+            ->contain(['Users']);
+        $chatCharacters = $this->paginate($query);
 
         $this->set(compact('chatCharacters'));
     }
@@ -37,8 +35,7 @@ class ChatCharactersController extends AppController
      */
     public function view($id = null)
     {
-        $chatCharacter = $this->ChatCharacters->get($id, contain: ['Users', 'BattleCharacterStatuses', 'ChatEntries', 'BattleCharacters', 'BattleSaveSkills']);
-
+        $chatCharacter = $this->ChatCharacters->get($id, contain: ['Users', 'ChatEntries', 'BattleCharacterStatuses', 'BattleCharacters', 'BattleSaveSkills']);
         $this->set(compact('chatCharacter'));
     }
 
@@ -59,7 +56,7 @@ class ChatCharactersController extends AppController
             }
             $this->Flash->error(__('The chat character could not be saved. Please, try again.'));
         }
-        $users = $this->ChatCharacters->Users->find('list', ['limit' => 200]);
+        $users = $this->ChatCharacters->Users->find('list', limit: 200)->all();
         $this->set(compact('chatCharacter', 'users'));
     }
 
@@ -82,7 +79,7 @@ class ChatCharactersController extends AppController
             }
             $this->Flash->error(__('The chat character could not be saved. Please, try again.'));
         }
-        $users = $this->ChatCharacters->Users->find('list', ['limit' => 200]);
+        $users = $this->ChatCharacters->Users->find('list', limit: 200)->all();
         $this->set(compact('chatCharacter', 'users'));
     }
 
@@ -90,7 +87,7 @@ class ChatCharactersController extends AppController
      * Delete method
      *
      * @param string|null $id Chat Character id.
-     * @return \Cake\Http\Response|null|void Redirects to index.
+     * @return \Cake\Http\Response|null Redirects to index.
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function delete($id = null)

@@ -14,17 +14,13 @@
             <?= $this->Html->link(__('New User'), ['action' => 'add'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="users view content">
             <h3><?= h($user->id) ?></h3>
             <table>
                 <tr>
                     <th><?= __('Username') ?></th>
                     <td><?= h($user->username) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Password') ?></th>
-                    <td><?= h($user->password) ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Role') ?></th>
@@ -55,30 +51,36 @@
                             <th><?= __('Sex') ?></th>
                             <th><?= __('Color') ?></th>
                             <th><?= __('Backgroundcolor') ?></th>
+                            <th><?= __('Nickname') ?></th>
+                            <th><?= __('Team') ?></th>
                             <th><?= __('Tag') ?></th>
                             <th><?= __('Url') ?></th>
+                            <th><?= __('Free1') ?></th>
+                            <th><?= __('Detail') ?></th>
                             <th><?= __('Modified') ?></th>
                             <th><?= __('Created') ?></th>
-                            <th><?= __('Detail') ?></th>
                             <th class="actions"><?= __('Actions') ?></th>
                         </tr>
-                        <?php foreach ($user->chat_characters as $chatCharacters) : ?>
+                        <?php foreach ($user->chat_characters as $chatCharacter) : ?>
                         <tr>
-                            <td><?= h($chatCharacters->id) ?></td>
-                            <td><?= h($chatCharacters->user_id) ?></td>
-                            <td><?= h($chatCharacters->fullname) ?></td>
-                            <td><?= h($chatCharacters->sex) ?></td>
-                            <td><?= h($chatCharacters->color) ?></td>
-                            <td><?= h($chatCharacters->backgroundcolor) ?></td>
-                            <td><?= h($chatCharacters->tag) ?></td>
-                            <td><?= h($chatCharacters->url) ?></td>
-                            <td><?= h($chatCharacters->modified) ?></td>
-                            <td><?= h($chatCharacters->created) ?></td>
-                            <td><?= h($chatCharacters->detail) ?></td>
+                            <td><?= h($chatCharacter->id) ?></td>
+                            <td><?= h($chatCharacter->user_id) ?></td>
+                            <td><?= h($chatCharacter->fullname) ?></td>
+                            <td><?= h($chatCharacter->sex) ?></td>
+                            <td><?= h($chatCharacter->color) ?></td>
+                            <td><?= h($chatCharacter->backgroundcolor) ?></td>
+                            <td><?= h($chatCharacter->nickname) ?></td>
+                            <td><?= h($chatCharacter->team) ?></td>
+                            <td><?= h($chatCharacter->tag) ?></td>
+                            <td><?= h($chatCharacter->url) ?></td>
+                            <td><?= h($chatCharacter->free1) ?></td>
+                            <td><?= h($chatCharacter->detail) ?></td>
+                            <td><?= h($chatCharacter->modified) ?></td>
+                            <td><?= h($chatCharacter->created) ?></td>
                             <td class="actions">
-                                <?= $this->Html->link(__('View'), ['controller' => 'ChatCharacters', 'action' => 'view', $chatCharacters->id]) ?>
-                                <?= $this->Html->link(__('Edit'), ['controller' => 'ChatCharacters', 'action' => 'edit', $chatCharacters->id]) ?>
-                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'ChatCharacters', 'action' => 'delete', $chatCharacters->id], ['confirm' => __('Are you sure you want to delete # {0}?', $chatCharacters->id)]) ?>
+                                <?= $this->Html->link(__('View'), ['controller' => 'ChatCharacters', 'action' => 'view', $chatCharacter->id]) ?>
+                                <?= $this->Html->link(__('Edit'), ['controller' => 'ChatCharacters', 'action' => 'edit', $chatCharacter->id]) ?>
+                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'ChatCharacters', 'action' => 'delete', $chatCharacter->id], ['confirm' => __('Are you sure you want to delete # {0}?', $chatCharacter->id)]) ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -101,19 +103,19 @@
                             <th><?= __('Created') ?></th>
                             <th class="actions"><?= __('Actions') ?></th>
                         </tr>
-                        <?php foreach ($user->chat_entries as $chatEntries) : ?>
+                        <?php foreach ($user->chat_entries as $chatEntry) : ?>
                         <tr>
-                            <td><?= h($chatEntries->id) ?></td>
-                            <td><?= h($chatEntries->chat_room_id) ?></td>
-                            <td><?= h($chatEntries->user_id) ?></td>
-                            <td><?= h($chatEntries->chat_character_id) ?></td>
-                            <td><?= h($chatEntries->entry_key) ?></td>
-                            <td><?= h($chatEntries->modified) ?></td>
-                            <td><?= h($chatEntries->created) ?></td>
+                            <td><?= h($chatEntry->id) ?></td>
+                            <td><?= h($chatEntry->chat_room_id) ?></td>
+                            <td><?= h($chatEntry->user_id) ?></td>
+                            <td><?= h($chatEntry->chat_character_id) ?></td>
+                            <td><?= h($chatEntry->entry_key) ?></td>
+                            <td><?= h($chatEntry->modified) ?></td>
+                            <td><?= h($chatEntry->created) ?></td>
                             <td class="actions">
-                                <?= $this->Html->link(__('View'), ['controller' => 'ChatEntries', 'action' => 'view', $chatEntries->id]) ?>
-                                <?= $this->Html->link(__('Edit'), ['controller' => 'ChatEntries', 'action' => 'edit', $chatEntries->id]) ?>
-                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'ChatEntries', 'action' => 'delete', $chatEntries->id], ['confirm' => __('Are you sure you want to delete # {0}?', $chatEntries->id)]) ?>
+                                <?= $this->Html->link(__('View'), ['controller' => 'ChatEntries', 'action' => 'view', $chatEntry->id]) ?>
+                                <?= $this->Html->link(__('Edit'), ['controller' => 'ChatEntries', 'action' => 'edit', $chatEntry->id]) ?>
+                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'ChatEntries', 'action' => 'delete', $chatEntry->id], ['confirm' => __('Are you sure you want to delete # {0}?', $chatEntry->id)]) ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -139,22 +141,22 @@
                             <th><?= __('Created') ?></th>
                             <th class="actions"><?= __('Actions') ?></th>
                         </tr>
-                        <?php foreach ($user->received_messages as $receivedMessages) : ?>
+                        <?php foreach ($user->received_messages as $receivedMessage) : ?>
                         <tr>
-                            <td><?= h($receivedMessages->id) ?></td>
-                            <td><?= h($receivedMessages->user_id) ?></td>
-                            <td><?= h($receivedMessages->chat_character_key) ?></td>
-                            <td><?= h($receivedMessages->chat_character_fullname) ?></td>
-                            <td><?= h($receivedMessages->from_chat_character_key) ?></td>
-                            <td><?= h($receivedMessages->from_chat_character_fullname) ?></td>
-                            <td><?= h($receivedMessages->title) ?></td>
-                            <td><?= h($receivedMessages->message) ?></td>
-                            <td><?= h($receivedMessages->modified) ?></td>
-                            <td><?= h($receivedMessages->created) ?></td>
+                            <td><?= h($receivedMessage->id) ?></td>
+                            <td><?= h($receivedMessage->user_id) ?></td>
+                            <td><?= h($receivedMessage->chat_character_key) ?></td>
+                            <td><?= h($receivedMessage->chat_character_fullname) ?></td>
+                            <td><?= h($receivedMessage->from_chat_character_key) ?></td>
+                            <td><?= h($receivedMessage->from_chat_character_fullname) ?></td>
+                            <td><?= h($receivedMessage->title) ?></td>
+                            <td><?= h($receivedMessage->message) ?></td>
+                            <td><?= h($receivedMessage->modified) ?></td>
+                            <td><?= h($receivedMessage->created) ?></td>
                             <td class="actions">
-                                <?= $this->Html->link(__('View'), ['controller' => 'ReceivedMessages', 'action' => 'view', $receivedMessages->id]) ?>
-                                <?= $this->Html->link(__('Edit'), ['controller' => 'ReceivedMessages', 'action' => 'edit', $receivedMessages->id]) ?>
-                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'ReceivedMessages', 'action' => 'delete', $receivedMessages->id], ['confirm' => __('Are you sure you want to delete # {0}?', $receivedMessages->id)]) ?>
+                                <?= $this->Html->link(__('View'), ['controller' => 'ReceivedMessages', 'action' => 'view', $receivedMessage->id]) ?>
+                                <?= $this->Html->link(__('Edit'), ['controller' => 'ReceivedMessages', 'action' => 'edit', $receivedMessage->id]) ?>
+                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'ReceivedMessages', 'action' => 'delete', $receivedMessage->id], ['confirm' => __('Are you sure you want to delete # {0}?', $receivedMessage->id)]) ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -180,22 +182,22 @@
                             <th><?= __('Created') ?></th>
                             <th class="actions"><?= __('Actions') ?></th>
                         </tr>
-                        <?php foreach ($user->send_messages as $sendMessages) : ?>
+                        <?php foreach ($user->send_messages as $sendMessage) : ?>
                         <tr>
-                            <td><?= h($sendMessages->id) ?></td>
-                            <td><?= h($sendMessages->user_id) ?></td>
-                            <td><?= h($sendMessages->chat_character_key) ?></td>
-                            <td><?= h($sendMessages->chat_character_fullname) ?></td>
-                            <td><?= h($sendMessages->to_chat_character_key) ?></td>
-                            <td><?= h($sendMessages->to_chat_character_fullname) ?></td>
-                            <td><?= h($sendMessages->title) ?></td>
-                            <td><?= h($sendMessages->message) ?></td>
-                            <td><?= h($sendMessages->modified) ?></td>
-                            <td><?= h($sendMessages->created) ?></td>
+                            <td><?= h($sendMessage->id) ?></td>
+                            <td><?= h($sendMessage->user_id) ?></td>
+                            <td><?= h($sendMessage->chat_character_key) ?></td>
+                            <td><?= h($sendMessage->chat_character_fullname) ?></td>
+                            <td><?= h($sendMessage->to_chat_character_key) ?></td>
+                            <td><?= h($sendMessage->to_chat_character_fullname) ?></td>
+                            <td><?= h($sendMessage->title) ?></td>
+                            <td><?= h($sendMessage->message) ?></td>
+                            <td><?= h($sendMessage->modified) ?></td>
+                            <td><?= h($sendMessage->created) ?></td>
                             <td class="actions">
-                                <?= $this->Html->link(__('View'), ['controller' => 'SendMessages', 'action' => 'view', $sendMessages->id]) ?>
-                                <?= $this->Html->link(__('Edit'), ['controller' => 'SendMessages', 'action' => 'edit', $sendMessages->id]) ?>
-                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'SendMessages', 'action' => 'delete', $sendMessages->id], ['confirm' => __('Are you sure you want to delete # {0}?', $sendMessages->id)]) ?>
+                                <?= $this->Html->link(__('View'), ['controller' => 'SendMessages', 'action' => 'view', $sendMessage->id]) ?>
+                                <?= $this->Html->link(__('Edit'), ['controller' => 'SendMessages', 'action' => 'edit', $sendMessage->id]) ?>
+                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'SendMessages', 'action' => 'delete', $sendMessage->id], ['confirm' => __('Are you sure you want to delete # {0}?', $sendMessage->id)]) ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>

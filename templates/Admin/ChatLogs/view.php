@@ -14,7 +14,7 @@
             <?= $this->Html->link(__('New Chat Log'), ['action' => 'add'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="chatLogs view content">
             <h3><?= h($chatLog->id) ?></h3>
             <table>
@@ -48,7 +48,7 @@
                 </tr>
                 <tr>
                     <th><?= __('Battle Log') ?></th>
-                    <td><?= $chatLog->has('battle_log') ? $this->Html->link($chatLog->battle_log->id, ['controller' => 'BattleLogs', 'action' => 'view', $chatLog->battle_log->id]) : '' ?></td>
+                    <td><?= $chatLog->hasValue('battle_log') ? $this->Html->link($chatLog->battle_log->id, ['controller' => 'BattleLogs', 'action' => 'view', $chatLog->battle_log->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Id') ?></th>

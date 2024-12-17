@@ -2,6 +2,9 @@
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\ChatEntry $chatEntry
+ * @var \Cake\Collection\CollectionInterface|string[] $chatRooms
+ * @var \Cake\Collection\CollectionInterface|string[] $users
+ * @var \Cake\Collection\CollectionInterface|string[] $chatCharacters
  */
 ?>
 <div class="row">
@@ -11,7 +14,7 @@
             <?= $this->Html->link(__('List Chat Entries'), ['action' => 'index'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="chatEntries form content">
             <?= $this->Form->create($chatEntry) ?>
             <fieldset>
@@ -20,7 +23,7 @@
                     echo $this->Form->control('chat_room_id', ['options' => $chatRooms]);
                     echo $this->Form->control('user_id', ['options' => $users]);
                     echo $this->Form->control('chat_character_id', ['options' => $chatCharacters]);
-                    echo $this->Form->control('entry_key');
+                        echo 'エントリーキー';                    echo $this->Form->control('entry_key');
                 ?>
             </fieldset>
             <?= $this->Form->button(__('Submit')) ?>

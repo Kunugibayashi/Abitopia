@@ -9,7 +9,6 @@ use App\Controller\AppController;
  * BattleCharacters Controller
  *
  * @property \App\Model\Table\BattleCharactersTable $BattleCharacters
- * @method \App\Model\Entity\BattleCharacter[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class BattleCharactersController extends AppController
 {
@@ -20,10 +19,9 @@ class BattleCharactersController extends AppController
      */
     public function index()
     {
-        $this->paginate = [
-            'contain' => ['BattleTurns', 'ChatCharacters'],
-        ];
-        $battleCharacters = $this->paginate($this->BattleCharacters);
+        $query = $this->BattleCharacters->find()
+            ->contain(['BattleTurns', 'ChatCharacters']);
+        $battleCharacters = $this->paginate($query);
 
         $this->set(compact('battleCharacters'));
     }
@@ -38,7 +36,6 @@ class BattleCharactersController extends AppController
     public function view($id = null)
     {
         $battleCharacter = $this->BattleCharacters->get($id, contain: ['BattleTurns', 'ChatCharacters']);
-
         $this->set(compact('battleCharacter'));
     }
 
@@ -59,8 +56,8 @@ class BattleCharactersController extends AppController
             }
             $this->Flash->error(__('The battle character could not be saved. Please, try again.'));
         }
-        $battleTurns = $this->BattleCharacters->BattleTurns->find('list', ['limit' => 200]);
-        $chatCharacters = $this->BattleCharacters->ChatCharacters->find('list', ['limit' => 200]);
+        $battleTurns = $this->BattleCharacters->BattleTurns->find('list', limit: 200)->all();
+        $chatCharacters = $this->BattleCharacters->ChatCharacters->find('list', limit: 200)->all();
         $this->set(compact('battleCharacter', 'battleTurns', 'chatCharacters'));
     }
 
@@ -83,8 +80,8 @@ class BattleCharactersController extends AppController
             }
             $this->Flash->error(__('The battle character could not be saved. Please, try again.'));
         }
-        $battleTurns = $this->BattleCharacters->BattleTurns->find('list', ['limit' => 200]);
-        $chatCharacters = $this->BattleCharacters->ChatCharacters->find('list', ['limit' => 200]);
+        $battleTurns = $this->BattleCharacters->BattleTurns->find('list', limit: 200)->all();
+        $chatCharacters = $this->BattleCharacters->ChatCharacters->find('list', limit: 200)->all();
         $this->set(compact('battleCharacter', 'battleTurns', 'chatCharacters'));
     }
 
@@ -92,7 +89,7 @@ class BattleCharactersController extends AppController
      * Delete method
      *
      * @param string|null $id Battle Character id.
-     * @return \Cake\Http\Response|null|void Redirects to index.
+     * @return \Cake\Http\Response|null Redirects to index.
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function delete($id = null)

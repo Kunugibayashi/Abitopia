@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
-use Cake\ORM\Query;
+use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -15,17 +15,17 @@ use Cake\Validation\Validator;
  *
  * @method \App\Model\Entity\ChatRoom newEmptyEntity()
  * @method \App\Model\Entity\ChatRoom newEntity(array $data, array $options = [])
- * @method \App\Model\Entity\ChatRoom[] newEntities(array $data, array $options = [])
- * @method \App\Model\Entity\ChatRoom get($primaryKey, $options = [])
- * @method \App\Model\Entity\ChatRoom findOrCreate($search, ?callable $callback = null, $options = [])
+ * @method array<\App\Model\Entity\ChatRoom> newEntities(array $data, array $options = [])
+ * @method \App\Model\Entity\ChatRoom get(mixed $primaryKey, array|string $finder = 'all', \Psr\SimpleCache\CacheInterface|string|null $cache = null, \Closure|string|null $cacheKey = null, mixed ...$args)
+ * @method \App\Model\Entity\ChatRoom findOrCreate($search, ?callable $callback = null, array $options = [])
  * @method \App\Model\Entity\ChatRoom patchEntity(\Cake\Datasource\EntityInterface $entity, array $data, array $options = [])
- * @method \App\Model\Entity\ChatRoom[] patchEntities(iterable $entities, array $data, array $options = [])
- * @method \App\Model\Entity\ChatRoom|false save(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\ChatRoom saveOrFail(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\ChatRoom[]|\Cake\Datasource\ResultSetInterface|false saveMany(iterable $entities, $options = [])
- * @method \App\Model\Entity\ChatRoom[]|\Cake\Datasource\ResultSetInterface saveManyOrFail(iterable $entities, $options = [])
- * @method \App\Model\Entity\ChatRoom[]|\Cake\Datasource\ResultSetInterface|false deleteMany(iterable $entities, $options = [])
- * @method \App\Model\Entity\ChatRoom[]|\Cake\Datasource\ResultSetInterface deleteManyOrFail(iterable $entities, $options = [])
+ * @method array<\App\Model\Entity\ChatRoom> patchEntities(iterable $entities, array $data, array $options = [])
+ * @method \App\Model\Entity\ChatRoom|false save(\Cake\Datasource\EntityInterface $entity, array $options = [])
+ * @method \App\Model\Entity\ChatRoom saveOrFail(\Cake\Datasource\EntityInterface $entity, array $options = [])
+ * @method iterable<\App\Model\Entity\ChatRoom>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\ChatRoom>|false saveMany(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\ChatRoom>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\ChatRoom> saveManyOrFail(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\ChatRoom>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\ChatRoom>|false deleteMany(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\ChatRoom>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\ChatRoom> deleteManyOrFail(iterable $entities, array $options = [])
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
@@ -34,7 +34,7 @@ class ChatRoomsTable extends Table
     /**
      * Initialize method
      *
-     * @param array $config The configuration for the Table.
+     * @param array<string, mixed> $config The configuration for the Table.
      * @return void
      */
     public function initialize(array $config): void
@@ -61,10 +61,6 @@ class ChatRoomsTable extends Table
     public function validationDefault(Validator $validator): Validator
     {
         $validator
-            ->nonNegativeInteger('id')
-            ->allowEmptyString('id', null, 'create');
-
-        $validator
             ->scalar('title')
             ->maxLength('title', 15)
             ->requirePresence('title', 'create')
@@ -87,6 +83,58 @@ class ChatRoomsTable extends Table
         $validator
             ->nonNegativeInteger('displayno')
             ->notEmptyString('displayno');
+
+        $validator
+            ->nonNegativeInteger('omikuji1flg')
+            ->notEmptyString('omikuji1flg');
+
+        $validator
+            ->scalar('omikuji1name')
+            ->maxLength('omikuji1name', 10)
+            ->notEmptyString('omikuji1name');
+
+        $validator
+            ->scalar('omikuji1text')
+            ->allowEmptyString('omikuji1text');
+
+        $validator
+            ->nonNegativeInteger('omikuji2flg')
+            ->notEmptyString('omikuji2flg');
+
+        $validator
+            ->scalar('omikuji2name')
+            ->maxLength('omikuji2name', 10)
+            ->notEmptyString('omikuji2name');
+
+        $validator
+            ->scalar('omikuji2text')
+            ->allowEmptyString('omikuji2text');
+
+        $validator
+            ->nonNegativeInteger('omikuji3flg')
+            ->notEmptyString('omikuji3flg');
+
+        $validator
+            ->scalar('omikuji3name')
+            ->maxLength('omikuji3name', 10)
+            ->notEmptyString('omikuji3name');
+
+        $validator
+            ->scalar('omikuji3text')
+            ->allowEmptyString('omikuji3text');
+
+        $validator
+            ->nonNegativeInteger('deck1flg')
+            ->notEmptyString('deck1flg');
+
+        $validator
+            ->scalar('deck1name')
+            ->maxLength('deck1name', 10)
+            ->notEmptyString('deck1name');
+
+        $validator
+            ->scalar('deck1text')
+            ->allowEmptyString('deck1text');
 
         return $validator;
     }

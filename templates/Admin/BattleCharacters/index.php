@@ -1,7 +1,7 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\BattleCharacter[]|\Cake\Collection\CollectionInterface $battleCharacters
+ * @var iterable<\App\Model\Entity\BattleCharacter> $battleCharacters
  */
 ?>
 <div class="battleCharacters index content">
@@ -41,8 +41,8 @@
                 <?php foreach ($battleCharacters as $battleCharacter): ?>
                 <tr>
                     <td><?= $this->Number->format($battleCharacter->id) ?></td>
-                    <td><?= $battleCharacter->has('battle_turn') ? $this->Html->link($battleCharacter->battle_turn->id, ['controller' => 'BattleTurns', 'action' => 'view', $battleCharacter->battle_turn->id]) : '' ?></td>
-                    <td><?= $battleCharacter->has('chat_character') ? $this->Html->link($battleCharacter->chat_character->id, ['controller' => 'ChatCharacters', 'action' => 'view', $battleCharacter->chat_character->id]) : '' ?></td>
+                    <td><?= $battleCharacter->hasValue('battle_turn') ? $this->Html->link($battleCharacter->battle_turn->id, ['controller' => 'BattleTurns', 'action' => 'view', $battleCharacter->battle_turn->id]) : '' ?></td>
+                    <td><?= $battleCharacter->hasValue('chat_character') ? $this->Html->link($battleCharacter->chat_character->id, ['controller' => 'ChatCharacters', 'action' => 'view', $battleCharacter->chat_character->id]) : '' ?></td>
                     <td><?= $this->Number->format($battleCharacter->strength) ?></td>
                     <td><?= $this->Number->format($battleCharacter->dexterity) ?></td>
                     <td><?= $this->Number->format($battleCharacter->stamina) ?></td>

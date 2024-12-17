@@ -14,17 +14,17 @@
             <?= $this->Html->link(__('New Battle Character'), ['action' => 'add'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="battleCharacters view content">
             <h3><?= h($battleCharacter->id) ?></h3>
             <table>
                 <tr>
                     <th><?= __('Battle Turn') ?></th>
-                    <td><?= $battleCharacter->has('battle_turn') ? $this->Html->link($battleCharacter->battle_turn->id, ['controller' => 'BattleTurns', 'action' => 'view', $battleCharacter->battle_turn->id]) : '' ?></td>
+                    <td><?= $battleCharacter->hasValue('battle_turn') ? $this->Html->link($battleCharacter->battle_turn->id, ['controller' => 'BattleTurns', 'action' => 'view', $battleCharacter->battle_turn->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Chat Character') ?></th>
-                    <td><?= $battleCharacter->has('chat_character') ? $this->Html->link($battleCharacter->chat_character->id, ['controller' => 'ChatCharacters', 'action' => 'view', $battleCharacter->chat_character->id]) : '' ?></td>
+                    <td><?= $battleCharacter->hasValue('chat_character') ? $this->Html->link($battleCharacter->chat_character->id, ['controller' => 'ChatCharacters', 'action' => 'view', $battleCharacter->chat_character->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Id') ?></th>

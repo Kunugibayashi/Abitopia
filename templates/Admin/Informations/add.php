@@ -11,14 +11,14 @@
             <?= $this->Html->link(__('List Informations'), ['action' => 'index'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="informations form content">
             <?= $this->Form->create($information) ?>
             <fieldset>
                 <legend><?= __('Add Information') ?></legend>
                 <?php
-                    echo $this->Form->control('title');
-                    echo $this->Form->control('detail');
+                        echo 'お知らせタイトル';                    echo $this->Form->control('title');
+                        echo 'お知らせメッセージ';                    echo $this->Form->control('detail');
                 ?>
             </fieldset>
             <?= $this->Form->button(__('Submit')) ?>

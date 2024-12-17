@@ -14,7 +14,7 @@
             <?= $this->Html->link(__('New Chat Log Warehouse'), ['action' => 'add'], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column column-80">
         <div class="chatLogWarehouses view content">
             <h3><?= h($chatLogWarehouse->id) ?></h3>
             <table>

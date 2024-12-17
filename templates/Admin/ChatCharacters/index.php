@@ -1,7 +1,7 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\ChatCharacter[]|\Cake\Collection\CollectionInterface $chatCharacters
+ * @var iterable<\App\Model\Entity\ChatCharacter> $chatCharacters
  */
 ?>
 <div class="chatCharacters index content">
@@ -17,6 +17,8 @@
                     <th><?= $this->Paginator->sort('sex') ?></th>
                     <th><?= $this->Paginator->sort('color') ?></th>
                     <th><?= $this->Paginator->sort('backgroundcolor') ?></th>
+                    <th><?= $this->Paginator->sort('nickname') ?></th>
+                    <th><?= $this->Paginator->sort('team') ?></th>
                     <th><?= $this->Paginator->sort('tag') ?></th>
                     <th><?= $this->Paginator->sort('url') ?></th>
                     <th><?= $this->Paginator->sort('modified') ?></th>
@@ -28,11 +30,13 @@
                 <?php foreach ($chatCharacters as $chatCharacter): ?>
                 <tr>
                     <td><?= $this->Number->format($chatCharacter->id) ?></td>
-                    <td><?= $chatCharacter->has('user') ? $this->Html->link($chatCharacter->user->id, ['controller' => 'Users', 'action' => 'view', $chatCharacter->user->id]) : '' ?></td>
+                    <td><?= $chatCharacter->hasValue('user') ? $this->Html->link($chatCharacter->user->id, ['controller' => 'Users', 'action' => 'view', $chatCharacter->user->id]) : '' ?></td>
                     <td><?= h($chatCharacter->fullname) ?></td>
                     <td><?= h($chatCharacter->sex) ?></td>
                     <td><?= h($chatCharacter->color) ?></td>
                     <td><?= h($chatCharacter->backgroundcolor) ?></td>
+                    <td><?= h($chatCharacter->nickname) ?></td>
+                    <td><?= h($chatCharacter->team) ?></td>
                     <td><?= h($chatCharacter->tag) ?></td>
                     <td><?= h($chatCharacter->url) ?></td>
                     <td><?= h($chatCharacter->modified) ?></td>
