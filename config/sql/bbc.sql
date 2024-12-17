@@ -100,6 +100,7 @@ CREATE TABLE `received_messages` (
   `from_chat_character_fullname` varchar(50)  NOT NULL                COMMENT '差出人キャラクター名',
   `title`                        varchar(255) NOT NULL                COMMENT '私書タイトル',
   `message`                      text         NOT NULL                COMMENT '私書メッセージ',
+  `opend`                        int unsigned NOT NULL DEFAULT '0'    COMMENT '開封したか？',
   `modified`                     datetime     NOT NULL                COMMENT '更新日',
   `created`                      datetime     NOT NULL                COMMENT '作成日',
   PRIMARY KEY (`id`),

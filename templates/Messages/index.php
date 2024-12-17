@@ -17,6 +17,7 @@
                     <th class="table-column-fullname"><?= __('宛先') ?></th>
                     <th class="table-column-fullname"><?= __('差出人') ?></th>
                     <th class="table-column-message-title"><?= __('件名') ?></th>
+                    <th class="table-column-opend"><?= __('開封') ?></th>
                     <th class="action"><?= __('') ?></th>
                 </tr>
             </thead>
@@ -30,6 +31,12 @@
                     <td><?= $this->Html->link(h($message->title), [
                             'controller' => 'Messages', 'action' => 'viewReceivedMessage', $message->id]
                         ); ?>
+                    </td>
+                    <td><?php if ($message->opend) {
+                            echo '開封済';
+                        } else {
+                            echo '未';
+                        } ?>
                     </td>
                     <td class="actions">
                         <?= $this->Form->postLink(__('削除'), [

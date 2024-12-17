@@ -16,6 +16,7 @@ use Cake\ORM\Entity;
  * @property string $from_chat_character_fullname
  * @property string $title
  * @property string $message
+ * @property int $opend
  * @property \Cake\I18n\DateTime $modified
  * @property \Cake\I18n\DateTime $created
  *
@@ -40,6 +41,7 @@ class ReceivedMessage extends Entity
         'from_chat_character_fullname' => true,
         'title' => true,
         'message' => true,
+        'opend' => true,
         'modified' => true,
         'created' => true,
         'user' => true,

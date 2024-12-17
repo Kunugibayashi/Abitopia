@@ -165,6 +165,33 @@ button + button {
 .top-nav-title a::first-letter {
     color: #2f4f4f;
 }
+.top-nav-links {
+    display: grid;
+    width: 12rem;
+    min-width: 12rem;
+    grid-template-rows: 3rem 1fr;
+    grid-template-columns: 1fr 5rem;
+    align-items: center;
+    justify-items: center;
+}
+.top-nav-links-login-username {
+    grid-column: 1 / 3;
+    grid-row: 1 / 2;
+}
+.top-nav-links-settings-button {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+    width: 5rem;
+    display: flex;
+    align-items: center;
+}
+.top-nav-links-img-site-letter {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+}
+#id-img-site-letter {
+    display: none;
+}
 .top-nav-links-settings-button,
 .top-nav-links-settings-button:hover,
 .top-nav-links-settings-button:focus {
@@ -180,7 +207,29 @@ button + button {
 .top-nav-links-settings-button:hover {
     color: #d33c43;
 }
+.top-nav-links-settings-title {
+    display: inline-block;
+    color: #4e4e4e;
+    font-size: 1.4rem;
+    margin-left: 0.2rem;
+}
 
+/* ************************************************************************* */
+/* animation                                                                 */
+/* ************************************************************************* */
+.letter-animation {
+    -webkit-animation: buruburu 2s linear infinite;
+    animation: buruburu 2s linear infinite;
+    scale: 1;
+}
+@keyframes buruburu {
+    0% { transform: translateX(0); }
+    7% { transform: translateX(-0.2rem); }
+    14%{ transform: translateX(0.2rem); }
+    20%{ transform: translateX(-0.2rem); }
+    32%{ transform: translateX(0.2rem); }
+    40%{ transform: translateX(0px); }
+}
 
 /* ************************************************************************* */
 /* container                                                                 */
@@ -250,7 +299,7 @@ button + button {
 /* modal                                                                     */
 /* ************************************************************************* */
 .modal-body {
-    overflow: scroll;
+    overflow: hidden auto;
     height: 60vh;
 }
 
@@ -436,6 +485,10 @@ table tbody tr td:last-of-type {
         width: 25rem;
         min-width: 25rem;
         word-break: normal;
+    }
+    .table-column-opend {
+        width: 8rem;
+        min-width: 8rem;
     }
 }
 

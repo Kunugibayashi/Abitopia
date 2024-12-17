@@ -118,13 +118,17 @@ class MessagesController extends AppController
     {
         $userId = $this->Authentication->getIdentityData('id');
 
-        $receivedMessages = $this->ReceivedMessages->find()
+        $receivedMessage = $this->ReceivedMessages->find()
             ->contain(['Users'])
             ->where(['user_id' =>  $userId])
             ->where(['ReceivedMessages.id' => $id])
             ->first();
 
-        $this->set('message', $receivedMessages);
+        // 開封済みにする
+        $receivedMessage->opend = 1;
+        $this->ReceivedMessages->save($receivedMessage);
+
+        $this->set('message', $receivedMessage);
         return $this->render('view');
     }
 
@@ -228,6 +232,35 @@ class MessagesController extends AppController
             ->limit(3);
 
         $this->set(compact('receivedMessages'));
+    }
+
+    public function isNewMessage()
+    {
+        $this->viewBuilder()->disableAutoLayout();
+        $userId = $this->Authentication->getIdentityData('id');
+
+        // 登録キャラがいない場合は表示しない
+        if (!$this->isCharacters()) {
+            return;
+        }
+        $chatCharacterIds = $this->getCharacterIds();
+
+        $receivedMessage = $this->ReceivedMessages->find()
+            ->contain(['Users'])
+            ->where(['user_id' => $userId])
+            ->where(['opend' => 0])
+            ->where(['chat_character_key IN ' => $chatCharacterIds])
+            ->first();
+
+        $result = 0;
+        if ($receivedMessage) {
+            $result = 1;
+        }
+
+        $response = $this->response;
+        $response = $response->withType('application/json')
+            ->withStringBody(json_encode(['code' => '200', 'isNewMessage' => $result]));
+        return $response;
     }
 
 }

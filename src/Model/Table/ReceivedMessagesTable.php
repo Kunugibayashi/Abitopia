@@ -98,6 +98,10 @@ class ReceivedMessagesTable extends Table
             ->requirePresence('message', 'create')
             ->notEmptyString('message');
 
+        $validator
+            ->nonNegativeInteger('opend')
+            ->notEmptyString('opend');
+
         return $validator;
     }
 

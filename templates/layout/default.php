@@ -62,14 +62,11 @@ $cakeDescription = 'CakePHP: the rapid development php framework';
                 <?= $this->Html->link(__('Q&A'), ['controller' => 'Site', 'action' => 'qa', ]) ?>
             </div>
         <?php } ?>
-        <div class="top-nav-links">
-            <?php if ($loginUsername) { ?>
-            <div>
-                <?php echo __('Hello, {0}.', [$loginUsername, ]); ?>
+        <?php if ($loginUsername) { ?>
+            <div class="top-menu-nav-links">
+                <?php echo $this->element('settings'); ?>
             </div>
-            <?php echo $this->element('settings'); ?>
-            <?php } ?>
-        </div>
+        <?php } ?>
     </nav>
     <main class="main">
         <div class="container">

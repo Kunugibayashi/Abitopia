@@ -44,10 +44,13 @@ jQuery(function(){
         }).fail(function (jqXHR, status, error) {
             console.log(error);
         }).always(() => {
+            // 自動更新を有効にする場合はコメントアウトを外してください
+            // ここから
             clearInterval(this.getViewCountObj);
             this.getViewCountObj = setInterval(function() {
                 getViewCount();
             }, 20 * 1000);
+            // ここまで
         });
     }
     getViewCount();
