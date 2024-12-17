@@ -291,6 +291,10 @@ button + button {
     display: block;
     padding: 12px 0;
 }
+.detail-wrap {
+    padding: 0 1rem;
+    border-left: 0.5rem solid #e1e1e1 ;
+}
 table tbody {
     display: flex;
     flex-wrap: wrap;
@@ -349,6 +353,14 @@ table tbody tr td:last-of-type {
     .table-column-fullname {
         width: 30rem;
         min-width: 30rem;
+    }
+    .table-column-nickname {
+        width: 20rem;
+        min-width: 20rem;
+    }
+    .table-column-team {
+        width: 15rem;
+        min-width: 15rem;
     }
     .table-column-chat-room-title {
         width: 25rem;

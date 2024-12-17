@@ -23,11 +23,13 @@
                     <thead>
                         <tr>
                             <th class="table-column-fullname"><?= $this->Paginator->sort('fullname', ['label' => '名前']) ?></th>
+                            <th class="table-column-nickname content-nickname-wrap"><?= $this->Paginator->sort('nickname', ['label' => '二つ名']) ?></th>
                             <th class="table-column-sex"><?= $this->Paginator->sort('sex', ['label' => '性別']) ?></th>
+                            <th class="table-column-team content-team-wrap"><?= $this->Paginator->sort('team', ['label' => '所属']) ?></th>
                             <th class="table-column-url"><?= $this->Paginator->sort('url', ['label' => 'URL']) ?></th>
                             <th class="table-column-level"><?= __('レベル') ?></th>
                             <th class="table-column-status"><?= __('ステータス') ?></th>
-                            <th class="table-column-tag"><?= $this->Paginator->sort('tag', ['label' => 'タグ']) ?></th>
+                            <th class="table-column-tag content-tag-wrap"><?= $this->Paginator->sort('tag', ['label' => 'タグ']) ?></th>
                             <th class="table-column-date"><?= $this->Paginator->sort('modified', ['label' => '更新日']) ?></th>
                             <th class="table-column-date"><?= $this->Paginator->sort('created', ['label' => '作成日']) ?></th>
                         </tr>
@@ -40,7 +42,9 @@
                                         'action' => 'view',
                                         $chatCharacter->id
                                     ]) ?></td>
+                            <td class="content-nickname-wrap"><?= h($chatCharacter->nickname) ?></td>
                             <td><?= h($chatCharacter->sex) ?></td>
+                            <td class="content-team-wrap"><?= h($chatCharacter->team) ?></td>
                             <td>
                                 <?php if (isset($chatCharacter->url) && !empty($chatCharacter->url)) {?>
                                     <a href="<?= h($chatCharacter->url) ?>">■</a>
@@ -54,7 +58,7 @@
                                 echo h($chatCharacter->battle_character_status->spirit);
                             ?>
                             </td>
-                            <td><?= h($chatCharacter->tag) ?></td>
+                            <td class="content-tag-wrap"><?= h($chatCharacter->tag) ?></td>
                             <td><?= h($chatCharacter->modified) ?></td>
                             <td><?= h($chatCharacter->created) ?></td>
                         </tr>

@@ -640,7 +640,7 @@ class BattleController extends AppController
             ->where(['chat_character_key' => $chatEntry->chat_character_id])
             ->order(['id' => 'DESC'])
             ->first();
-        if($lastChatLog->message == $message) {
+        if(!is_null($lastChatLog) && !is_null($lastChatLog->message) && $lastChatLog->message == $message) {
             $this->log(__CLASS__.":".__FUNCTION__.":" ."The remarks are repeated.", 'warning');
 
             $response = $this->response;
@@ -775,7 +775,7 @@ class BattleController extends AppController
             ->where(['chat_character_key' => $chatEntry->chat_character_id])
             ->order(['id' => 'DESC'])
             ->first();
-        if($lastChatLog->message == $message) {
+        if(!is_null($lastChatLog) && !is_null($lastChatLog->message) && $lastChatLog->message == $message) {
             $this->log(__CLASS__.":".__FUNCTION__.":" ."The remarks are repeated.", 'warning');
 
             $response = $this->response;

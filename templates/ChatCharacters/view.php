@@ -25,9 +25,17 @@
                     <th class="table-column-head"><?= __('名前') ?></th>
                     <td><?= h($chatCharacter->fullname) ?></td>
                 </tr>
+                <tr class="content-nickname-wrap">
+                    <th class="table-column-head""><?= __('二つ名') ?></th>
+                    <td><?= h($chatCharacter->nickname) ?></td>
+                </tr>
                 <tr>
                     <th class="table-column-head"><?= __('性別') ?></th>
                     <td><?= h($chatCharacter->sex) ?></td>
+                </tr>
+                <tr class="content-team-wrap">
+                    <th class="table-column-head""><?= __('所属') ?></th>
+                    <td><?= h($chatCharacter->team) ?></td>
                 </tr>
                 <tr>
                     <th class="table-column-head"><?= __('色') ?></th>
@@ -37,7 +45,7 @@
                     <th class="table-column-head"><?= __('背景色') ?></th>
                     <td><span style="color:<?= $chatCharacter->backgroundcolor ?>"><?= h($chatCharacter->backgroundcolor) ?></span></td>
                 </tr>
-                <tr>
+                <tr class="content-team-wrap">
                     <th class="table-column-head"><?= __('タグ') ?></th>
                     <td><?= h($chatCharacter->tag) ?></td>
                 </tr>
@@ -80,6 +88,12 @@
                     <td><?= h($chatCharacter->created) ?></td>
                 </tr>
             </table>
+            <div class="text-wrap content-free1-wrap">
+                <strong><?= __('フリー欄') ?></strong>
+                <p class="detail-wrap">
+                    <?php echo nl2br(h($chatCharacter->free1)); ?>
+                </p>
+            </div>
             <div class="text-wrap">
                 <strong><?= __('詳細') ?></strong>
                 <p class="detail-wrap">

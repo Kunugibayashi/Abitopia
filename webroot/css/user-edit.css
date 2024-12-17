@@ -1,2 +1,18 @@
 @charset "utf-8";
 /* サイトのデザインを変更する場合、編集を推奨するCSS。 */
+
+/* 画面表示項目 （非表示にする場合はコメントを外して none にする）
+■二つ名
+.content-nickname-wrap { display: none; }
+■所属
+.content-team-wrap { display: none; }
+■タグ項目
+.content-tag-wrap { display: none; }
+■フリー欄
+.content-free1-wrap { display: none; }
+*/
+/* .content-nickname-wrap { display: none; } */
+/* .content-team-wrap { display: none; } */
+/* .content-tag-wrap { display: none; } */
+/* .content-free1-wrap { display: none; } */
+

@@ -33,8 +33,11 @@ class ChatCharactersController extends AppController
             $query = $this->ChatCharacters->find('all',conditions: [
                 'OR' => [
                     'fullname LIKE' => '%' .$keyword .'%',
+                    'nickname LIKE' => '%' .$keyword .'%',
                     'sex LIKE' => '%' .$keyword .'%',
+                    'team LIKE' => '%' .$keyword .'%',
                     'tag LIKE' => '%' .$keyword .'%',
+                    'free1 LIKE' => '%' .$keyword .'%',
                     'detail LIKE' => '%' .$keyword .'%',
                 ]
             ]);

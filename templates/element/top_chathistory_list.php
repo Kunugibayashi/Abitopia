@@ -21,11 +21,11 @@ jQuery(function(){
         }).always(() => {
             // 自動更新を有効にする場合はコメントアウトを外してください
             // ここから
-            // jQuery('#id-chathistory-reload').show();
-            // clearInterval(this.getChatHistoryTimerObj);
-            // this.getChatHistoryTimerObj = setInterval(function() {
-            //     getChatHistory();
-            // }, 20 * 1000);
+            jQuery('#id-chathistory-reload').show();
+            clearInterval(this.getChatHistoryTimerObj);
+            this.getChatHistoryTimerObj = setInterval(function() {
+                getChatHistory();
+            }, 20 * 1000);
             // ここまで
         });
     }
