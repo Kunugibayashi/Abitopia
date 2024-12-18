@@ -185,7 +185,7 @@ button + button {
     display: flex;
     align-items: center;
 }
-.top-nav-links-img-site-letter {
+.top-nav-links-img-site-letter-button {
     grid-column: 2 / 3;
     grid-row: 2 / 3;
 }
@@ -194,7 +194,11 @@ button + button {
 }
 .top-nav-links-settings-button,
 .top-nav-links-settings-button:hover,
-.top-nav-links-settings-button:focus {
+.top-nav-links-settings-button:focus,
+.top-nav-links-img-site-letter-button,
+.top-nav-links-img-site-letter-button:hover,
+.top-nav-links-img-site-letter-button:focus
+{
     margin: 0;
     padding: 0;
     line-height: 0;
@@ -204,7 +208,9 @@ button + button {
     color: #000;
     font-size: 1rem;
 }
-.top-nav-links-settings-button:hover {
+.top-nav-links-settings-button:hover,
+.top-nav-links-img-site-letter-button:hover
+{
     color: #d33c43;
 }
 .top-nav-links-settings-title {

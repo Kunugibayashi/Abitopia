@@ -4,14 +4,16 @@
         <?php echo $this->Html->image('site/gear.png', ['alt' => '設定', 'width' => '16px', 'height' => '16px', ]); ?>
         <div class="top-nav-links-settings-title"><?php echo __('設定'); ?></div>
     </button>
-    <?php echo $this->Html->image('site/letter.png', [
-        'alt' => '新しい私書',
-        'id' => 'id-img-site-letter',
-        'class' => 'top-nav-links-img-site-letter letter-animation',
-        'width' => '16px',
-        'height' => '16px',
-        ]);
-    ?>
+    <button class="top-nav-links-img-site-letter-button">
+        <?php echo $this->Html->image('site/letter.png', [
+            'alt' => '新しい私書',
+            'id' => 'id-img-site-letter',
+            'class' => 'letter-animation',
+            'width' => '16px',
+            'height' => '16px',
+            ]);
+        ?>
+    </button>
 </div>
 <div class="modal-template" id="id-modal-template">
     <div class="modal-mask">
@@ -39,6 +41,13 @@
 jQuery(function(){
     jQuery('button#show-modal').on('click', function(){
         jQuery("#id-modal-template").show();
+    });
+
+    jQuery('#id-img-site-letter').on('click', function(){
+        location.href = '<?= $this->Url->build([
+                'controller' => 'Messages',
+                'action' => 'index'
+            ]); ?>' ;
     });
 
     var getNewMessageAlert = function() {
