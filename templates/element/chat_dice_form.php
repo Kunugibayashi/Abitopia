@@ -1,27 +1,26 @@
-<?= $this->Form->create($chatLog, ['id' => "id-diceform", ]) ?>
+<?= $this->Form->create($chatLog, ['id' => "id-dice-form", ]) ?>
+<div class="dice-container">
 <fieldset>
     <?php
         echo $this->Form->control('dice', [
-            'label' => 'ダイス',
+            'label' => '',
             'maxlength' => '8',
-            'placeholder' => '1d100（100面サイコロ1個）, 2d6（6面サイコロ2個）など、 最大 10d100（100面サイコロ10個）',
+            'placeholder' => '最大 10d100（100面サイコロ10個）',
             'id' => 'id-dice',
         ]);
-
         echo $this->Form->hidden('entry_key');
         echo $this->Form->hidden('chat_room_key');
         echo $this->Form->hidden('chat_character_key');
     ?>
-
-    <div id="id-dice-error-message"></div>
 </fieldset>
-<div class="dice-container">
     <?= $this->Form->button(__('ダイスを振る'), [
             'type' => 'button',
             'id' => 'id-dice-button',
         ]) ?>
 </div>
 <?= $this->Form->end() ?>
+
+<div id="id-dice-error-message"></div>
 <script>
 jQuery(function(){
     jQuery('#id-dice-button').on('click', function(){
@@ -32,7 +31,7 @@ jQuery(function(){
         message = jQuery.trim(message);
         if (!message) return;
 
-        var sendData = jQuery('#id-diceform').serializeArray();
+        var sendData = jQuery('#id-dice-form').serializeArray();
         jQuery.ajax({
             data: sendData,
             url: '<?php echo $this->Url->build(['controller' => 'Chat', 'action' => 'dice', $chatRoomId, ]); ?>',

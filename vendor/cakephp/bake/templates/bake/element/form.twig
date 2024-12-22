@@ -54,7 +54,8 @@
                     {{- "\n" }}
         {%- else %}
                     {%- if columnComments is defined %}
-                        echo '{{ columnComments[field] }}';
+                    echo '{{ columnComments[field] }}';
+                    {{- "\n" }}
                     {%- endif %}
                     echo $this->Form->control('{{ field }}');
                     {{- "\n" }}

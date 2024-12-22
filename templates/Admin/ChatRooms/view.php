@@ -23,20 +23,12 @@
                     <td><?= h($chatRoom->title) ?></td>
                 </tr>
                 <tr>
-                    <th><?= __('Information') ?></th>
-                    <td><?= h($chatRoom->information) ?></td>
-                </tr>
-                <tr>
                     <th><?= __('Omikuji1name') ?></th>
                     <td><?= h($chatRoom->omikuji1name) ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Omikuji2name') ?></th>
                     <td><?= h($chatRoom->omikuji2name) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Omikuji3name') ?></th>
-                    <td><?= h($chatRoom->omikuji3name) ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Deck1name') ?></th>
@@ -67,10 +59,6 @@
                     <td><?= $this->Number->format($chatRoom->omikuji2flg) ?></td>
                 </tr>
                 <tr>
-                    <th><?= __('Omikuji3flg') ?></th>
-                    <td><?= $this->Number->format($chatRoom->omikuji3flg) ?></td>
-                </tr>
-                <tr>
                     <th><?= __('Deck1flg') ?></th>
                     <td><?= $this->Number->format($chatRoom->deck1flg) ?></td>
                 </tr>
@@ -84,6 +72,12 @@
                 </tr>
             </table>
             <div class="text">
+                <strong><?= __('Information') ?></strong>
+                <blockquote>
+                    <?= $this->Text->autoParagraph(h($chatRoom->information)); ?>
+                </blockquote>
+            </div>
+            <div class="text">
                 <strong><?= __('Omikuji1text') ?></strong>
                 <blockquote>
                     <?= $this->Text->autoParagraph(h($chatRoom->omikuji1text)); ?>
@@ -93,12 +87,6 @@
                 <strong><?= __('Omikuji2text') ?></strong>
                 <blockquote>
                     <?= $this->Text->autoParagraph(h($chatRoom->omikuji2text)); ?>
-                </blockquote>
-            </div>
-            <div class="text">
-                <strong><?= __('Omikuji3text') ?></strong>
-                <blockquote>
-                    <?= $this->Text->autoParagraph(h($chatRoom->omikuji3text)); ?>
                 </blockquote>
             </div>
             <div class="text">

@@ -39,7 +39,9 @@ if ($chatRoomCss) {
                 <?php } ?>
             </div>
             <div class="chatentry form">
-                <?php echo $this->element('chat_entry_form'); ?>
+                <?php if(!is_null($chatCharacters) && count($chatCharacters) > 0){ ?>
+                    <?php echo $this->element('chat_entry_form'); ?>
+                <?php } ?>
             </div>
         </div>
         <?php

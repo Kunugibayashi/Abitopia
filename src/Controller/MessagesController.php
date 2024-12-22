@@ -241,7 +241,10 @@ class MessagesController extends AppController
 
         // 登録キャラがいない場合は表示しない
         if (!$this->isCharacters()) {
-            return;
+            $response = $this->response;
+            $response = $response->withType('application/json')
+                ->withStringBody(json_encode(['code' => '200', 'isNewMessage' => 0]));
+            return $response;
         }
         $chatCharacterIds = $this->getCharacterIds();
 

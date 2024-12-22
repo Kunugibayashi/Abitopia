@@ -14,7 +14,7 @@ if (isset($chatRoomCss)) {
 <style>
 html { box-sizing: border-box; font-size: 62.5%; }
 body { color: #606c76; font-size: 1.6em; font-weight: 300; letter-spacing: .01em; line-height: 1.6; }
-.system { text-align: right; padding: 0 1rem; }
+.system { padding: 0 1rem; }
 .chat-log-contenar { margin: 1rem; }
 .chat-log { border-radius: 0.5rem; overflow: hidden; padding: 1rem;}
 .chat-log-title { border-bottom: inset 1px; padding: 1rem 0;}

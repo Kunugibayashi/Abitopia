@@ -111,19 +111,6 @@ class ChatRoomsTable extends Table
             ->allowEmptyString('omikuji2text');
 
         $validator
-            ->nonNegativeInteger('omikuji3flg')
-            ->notEmptyString('omikuji3flg');
-
-        $validator
-            ->scalar('omikuji3name')
-            ->maxLength('omikuji3name', 10)
-            ->notEmptyString('omikuji3name');
-
-        $validator
-            ->scalar('omikuji3text')
-            ->allowEmptyString('omikuji3text');
-
-        $validator
             ->nonNegativeInteger('deck1flg')
             ->notEmptyString('deck1flg');
 

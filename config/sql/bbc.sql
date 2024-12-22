@@ -133,7 +133,7 @@ CREATE TABLE `informations` (
 CREATE TABLE `chat_rooms` (
   `id`            int unsigned  NOT NULL AUTO_INCREMENT         COMMENT 'チャットルームID',
   `title`         varchar(15)   NOT NULL                        COMMENT 'チャットルームタイトル',
-  `information`   varchar(1023) NOT NULL                        COMMENT 'チャットルーム説明',
+  `information`   text                                          COMMENT 'チャットルーム説明',
   `published`     int unsigned  NOT NULL DEFAULT '1'            COMMENT '公開するか？（0:非公開 1:公開）',
   `readonly`      int unsigned  NOT NULL DEFAULT '1'            COMMENT '管理人のみルーム説明編集可能か？（0:ユーザーも可能な自由設定ルーム 1:管理人のみ可能）',
   `displayno`     int unsigned  NOT NULL DEFAULT '0'            COMMENT '表示順序',
@@ -143,12 +143,9 @@ CREATE TABLE `chat_rooms` (
   `omikuji2flg`   int unsigned  NOT NULL DEFAULT '0'            COMMENT 'おみくじ2を表示するか？（0:非表示 1:表示）',
   `omikuji2name`  varchar(10)   NOT NULL DEFAULT 'おみくじ2'     COMMENT 'おみくじ2タイトル',
   `omikuji2text`  text                                          COMMENT 'おみくじ2内容（複数の場合は,区切り）',
-  `omikuji3flg`   int unsigned  NOT NULL DEFAULT '0'            COMMENT 'おみくじ3を表示するか？（0:非表示 1:表示）',
-  `omikuji3name`  varchar(10)   NOT NULL DEFAULT 'おみくじ3'     COMMENT 'おみくじ3タイトル',
-  `omikuji3text`  text                                          COMMENT 'おみくじ3内容（複数の場合は,区切り）',
   `deck1flg`      int unsigned  NOT NULL DEFAULT '0'            COMMENT '手札1を表示するか？',
   `deck1name`     varchar(10)   NOT NULL DEFAULT '手札'         COMMENT '手札1タイトル',
-  `deck1text`     text                                          COMMENT '手札1内容（複数の場合は,区切り。初期処理後は頭に#が付与。文章内に#がある場合意図しない挙動になる可能性あり）',
+  `deck1text`     text                                          COMMENT '手札1内容（複数の場合は,区切り。初期処理後は頭に#が付与。0#が山札内、1#がひかれたカード。文章内に#がある場合意図しない挙動になる可能性あり）',
   `modified`      datetime      NOT NULL                        COMMENT '更新日',
   `created`       datetime      NOT NULL                        COMMENT '作成日',
   PRIMARY KEY (`id`)

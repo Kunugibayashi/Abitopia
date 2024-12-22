@@ -13,7 +13,6 @@
                 <tr>
                     <th><?= $this->Paginator->sort('id') ?></th>
                     <th><?= $this->Paginator->sort('title') ?></th>
-                    <th><?= $this->Paginator->sort('information') ?></th>
                     <th><?= $this->Paginator->sort('published') ?></th>
                     <th><?= $this->Paginator->sort('readonly') ?></th>
                     <th><?= $this->Paginator->sort('displayno') ?></th>
@@ -21,8 +20,6 @@
                     <th><?= $this->Paginator->sort('omikuji1name') ?></th>
                     <th><?= $this->Paginator->sort('omikuji2flg') ?></th>
                     <th><?= $this->Paginator->sort('omikuji2name') ?></th>
-                    <th><?= $this->Paginator->sort('omikuji3flg') ?></th>
-                    <th><?= $this->Paginator->sort('omikuji3name') ?></th>
                     <th><?= $this->Paginator->sort('deck1flg') ?></th>
                     <th><?= $this->Paginator->sort('deck1name') ?></th>
                     <th><?= $this->Paginator->sort('modified') ?></th>
@@ -35,7 +32,6 @@
                 <tr>
                     <td><?= $this->Number->format($chatRoom->id) ?></td>
                     <td><?= h($chatRoom->title) ?></td>
-                    <td><?= h($chatRoom->information) ?></td>
                     <td><?= $this->Number->format($chatRoom->published) ?></td>
                     <td><?= $this->Number->format($chatRoom->readonly) ?></td>
                     <td><?= $this->Number->format($chatRoom->displayno) ?></td>
@@ -43,8 +39,6 @@
                     <td><?= h($chatRoom->omikuji1name) ?></td>
                     <td><?= $this->Number->format($chatRoom->omikuji2flg) ?></td>
                     <td><?= h($chatRoom->omikuji2name) ?></td>
-                    <td><?= $this->Number->format($chatRoom->omikuji3flg) ?></td>
-                    <td><?= h($chatRoom->omikuji3name) ?></td>
                     <td><?= $this->Number->format($chatRoom->deck1flg) ?></td>
                     <td><?= h($chatRoom->deck1name) ?></td>
                     <td><?= h($chatRoom->modified) ?></td>

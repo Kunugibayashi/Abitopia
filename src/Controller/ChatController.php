@@ -32,6 +32,8 @@ class ChatController extends AppController
         $this->loadComponent('ActionLog');
         $this->loadComponent('ChatSession');
         $this->loadComponent('Dice');
+        $this->loadComponent('Omikuji');
+        $this->loadComponent('Deck');
 
         $this->ChatRooms = $this->fetchTable('ChatRooms');
         $this->ChatCharacters = $this->fetchTable('ChatCharacters');
@@ -277,6 +279,10 @@ class ChatController extends AppController
         $chatRoomCss = $this->CheckFile->findChatRoomCss($chatRoomId);
         $entryKey = $this->CheckChat->findEntryKey($chatRoomId);
 
+        // 部屋情報
+        $chatRoom = $this->ChatRooms
+            ->get($chatRoomId);
+
         $chatLog = $this->ChatLogs->newEmptyEntity();
         $chatLog->set('entry_key', $entryKey);
         $chatLog->set('chat_room_key', $chatRoomId);
@@ -327,6 +333,7 @@ class ChatController extends AppController
         $this->set(compact('chatRoomId'));
         $this->set(compact('chatLog'));
         $this->set(compact('chatCharacterId'));
+        $this->set(compact('chatRoom'));
     }
 
     public function say()
@@ -566,7 +573,7 @@ class ChatController extends AppController
         $message = __($format, [
             $chatCharacter->fullname,
             $rollDiceString,
-            '( ' .join(' + ', $surfaces) .' )',
+            join(' + ', $surfaces),
             $sum,
         ]);
         $chatLog = $this->ActionLog->setSystemMessage($message, $chatEntry, $chatRoom);
@@ -575,7 +582,255 @@ class ChatController extends AppController
 
             $response = $this->response;
             $response = $response->withType('application/json')
-                ->withStringBody(json_encode(['code' => '500']));
+                ->withStringBody(json_encode(['code' => '500', 'message' => 'DB更新に失敗しました。']));
+            return $response;
+        }
+
+        $connection->commit();
+
+        $response = $this->response;
+        $response = $response->withType('application/json')
+            ->withStringBody(json_encode(['code' => '200', 'message' => '正常終了']));
+        return $response;
+    }
+
+    public function omikuji()
+    {
+        $this->autoRender = false;
+        $chatCharacterId = $this->request->getData(); // ここは key
+
+        $userId = $this->Authentication->getIdentityData('id');
+        $chatCharacterId = $this->request->getData('chat_character_key'); // ここは key
+        $chatCharacterId = $this->CheckChat->userCharacterId($userId, $chatCharacterId);
+        $this->ChatSession->setChatCharacterId($chatCharacterId);
+        // Routesにて、正規表現で数値制限済み
+        $chatRoomId = $this->request->getParam('chatRoomId');
+
+        $chatRoom = $this->ChatRooms->get($chatRoomId);
+        $chatEntry = $this->ChatEntries->find()
+            ->where(['chat_room_id' => $chatRoomId])
+            ->where(['user_id' => $userId])
+            ->where(['chat_character_id' => $chatCharacterId])
+            ->first();
+        $chatCharacter = $this->ChatCharacters
+            ->get($chatCharacterId);
+
+        $omikuji = $this->request->getData('omikuji');
+
+        $omikujiText = "";
+        $omikujiName = "";
+        if ($omikuji == 'omikuji1') {
+            $omikujiText = $chatRoom->omikuji1text;
+            $omikujiName = $chatRoom->omikuji1name;
+        } else if ($omikuji == 'omikuji2') {
+            $omikujiText = $chatRoom->omikuji2text;
+            $omikujiName = $chatRoom->omikuji2name;
+        }
+        if (empty($omikujiText)) {
+            $response = $this->response;
+            $response = $response->withType('application/json')
+                ->withStringBody(json_encode(['code' => '400', 'message' => 'おみくじが設定されていません。']));
+            return $response;
+        }
+
+        $omikujiArray = explode(',', $omikujiText);
+        if (empty($omikujiArray) || count($omikujiArray) < 1) {
+            $response = $this->response;
+            $response = $response->withType('application/json')
+                ->withStringBody(json_encode(['code' => '400', 'message' => 'おみくじが設定されていません。']));
+            return $response;
+        }
+
+        list($count, $me, $resultOmikujiText) = $this->Omikuji->draw($omikujiText);
+
+        $connection = ConnectionManager::get('default');
+        $connection->begin();
+
+        // おみくじ
+        $format = Configure::read('Room.omikuji');
+        $message = __($format, [
+            $chatCharacter->fullname,
+            $omikujiName,
+            $count,
+            $me,
+            $resultOmikujiText,
+        ]);
+        $chatLog = $this->ActionLog->setSystemMessage($message, $chatEntry, $chatRoom);
+        if (!$this->ChatLogs->save($chatLog)) {
+            $connection->rollback();
+
+            $response = $this->response;
+            $response = $response->withType('application/json')
+                ->withStringBody(json_encode(['code' => '500', 'message' => 'DB更新に失敗しました。']));
+            return $response;
+        }
+
+        $connection->commit();
+
+        $response = $this->response;
+        $response = $response->withType('application/json')
+            ->withStringBody(json_encode(['code' => '200', 'message' => '正常終了']));
+        return $response;
+    }
+
+    public function deckflip()
+    {
+        $this->autoRender = false;
+        $chatCharacterId = $this->request->getData(); // ここは key
+
+        $userId = $this->Authentication->getIdentityData('id');
+        $chatCharacterId = $this->request->getData('chat_character_key'); // ここは key
+        $chatCharacterId = $this->CheckChat->userCharacterId($userId, $chatCharacterId);
+        $this->ChatSession->setChatCharacterId($chatCharacterId);
+        // Routesにて、正規表現で数値制限済み
+        $chatRoomId = $this->request->getParam('chatRoomId');
+
+        $chatRoom = $this->ChatRooms->get($chatRoomId);
+        $chatEntry = $this->ChatEntries->find()
+            ->where(['chat_room_id' => $chatRoomId])
+            ->where(['user_id' => $userId])
+            ->where(['chat_character_id' => $chatCharacterId])
+            ->first();
+        $chatCharacter = $this->ChatCharacters
+            ->get($chatCharacterId);
+
+        $deckText = $chatRoom->deck1text;
+        $deckName = $chatRoom->deck1name;
+
+        if (empty($deckText)) {
+            $response = $this->response;
+            $response = $response->withType('application/json')
+                ->withStringBody(json_encode(['code' => '400', 'message' => '山札が設定されていません。']));
+            return $response;
+        }
+
+        $deckArray = explode(',', $deckText);
+        if (empty($deckArray) || count($deckArray) < 1) {
+            $response = $this->response;
+            $response = $response->withType('application/json')
+                ->withStringBody(json_encode(['code' => '400', 'message' => '山札が設定されていません。']));
+            return $response;
+        }
+
+        list($deckText, $headCount, $tailCount, $resultdeckText) = $this->Deck->flip($deckText);
+
+        if (is_null($deckText) || empty($deckText)) {
+            $response = $this->response;
+            $response = $response->withType('application/json')
+                ->withStringBody(json_encode(['code' => '400', 'message' => '山札がありません。リセットしてください。']));
+            return $response;
+        }
+
+        $connection = ConnectionManager::get('default');
+        $connection->begin();
+
+        // 山札
+        $format = Configure::read('Room.deck');
+        $message = __($format, [
+            $chatCharacter->fullname,
+            $deckName,
+            ($headCount + $tailCount),
+            ($headCount + 1),
+            ($headCount + $tailCount),
+            $resultdeckText,
+        ]);
+        $chatLog = $this->ActionLog->setSystemMessage($message, $chatEntry, $chatRoom);
+        if (!$this->ChatLogs->save($chatLog)) {
+            $connection->rollback();
+
+            $response = $this->response;
+            $response = $response->withType('application/json')
+                ->withStringBody(json_encode(['code' => '500', 'message' => 'DB更新に失敗しました。']));
+            return $response;
+        }
+
+        // 山札のDBを更新する
+        $chatRoom->deck1text = $deckText;
+        if (!$this->ChatRooms->save($chatRoom)) {
+            $connection->rollback();
+
+            $response = $this->response;
+            $response = $response->withType('application/json')
+                ->withStringBody(json_encode(['code' => '500', 'message' => 'DB更新に失敗しました。']));
+            return $response;
+        }
+
+        $connection->commit();
+
+        $response = $this->response;
+        $response = $response->withType('application/json')
+            ->withStringBody(json_encode(['code' => '200', 'message' => '正常終了']));
+        return $response;
+    }
+
+    public function deckreset()
+    {
+        $this->autoRender = false;
+        $chatCharacterId = $this->request->getData(); // ここは key
+
+        $userId = $this->Authentication->getIdentityData('id');
+        $chatCharacterId = $this->request->getData('chat_character_key'); // ここは key
+        $chatCharacterId = $this->CheckChat->userCharacterId($userId, $chatCharacterId);
+        $this->ChatSession->setChatCharacterId($chatCharacterId);
+        // Routesにて、正規表現で数値制限済み
+        $chatRoomId = $this->request->getParam('chatRoomId');
+
+        $chatRoom = $this->ChatRooms->get($chatRoomId);
+        $chatEntry = $this->ChatEntries->find()
+            ->where(['chat_room_id' => $chatRoomId])
+            ->where(['user_id' => $userId])
+            ->where(['chat_character_id' => $chatCharacterId])
+            ->first();
+        $chatCharacter = $this->ChatCharacters
+            ->get($chatCharacterId);
+
+        $deckText = $chatRoom->deck1text;
+        $deckName = $chatRoom->deck1name;
+
+        if (empty($deckText)) {
+            $response = $this->response;
+            $response = $response->withType('application/json')
+                ->withStringBody(json_encode(['code' => '400', 'message' => '山札が設定されていません。']));
+            return $response;
+        }
+
+        $deckArray = explode(',', $deckText);
+        if (empty($deckArray) || count($deckArray) < 1) {
+            $response = $this->response;
+            $response = $response->withType('application/json')
+                ->withStringBody(json_encode(['code' => '400', 'message' => '山札が設定されていません。']));
+            return $response;
+        }
+
+        $resetDeckText = $this->Deck->reset($deckText);
+
+        $connection = ConnectionManager::get('default');
+        $connection->begin();
+
+        // 山札のDBを更新する
+        $chatRoom->deck1text = $resetDeckText;
+        if (!$this->ChatRooms->save($chatRoom)) {
+            $connection->rollback();
+
+            $response = $this->response;
+            $response = $response->withType('application/json')
+                ->withStringBody(json_encode(['code' => '500', 'message' => 'DB更新に失敗しました。']));
+            return $response;
+        }
+
+        // 山札リセット
+        $format = Configure::read('Room.deckreset');
+        $message = __($format, [
+            $chatCharacter->fullname,
+            $deckName,
+        ]);
+        $chatLog = $this->ActionLog->setSystemMessage($message, $chatEntry, $chatRoom);
+        if (!$this->ChatLogs->save($chatLog)) {
+            $connection->rollback();
+
+            $response = $this->response;
+            $response = $response->withType('application/json')
+                ->withStringBody(json_encode(['code' => '500', 'message' => 'DB更新に失敗しました。']));
             return $response;
         }
 

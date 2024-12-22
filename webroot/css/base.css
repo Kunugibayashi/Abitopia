@@ -499,6 +499,49 @@ table tbody tr td:last-of-type {
 }
 
 /* ************************************************************************* */
+/* チャットランダムコンテンツ用                                                 */
+/* ************************************************************************* */
+.random-form-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 1rem;
+}
+.dice-form-50 {
+    flex-basis: 50%;
+}
+.dice-form-70 {
+    flex-basis: 70%;
+}
+.dice-form-100 {
+    flex-basis: 100%;
+}
+.omikuji-form-20 {
+    flex-basis: 20%;
+}
+.deck-form-20 {
+    flex-basis: 20%;
+}
+#id-dice-button {
+    width: 100%;
+}
+.dice-container {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0.5rem;
+}
+.omikuji-container {
+    display: flex;
+    flex-direction: column;
+}
+.deck-container {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ************************************************************************* */
 /* 戦闘用                                                                    */
 /* ************************************************************************* */
 .battle-skill-label {

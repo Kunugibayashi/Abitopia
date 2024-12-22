@@ -20,9 +20,6 @@ use Cake\ORM\Entity;
  * @property int $omikuji2flg
  * @property string $omikuji2name
  * @property string|null $omikuji2text
- * @property int $omikuji3flg
- * @property string $omikuji3name
- * @property string|null $omikuji3text
  * @property int $deck1flg
  * @property string $deck1name
  * @property string|null $deck1text
@@ -54,9 +51,6 @@ class ChatRoom extends Entity
         'omikuji2flg' => true,
         'omikuji2name' => true,
         'omikuji2text' => true,
-        'omikuji3flg' => true,
-        'omikuji3name' => true,
-        'omikuji3text' => true,
         'deck1flg' => true,
         'deck1name' => true,
         'deck1text' => true,

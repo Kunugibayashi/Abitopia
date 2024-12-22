@@ -12,6 +12,25 @@ use App\Controller\AppController;
  */
 class ChatRoomsController extends AppController
 {
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->loadComponent('Omikuji');
+        $this->loadComponent('Deck');
+    }
+
+    public function textFormat($chatRoom)
+    {
+        // おみくじ整形
+        $chatRoom->omikuji1text = $this->Omikuji->saveDataFormat($chatRoom->omikuji1text);
+        $chatRoom->omikuji2text = $this->Omikuji->saveDataFormat($chatRoom->omikuji2text);
+
+        // 手札整形
+        $chatRoom->deck1text = $this->Deck->saveDataFormat($chatRoom->deck1text);
+
+        return $chatRoom;
+    }
+
     /**
      * Index method
      *
@@ -48,6 +67,10 @@ class ChatRoomsController extends AppController
         $chatRoom = $this->ChatRooms->newEmptyEntity();
         if ($this->request->is('post')) {
             $chatRoom = $this->ChatRooms->patchEntity($chatRoom, $this->request->getData());
+
+            // 特殊データ整形
+            $chatRoom = $this->textFormat($chatRoom);
+
             if ($this->ChatRooms->save($chatRoom)) {
                 $this->Flash->success(__('The chat room has been saved.'));
 
@@ -70,6 +93,10 @@ class ChatRoomsController extends AppController
         $chatRoom = $this->ChatRooms->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $chatRoom = $this->ChatRooms->patchEntity($chatRoom, $this->request->getData());
+
+            // 特殊データ整形
+            $chatRoom = $this->textFormat($chatRoom);
+
             if ($this->ChatRooms->save($chatRoom)) {
                 $this->Flash->success(__('The chat room has been saved.'));
 
