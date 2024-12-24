@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use Cake\Core\Configure;
+
 /**
  * Manual Controller
  *
@@ -10,6 +12,12 @@ namespace App\Controller;
  */
 class ManualController extends AppController
 {
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->loadComponent('SiteSystemConfig');
+    }
+
     public function beforeFilter(\Cake\Event\EventInterface $event)
     {
         parent::beforeFilter($event);
@@ -20,6 +28,13 @@ class ManualController extends AppController
 
     public function index()
     {
+    }
+
+    public function siteRule()
+    {
+        $siteRules = $this->SiteSystemConfig->getMergeRule();
+
+        $this->set(compact('siteRules'));
     }
 
     public function setting()

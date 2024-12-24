@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
+use Cake\Core\Configure;
+
 use App\Controller\AppController;
 
 /**
@@ -12,6 +14,12 @@ use App\Controller\AppController;
  */
 class SiteSystemConfigsController extends AppController
 {
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->loadComponent('SiteSystemConfig');
+    }
+
     /**
      * Index method
      *
@@ -98,5 +106,52 @@ class SiteSystemConfigsController extends AppController
         }
 
         return $this->redirect(['action' => 'index']);
+    }
+
+    /**
+     * Index method
+     *
+     * @return \Cake\Http\Response|null|void Renders view
+     */
+    public function indexCustom()
+    {
+        $request = $this->request->getData();
+        // $this->log(__CLASS__.":".__FUNCTION__.":" ."request = " . print_r($request, true), 'debug');
+
+        if ($this->request->is('post')) {
+            $codeAndActives = $request['actives'];
+
+            $errorMessage = "";
+            foreach ($codeAndActives as $code => $activeFlag) {
+                // $this->log(__CLASS__.":".__FUNCTION__.":" ."code = $code / activeFlag = $activeFlag", 'debug');
+
+                $siteSystemConfig = $this->SiteSystemConfigs->newEmptyEntity();
+                $siteSystemConfig->set('id', $code);
+                $siteSystemConfig->set('site_rule_code', $code);
+                $siteSystemConfig->set('active_flag', $activeFlag);
+
+                // リクエスト分DB更新
+                if (!$this->SiteSystemConfigs->save($siteSystemConfig)) {
+                    $errorMessage = 'The site system config could not be saved. Please, try again.';
+                }
+            }
+
+            // エラーがあった場合はエラーを表示
+            if (!empty($errorMessage)){
+                $this->Flash->error(__($errorMessage));
+            } else {
+                $this->Flash->success(__('The site system config has been saved.'));
+            }
+
+            // 最新の情報を取得
+            $siteRules = $this->SiteSystemConfig->getMergeRule();
+            $this->set(compact('siteRules'));
+
+            return $this->redirect(['action' => 'indexCustom']);
+        }
+
+        // 最新の情報を取得
+        $siteRules = $this->SiteSystemConfig->getMergeRule();
+        $this->set(compact('siteRules'));
     }
 }

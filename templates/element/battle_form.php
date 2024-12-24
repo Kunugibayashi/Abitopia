@@ -36,7 +36,9 @@ if (!$battleTurn || $battleTurn->battle_status == BT_ST_KETYAKU) {
             '4' => '必殺技（大）',
         ], ]); ?>
         <?php echo $this->Form->control('attack_skill_code', ['label' => false, 'options' => $attackSkillCodes, ]); ?>
-        <?php echo $this->Form->control('attack_technique_name', ['label' => '技名', ]); ?>
+        <?php if ($siteRules[RULE_INPUT_TECHNIQUE_NAME]['active']) { ?>
+            <?php echo $this->Form->control('attack_technique_name', ['label' => '技名', ]); ?>
+        <?php } ?>
         <label id="is-attack-label">
             <?php echo $this->Form->checkbox('is_attack', [
                 'id' => 'id-is-attack']); ?> <?= __('攻撃スキルセット') ?>

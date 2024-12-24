@@ -1,4 +1,12 @@
 <div class="side-nav">
+    <h4 class="heading"><?= $this->Html->link(__('サイト適応ルール'), [
+        'controller' => 'Manual', 'action' => 'siteRule'], ['class' => 'side-nav-item']) ?>
+    </h4>
+    <ul class="manual-menu">
+        <li><?= $this->Html->link(__('ルール一覧'), [
+            'controller' => 'Manual', 'action' => 'siteRule'], ['class' => 'side-nav-item']) ?>
+        </li>
+    </ul>
 
     <h4 class="heading"><?= $this->Html->link(__('設定'), [
         'controller' => 'Manual', 'action' => 'setting'], ['class' => 'side-nav-item']) ?>

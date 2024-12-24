@@ -5,7 +5,7 @@
  */
 ?>
 <div class="row">
-    <aside class="column">
+    <aside class="column-side">
         <div class="side-nav">
             <h4 class="heading"><?= __('メニュー') ?></h4>
             <?= $this->Html->link(__('名簿一覧'), ['action' => 'search'], ['class' => 'side-nav-item']) ?>
@@ -17,7 +17,7 @@
                 ], ['class' => 'side-nav-item']) ?>
         </div>
     </aside>
-    <div class="column-responsive column-80">
+    <div class="column-responsive main-container">
         <div class="chatCharacters view content">
             <h3><?= h($chatCharacter->fullname) ?></h3>
             <table>

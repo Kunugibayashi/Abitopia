@@ -85,18 +85,6 @@ blockquote {
     padding: 0.2rem 0;
     list-style-type: disc;
 }
-ul.manual-menu  {
-    margin: 0.5rem 0 1.5rem 0;
-    padding: 0;
-}
-ul.manual-menu li {
-    margin: 0 0 0 1rem;
-    padding: 0.1rem 0;
-}
-ul.manual-menu a {
-    margin: 0;
-    padding: 0;
-}
 
 /* ************************************************************************* */
 /* button                                                                    */
@@ -400,6 +388,12 @@ table tbody tr td:last-of-type {
         padding: 1.2rem 1.5rem;
         text-align: left;
     }
+    table.table-rule tbody tr td.table-rule-column-onoff
+    {
+        width: 10rem;
+        min-width: 10rem;
+        max-width: 10rem;
+    }
 
     .table-column-date {
         width: 20rem;
@@ -595,3 +589,43 @@ table tbody tr td:last-of-type {
     text-align: right;
     opacity: 0.5;
 }
+
+/* ************************************************************************* */
+/* manual                                                                    */
+/* ************************************************************************* */
+ul.manual-menu  {
+    margin: 0.5rem 0 1.5rem 0;
+    padding: 0;
+}
+ul.manual-menu li {
+    margin: 0 0 0 1rem;
+    padding: 0.1rem 0;
+}
+ul.manual-menu a {
+    margin: 0;
+    padding: 0;
+}
+.table-rule-column-head {
+    vertical-align: middle;
+}
+.table-rule-column-onoff {
+    vertical-align: middle;
+    text-align: right;
+}
+.rule-point-on,
+.rule-point-off {
+    text-align: center;
+    vertical-align: middle;
+    border-radius: 10rem;
+    font-weight: bold;
+    padding: 0.5rem 0 0.2rem 0;
+}
+.rule-point-on {
+    background-color: #8b0000;
+    color: #ffffff;
+}
+.rule-point-off {
+    background-color: #838383;
+    color: #ffffff;
+}
+

@@ -67,17 +67,22 @@ $routes->scope('/', function (RouteBuilder $builder) {
     $builder->connect('/home', ['controller' => 'Pages', 'action' => 'display', 'home']);
 
     /*
+     * Admin
+     */
+    $builder->connect('/admin/messages/is-new-message', ['controller' => 'Messages', 'action' => 'isNewMessage']);
+
+    /*
      * ...and connect the rest of 'Pages' controller's URLs.
      */
     $builder->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
 
     $builder->connect('/chat/chat-log-window/{chatRoomId}/{openLogWindow}', ['controller' => 'Chat', 'action' => 'chatLogWindow'])
-      ->setPatterns(['chatRoomId' => '\d+'])
-      ->setPatterns(['openLogWindow' => '\d+'])
-      ->setPass(['chatRoomId', 'openLogWindow']);
+        ->setPatterns(['chatRoomId' => '\d+'])
+        ->setPatterns(['openLogWindow' => '\d+'])
+        ->setPass(['chatRoomId', 'openLogWindow']);
     $builder->connect('/chat/{chatRoomId}', ['controller' => 'Chat', 'action' => 'index'])
-      ->setPatterns(['chatRoomId' => '\d+'])
-      ->setPass(['chatRoomId']);
+        ->setPatterns(['chatRoomId' => '\d+'])
+        ->setPass(['chatRoomId']);
     $builder->connect('/{controller}/{action}/{chatRoomId}/{chatEntryKey}')
         ->setPatterns(['chatRoomId' => '\d+'])
         ->setPass(['chatRoomId', 'chatEntryKey']);

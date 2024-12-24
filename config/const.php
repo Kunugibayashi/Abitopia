@@ -1,7 +1,7 @@
 <?php
 // CSS更新用文字列
-define('CSS_UPDATE_DATE', '202412101730'); // リリース時用文字列。'202412120101' など数値のみ日付推奨。
-// define('CSS_UPDATE_DATE', date("YmdHis")); // テスト用関数。読み込み毎に更新。
+define('CSS_UPDATE_DATE', '202412101730'); // リリース時用文字列。'202412120101' など数値のみ日付推奨。テスト時は date("YmdHis") 推奨。
+define('SITE_DEBUG_MODE', 0); // テスト用。デバッグ用の関数や出力を表示。リリース時は0にすること。
 // PHPメモリ上限
 define('PHP_MEMORY_LIMIT', '3072M');
 // 攻撃属性
@@ -55,6 +55,12 @@ define('BT_ST_KETYAKU', 9); // 決着
 define('BT_COM_FURI', 1); // 不利
 define('BT_COM_KIKKOU', 5); // 拮抗
 define('BT_COM_YUURI', 9); // 有利
+// 選択ルール
+define('RULE_INPUT_TECHNIQUE_NAME', 10); // 技名の入力
+define('RULE_RESURRECTION', 11); // 底力の発動
+define('RULE_SCRATCH', 12); // かすり傷の発動
+define('RULE_1TURN_DEXPLUS', 13); // 1ターンごとの命中率増加
+define('RULE_1TURN_DAMAGE', 14); // 1ターンごとの体力ダメージ
 return [
     'Site' => [
         'title' => 'サイト名', // サイト名
@@ -69,6 +75,33 @@ return [
         'deck'      => '{0}：[{1}]{2}種...({3} / {4}) = {5}',
         'deckreset' => '{0}：[{1}]...山札をリセットしました。',
     ],
+    'Rule' => [ // ONOFFはDBで管理。INSERTでデータを登録すると文言の変更等がしにくくなるためconstで設定
+        RULE_INPUT_TECHNIQUE_NAME => [
+            'code'  => RULE_INPUT_TECHNIQUE_NAME,
+            'information'  => '技名を手動で入力',
+            'active'  => 0,
+        ],
+        RULE_RESURRECTION => [
+            'code'  => RULE_RESURRECTION,
+            'information'  => '体力が0になった時、一定の確率で復活（底力）',
+            'active'  => 0,
+        ],
+        RULE_SCRATCH => [
+            'code'  => RULE_SCRATCH,
+            'information'  => '攻撃を外した時、一定の確率で半減ダメージを与える（かすり傷）',
+            'active'  => 0,
+        ],
+        RULE_1TURN_DEXPLUS => [
+            'code'  => RULE_1TURN_DEXPLUS,
+            'information'  => '攻撃時、1ターンごとに命中率が10%増加',
+            'active'  => 0,
+        ],
+        RULE_1TURN_DAMAGE => [
+            'code'  => RULE_1TURN_DAMAGE,
+            'information'  => '攻撃時、1ターンごとに覚醒スキル発動不可ダメージを5を受ける',
+            'active'  => 0,
+        ],
+    ],
     'Battle' => [
         'narration' => [
             'NARR_BATTLE_DECLARATION' => '{0}は{1}に宣戦布告！',
@@ -82,18 +115,24 @@ return [
             'NARR_BATTLE_KASURI' => 'かすり傷判定 / (20+{0}*10)={1}% / {2} / {3}',
             'NARR_BATTLE_SKILL' => '{0}【{1}】[{2}] vs [{5}]【{4}】{3}',
             'NARR_MEITYU' => '{0}の『{1}』が{2}に命中！ {3} の{4}ダメージ！',
+            'NARR_MEITYU_NO_NAME' => '{2}に命中！ {3} の{4}ダメージ！',
             'NARR_HAZURE' => '{0}は{1}の『{2}』を{3}した！', // 回避、防御、相殺
+            'NARR_HAZURE_NO_NAME' => '{0}は{3}した！', // 回避、防御、相殺
             'NARR_KASURI' => 'しかし、{0}しきれず {1} の半減ダメージ！', // 回避、防御、相殺
             'NARR_HATUDOU' => '{0}の{1}が発動！', // 攻防一体、カウンター
             'NARR_KONBI' => ' {0} コンボバースト！',
             'NARR_RENXOKU_HATSUDOU' => '連続攻撃！',
             'NARR_KONBI_FUHATSU' => 'コンビネーション不発！',
             'NARR_SENI_UP' => '{0}は『{1}』を使用！　戦意高揚、HP {2} の回復！',
+            'NARR_SENI_UP_NO_NAME' => '{0}は戦意高揚を使用！　HP {2} の回復！',
             'NARR_SENI_FUHATSU' => '{0}は『{1}』を使用！　戦意高揚不発！',
+            'NARR_SENI_FUHATSU_NO_NAME' => '{0}は戦意高揚を使用！　戦意高揚不発！',
             'NARR_SEISHIN_UP' => '{0}は『{1}』を使用。精神統一、SP {2} の回復！',
+            'NARR_SEISHIN_UP_NO_NAME' => '{0}は精神統一を使用。SP {2} の回復！',
             'NARR_SEISHIN_FUHATSU' => '{0}は『{1}』を使用！　精神統一不発！',
+            'NARR_SEISHIN_FUHATSU_NO_NAME' => '{0}は精神統一を使用！　精神統一不発！',
             'NARR_SOKOJIKARA' => '{0}の底力が発動！　戦闘続行！',
-            'NARR_KAKUSEI' => '{0}の『{1}』が覚醒！', // 覚醒スキル
+            'NARR_KAKUSEI' => '{0}の{1}が覚醒！', // 覚醒スキル
             'NARR_KO' => '{0}は戦闘不能！',
         ],
         'attributes' => [

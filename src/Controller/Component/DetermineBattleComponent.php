@@ -54,6 +54,8 @@ class DetermineBattleComponent extends Component
     private $isDetermineScratchString = 0; // 半減ダメージ、ダイスをふった場合の文字列
     private $isScratch = 0; // 半減ダメージか？
 
+    protected array $components = ['SiteSystemConfig'];
+
     public function initialize($config): void
     {
         parent::initialize($config);
@@ -98,7 +100,12 @@ class DetermineBattleComponent extends Component
             // 戦意高揚
             if ($this->recoveryHp > 0) {
                 // 発動
-                $format = Configure::read('Battle.narration.NARR_SENI_UP');
+                $format = "";
+                if ($this->SiteSystemConfig->isInputTechniqueName()) {
+                    $format = Configure::read('Battle.narration.NARR_SENI_UP');
+                } else {
+                    $format = Configure::read('Battle.narration.NARR_SENI_UP_NO_NAME');
+                }
                 $line1[] = __($format,
                     $this->attackChatCharacter->fullname,
                     $this->attack_technique_name,
@@ -106,7 +113,12 @@ class DetermineBattleComponent extends Component
                 );
             } else {
                 // 不発
-                $format = Configure::read('Battle.narration.NARR_SENI_FUHATSU');
+                $format = "";
+                if ($this->SiteSystemConfig->isInputTechniqueName()) {
+                    $format = Configure::read('Battle.narration.NARR_SENI_FUHATSU');
+                } else {
+                    $format = Configure::read('Battle.narration.NARR_SENI_FUHATSU_NO_NAME');
+                }
                 $line1[] = __($format,
                     $this->attackChatCharacter->fullname,
                     $this->attack_technique_name,
@@ -116,7 +128,12 @@ class DetermineBattleComponent extends Component
             // 精神統一
             if ($this->recoverySp > 0) {
                 // 発動
-                $format = Configure::read('Battle.narration.NARR_SEISHIN_UP');
+                $format = "";
+                if ($this->SiteSystemConfig->isInputTechniqueName()) {
+                    $format = Configure::read('Battle.narration.NARR_SEISHIN_UP');
+                } else {
+                    $format = Configure::read('Battle.narration.NARR_SEISHIN_UP_NO_NAME');
+                }
                 $line1[] = __($format,
                     $this->attackChatCharacter->fullname,
                     $this->attack_technique_name,
@@ -124,7 +141,12 @@ class DetermineBattleComponent extends Component
                 );
             } else {
                 // 不発
-                $format = Configure::read('Battle.narration.NARR_SEISHIN_FUHATSU');
+                $format = "";
+                if ($this->SiteSystemConfig->isInputTechniqueName()) {
+                    $format = Configure::read('Battle.narration.NARR_SEISHIN_FUHATSU');
+                } else {
+                    $format = Configure::read('Battle.narration.NARR_SEISHIN_FUHATSU_NO_NAME');
+                }
                 $line1[] = __($format,
                     $this->attackChatCharacter->fullname,
                     $this->attack_technique_name,
@@ -134,7 +156,12 @@ class DetermineBattleComponent extends Component
         if ($this->isHit == 1 && $this->isScratch != 1) {
             // 命中していること
             // かすり傷でないこと
-            $format = Configure::read('Battle.narration.NARR_MEITYU');
+            $format = "";
+            if ($this->SiteSystemConfig->isInputTechniqueName()) {
+                $format = Configure::read('Battle.narration.NARR_MEITYU');
+            } else {
+                $format = Configure::read('Battle.narration.NARR_MEITYU_NO_NAME');
+            }
             $line1[] = __($format,
                 $this->attackChatCharacter->fullname,
                 $this->attack_technique_name,
@@ -146,7 +173,12 @@ class DetermineBattleComponent extends Component
         if ($this->isHit == 0 || $this->isScratch == 1) {
             // 外れの場合
             // かすり傷でもナレーションを入れる
-            $format = Configure::read('Battle.narration.NARR_HAZURE');
+            $format = "";
+            if ($this->SiteSystemConfig->isInputTechniqueName()) {
+                $format = Configure::read('Battle.narration.NARR_HAZURE');
+            } else {
+                $format = Configure::read('Battle.narration.NARR_HAZURE_NO_NAME');
+            }
             $line1[] = __($format,
                 $this->defenseChatCharacter->fullname,
                 $this->attackChatCharacter->fullname,
@@ -563,11 +595,11 @@ class DetermineBattleComponent extends Component
 
         $format = Configure::read('Battle.narration.NARR_BATTLE_SOKOJIKARA');
         $this->isResurrectionString = __($format,
-           $this->defenseBattleCharacter->sp,
-           $this->defenseBattleCharacter->combo,
-           $borderline,
-           $diseString,
-           ($this->isResurrection) ? '成功' : '失敗',
+            $this->defenseBattleCharacter->sp,
+            $this->defenseBattleCharacter->combo,
+            $borderline,
+            $diseString,
+            ($this->isResurrection) ? '成功' : '失敗',
         );
     }
 

@@ -7,6 +7,9 @@
         <li>
             <?php echo $this->Html->link('チャットルーム', '/admin/ChatRooms'); ?>
         </li>
+        <li>
+            <?php echo $this->Html->link('サイト設定カスタム画面', '/admin/SiteSystemConfigs/indexCustom'); ?>
+        </li>
     </ul>
 </div>
 <div class="index content">

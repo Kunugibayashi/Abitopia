@@ -38,6 +38,7 @@ class BattleController extends AppController
         $this->loadComponent('CheckFile');
         $this->loadComponent('DetermineBattle');
         $this->loadComponent('ActionLog');
+        $this->loadComponent('SiteSystemConfig');
 
         $this->ChatEntries = $this->fetchTable('ChatEntries');
         $this->ChatCharacters = $this->fetchTable('ChatCharacters');
@@ -107,12 +108,15 @@ class BattleController extends AppController
         // 別窓にログを表示するか
         $openLogWindow = $this->ChatSession->getOpenLogWindow();
 
+        $siteRules = $this->SiteSystemConfig->getMergeRule();
+
         $this->set(compact('openLogWindow'));
         $this->set(compact('chatCharacter'));
         $this->set(compact('chatRoomCss'));
         $this->set(compact('chatRoomId'));
         $this->set(compact('chatLog'));
         $this->set(compact('chatCharacterId'));
+        $this->set(compact('siteRules'));
     }
 
     public function suspend()
