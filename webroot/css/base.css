@@ -85,6 +85,12 @@ blockquote {
     padding: 0.2rem 0;
     list-style-type: disc;
 }
+/* サイト全体のコンテンツ色を統一するための設定 */
+.chat-chatroom-title,
+.content {
+    background: #ffffff;
+}
+
 
 /* ************************************************************************* */
 /* button                                                                    */
@@ -259,8 +265,11 @@ button + button {
 /* ************************************************************************* */
 .chat-chatroom-title {
     display: inline-block;
-    padding: 0.2rem;
-    margin: 0 0.2rem;
+    padding: 0.5rem 1rem;
+    margin: 0 0 1rem 0;
+    width: 90%;
+    border-radius: 0.4rem;
+    box-shadow: 0 7px 14px 0 rgba(60, 66, 87, 0.1), 0 3px 6px 0 rgba(0, 0, 0, 0.07);
 }
 .chatroom-information {
     padding: 1rem 0;
@@ -629,10 +638,10 @@ ul.manual-menu a {
 }
 .rule-point-on {
     background-color: #8b0000;
-    color: #ffffff;
+    color: #e4e4e4;
 }
 .rule-point-off {
     background-color: #838383;
-    color: #ffffff;
+    color: #e4e4e4;
 }
 

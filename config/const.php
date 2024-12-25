@@ -1,7 +1,7 @@
 <?php
 // CSS更新用文字列
-define('CSS_UPDATE_DATE', '202412101730'); // リリース時用文字列。'202412120101' など数値のみ日付推奨。テスト時は推奨： define('CSS_UPDATE_DATE', date("YmdHis"));
-define('SITE_DEBUG_MODE', 0); // テスト用。デバッグ用の関数や出力を表示。リリース時は0にすること。
+define('CSS_UPDATE_DATE', '202412101730'); // リリース時用文字列。'202412120101' など数値のみ日付推奨。テスト時推奨： define('CSS_UPDATE_DATE', date("YmdHis"));
+define('SITE_DEBUG_MODE', 0); // テスト用。デバッグ用の関数や出力を表示。リリース時は0にすること。テスト時推奨： define('SITE_DEBUG_MODE', 1);
 // PHPメモリ上限
 define('PHP_MEMORY_LIMIT', '3072M');
 // 攻撃属性
