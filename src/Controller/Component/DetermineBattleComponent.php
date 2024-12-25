@@ -484,13 +484,13 @@ class DetermineBattleComponent extends Component
         if ($this->isCounter) {
             // カウンター
             $this->defenseBattleCharacter->set('temporary_strength',
-                ($this->defenseBattleCharacter->temporary_strength + 1)
+                ($this->defenseBattleCharacter->temporary_strength + 2)
             );
         }
         if ($this->isKoubouittai) {
             // 攻防一体
             $this->defenseBattleCharacter->set('temporary_strength',
-                ($this->defenseBattleCharacter->temporary_strength + 2)
+                ($this->defenseBattleCharacter->temporary_strength + 3)
             );
         }
         if ($this->isLimit
@@ -777,7 +777,8 @@ class DetermineBattleComponent extends Component
             || ($attackSkillCode == BT_AT_BUI_03 && $attackSkillAttribute == BT_ATTR_03)
             || ($attackSkillCode == BT_AT_BUI_04 && $attackSkillAttribute == BT_ATTR_04)
         ) {
-            $correctionASkill = 2;
+            // 部位破壊
+            $correctionASkill = 4;
         }
 
         // 必殺補正

@@ -32,7 +32,15 @@ class SiteSystemConfigComponent extends Component
      */
     public function getMergeRule() {
         $siteRules = Configure::read('Rule');
+
+        if (is_null($this->SiteSystemConfigs)) {
+            return $siteRules;
+        }
+
         $siteSystemConfigs = $this->SiteSystemConfigs->find();
+        if (is_null($siteSystemConfigs) || count($siteSystemConfigs->toArray()) <= 0) {
+            return $siteRules;
+        }
 
         foreach ($siteSystemConfigs as $systemCnt => $siteSystemConfig) {
             foreach ($siteRules as $ruleCnt => $siteRule) {
@@ -46,6 +54,15 @@ class SiteSystemConfigComponent extends Component
      * 登録されていない場合は null になるためチェックを入れる関数を作成。
      */
     private function getSiteSystemConfig($id) {
+        if (is_null($this->SiteSystemConfigs)) {
+            return 0;
+        }
+
+        $siteSystemConfigs = $this->SiteSystemConfigs->find();
+        if (is_null($siteSystemConfigs) || count($siteSystemConfigs->toArray()) <= 0) {
+            return 0;
+        }
+
         $siteSystemConfig = $this->SiteSystemConfigs->get($id);
         if (is_null($siteSystemConfig)) {
             return 0;
