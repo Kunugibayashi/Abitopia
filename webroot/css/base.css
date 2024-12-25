@@ -430,6 +430,10 @@ table tbody tr td:last-of-type {
         width: 10rem;
         min-width: 10rem;
     }
+    .table-column-limit-skill {
+        width: 20rem;
+        min-width: 20rem;
+    }
     .table-column-tag-name,
     .table-column-class-name {
         width: 25rem;
@@ -565,6 +569,9 @@ table tbody tr td:last-of-type {
     margin: 0;
     padding: 0;
     text-align: center;
+}
+#id-battlecommentary-data {
+    overflow-x: auto;
 }
 
 /* ************************************************************************* */

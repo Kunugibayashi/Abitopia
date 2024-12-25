@@ -52,7 +52,7 @@ class DetermineBattleComponent extends Component
     private $isKoubouittai = 0; // 相手の攻防一体が発動したか？
     private $isDetermineScratch = 0; // 半減ダメージの判定をするか
     private $isDetermineScratchString = 0; // 半減ダメージ、ダイスをふった場合の文字列
-    private $isScratch = 0; // 半減ダメージか？
+    private $isScratch = 0; // かすり傷が発動したか？
 
     protected array $components = ['SiteSystemConfig'];
 
@@ -104,7 +104,7 @@ class DetermineBattleComponent extends Component
                 if ($this->SiteSystemConfig->isInputTechniqueName()) {
                     $format = Configure::read('Battle.narration.NARR_SENI_UP');
                 } else {
-                    $format = Configure::read('Battle.narration.NARR_SENI_UP_NO_NAME');
+                    $format = Configure::read('Battle.narration.NARR_SENI_UP_NOT_SELECT');
                 }
                 $line1[] = __($format,
                     $this->attackChatCharacter->fullname,
@@ -117,7 +117,7 @@ class DetermineBattleComponent extends Component
                 if ($this->SiteSystemConfig->isInputTechniqueName()) {
                     $format = Configure::read('Battle.narration.NARR_SENI_FUHATSU');
                 } else {
-                    $format = Configure::read('Battle.narration.NARR_SENI_FUHATSU_NO_NAME');
+                    $format = Configure::read('Battle.narration.NARR_SENI_FUHATSU_NOT_SELECT');
                 }
                 $line1[] = __($format,
                     $this->attackChatCharacter->fullname,
@@ -132,7 +132,7 @@ class DetermineBattleComponent extends Component
                 if ($this->SiteSystemConfig->isInputTechniqueName()) {
                     $format = Configure::read('Battle.narration.NARR_SEISHIN_UP');
                 } else {
-                    $format = Configure::read('Battle.narration.NARR_SEISHIN_UP_NO_NAME');
+                    $format = Configure::read('Battle.narration.NARR_SEISHIN_UP_NOT_SELECT');
                 }
                 $line1[] = __($format,
                     $this->attackChatCharacter->fullname,
@@ -145,7 +145,7 @@ class DetermineBattleComponent extends Component
                 if ($this->SiteSystemConfig->isInputTechniqueName()) {
                     $format = Configure::read('Battle.narration.NARR_SEISHIN_FUHATSU');
                 } else {
-                    $format = Configure::read('Battle.narration.NARR_SEISHIN_FUHATSU_NO_NAME');
+                    $format = Configure::read('Battle.narration.NARR_SEISHIN_FUHATSU_NOT_SELECT');
                 }
                 $line1[] = __($format,
                     $this->attackChatCharacter->fullname,
@@ -160,7 +160,7 @@ class DetermineBattleComponent extends Component
             if ($this->SiteSystemConfig->isInputTechniqueName()) {
                 $format = Configure::read('Battle.narration.NARR_MEITYU');
             } else {
-                $format = Configure::read('Battle.narration.NARR_MEITYU_NO_NAME');
+                $format = Configure::read('Battle.narration.NARR_MEITYU_NOT_SELECT');
             }
             $line1[] = __($format,
                 $this->attackChatCharacter->fullname,
@@ -177,7 +177,7 @@ class DetermineBattleComponent extends Component
             if ($this->SiteSystemConfig->isInputTechniqueName()) {
                 $format = Configure::read('Battle.narration.NARR_HAZURE');
             } else {
-                $format = Configure::read('Battle.narration.NARR_HAZURE_NO_NAME');
+                $format = Configure::read('Battle.narration.NARR_HAZURE_NOT_SELECT');
             }
             $line1[] = __($format,
                 $this->defenseChatCharacter->fullname,
@@ -247,6 +247,25 @@ class DetermineBattleComponent extends Component
                 $this->defenseChatCharacter->fullname,
                 $this->battleSkills[$this->defenseBattleCharacter->defense_skill_code],
             );
+        }
+
+        // 選択ルールでONの場合は処理
+        // 戦闘不能の場合は処理をしない、デュアルドライブの連続攻撃時には処理しない
+        if (!$this->isKo && !$this->isContinuous) {
+            // 1ターン持続命中率増加
+            if ($this->SiteSystemConfig->is1TurnDexplus()) {
+                $format = Configure::read('Battle.narration.NARR_1TURN_DEXPLUS');
+                $narration[] = __($format,
+                    $this->attackChatCharacter->fullname,
+                );
+            }
+            // 1ターン持続ダメージ
+            if ($this->SiteSystemConfig->is1TurnDamage()) {
+                $format = Configure::read('Battle.narration.NARR_1TURN_DAMAGE');
+                $narration[] = __($format,
+                    $this->attackChatCharacter->fullname,
+                );
+            }
         }
 
         // 属性
@@ -440,6 +459,23 @@ class DetermineBattleComponent extends Component
                 ($this->attackBattleCharacter->continuous_turn_count + 1)
             );
         }
+        // 選択ルールでONの場合は処理
+        if (!$this->isKo && !$this->isContinuous) {
+            // 1ターン持続命中率増加
+            if ($this->SiteSystemConfig->is1TurnDexplus()) {
+                $this->attackBattleCharacter->set('permanent_hit_rate',
+                    ($this->attackBattleCharacter->get('permanent_hit_rate') + 10)
+                );
+            }
+            // 1ターン持続ダメージ。このダメージでは死なない、覚醒スキルも発動させないため最後に処理
+            if ($this->SiteSystemConfig->is1TurnDamage()) {
+                $tmpHp = $this->attackBattleCharacter->get('hp') - 5;
+                if ($tmpHp <= 0) {
+                    $tmpHp = 1;
+                }
+                $this->attackBattleCharacter->set('hp', $tmpHp);
+            }
+        }
 
         // 防御した側
         if ($this->isLimit) {
@@ -575,6 +611,10 @@ class DetermineBattleComponent extends Component
 
     public function determineResurrection()
     {
+        // 選択ルールでOFFの場合は処理しない
+        if (!$this->SiteSystemConfig->isResurrection()) {
+            return;
+        }
         // 戦闘不能でない場合は処理しない
         if ($this->isKo == 0) {
             return;
@@ -766,7 +806,8 @@ class DetermineBattleComponent extends Component
             $scratch = 0.5;
         }
 
-        // {(5+strength)+(攻撃スキル補正)+(恒久補正+一時補正)}*(必殺掛け率)*(明鏡覚悟)*（かすり傷）
+        // ((5+腕力)+(攻撃スキル補正)+(恒久腕力補正+一時腕力補正))*(必殺掛け率)*(明鏡覚悟掛け率)*(かすり傷掛け率)=ダメージ
+        // ((5+腕力)+(攻撃スキル補正)+(恒久腕力補正+一時腕力補正))*(必殺掛け率)*(明鏡覚悟掛け率)=ダメージ
         $damage = (5 + $this->attackBattleCharacter->strength);
         $damage += $correctionASkill;
         $damage += $this->attackBattleCharacter->permanent_strength;
@@ -776,7 +817,12 @@ class DetermineBattleComponent extends Component
         $damage = $damage * $scratch;
         $damage = round($damage);
 
-        $format = Configure::read('Battle.narration.NARR_BATTLE_DMG');
+        $format = "";
+        if ($this->SiteSystemConfig->isInputTechniqueName()) {
+            $format = Configure::read('Battle.narration.NARR_BATTLE_DMG');
+        } else {
+            $format = Configure::read('Battle.narration.NARR_BATTLE_DMG_NOT_SELECT');
+        }
         $damageString = __($format,
             $this->attackBattleCharacter->strength,
             $correctionASkill,
@@ -814,6 +860,10 @@ class DetermineBattleComponent extends Component
     }
 
     public function determineScratch() {
+        // 選択ルールでOFFの場合は処理しない
+        if (!$this->SiteSystemConfig->isScratch()) {
+            return;
+        }
         // フラグが立っていない場合は処理しない
         if ($this->isDetermineScratch != 1) {
             return;
