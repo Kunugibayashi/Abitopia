@@ -11,7 +11,7 @@ use Cake\ORM\Entity;
  * @property int $id
  * @property int $user_id
  * @property string $fullname
- * @property string $sex
+ * @property string|null $sex
  * @property string $color
  * @property string $backgroundcolor
  * @property string|null $nickname
@@ -24,10 +24,10 @@ use Cake\ORM\Entity;
  * @property \Cake\I18n\DateTime $created
  *
  * @property \App\Model\Entity\User $user
+ * @property \App\Model\Entity\ChatEntry $chat_entry
  * @property \App\Model\Entity\BattleCharacterStatus $battle_character_status
  * @property \App\Model\Entity\BattleCharacter[] $battle_characters
  * @property \App\Model\Entity\BattleSaveSkill[] $battle_save_skills
- * @property \App\Model\Entity\ChatEntry $chat_entry
  */
 class ChatCharacter extends Entity
 {
@@ -55,9 +55,9 @@ class ChatCharacter extends Entity
         'modified' => true,
         'created' => true,
         'user' => true,
+        'chat_entry' => true,
         'battle_character_status' => true,
         'battle_characters' => true,
         'battle_save_skills' => true,
-        'chat_entry' => true,
     ];
 }

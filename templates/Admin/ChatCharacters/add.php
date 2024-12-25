@@ -19,16 +19,26 @@
                 <legend><?= __('Add Chat Character') ?></legend>
                 <?php
                     echo $this->Form->control('user_id', ['options' => $users]);
-                        echo 'キャラクター名';                    echo $this->Form->control('fullname');
-                        echo '性別';                    echo $this->Form->control('sex');
-                        echo 'メッセージ文字色';                    echo $this->Form->control('color');
-                        echo 'メッセージ背景色';                    echo $this->Form->control('backgroundcolor');
-                        echo '二つ名';                    echo $this->Form->control('nickname');
-                        echo '所属';                    echo $this->Form->control('team');
-                        echo 'タグ';                    echo $this->Form->control('tag');
-                        echo 'URL';                    echo $this->Form->control('url');
-                        echo 'フリー欄';                    echo $this->Form->control('free1');
-                        echo '詳細';                    echo $this->Form->control('detail');
+                    echo 'キャラクター名';
+                    echo $this->Form->control('fullname');
+                    echo '性別';
+                    echo $this->Form->control('sex');
+                    echo 'メッセージ文字色';
+                    echo $this->Form->control('color');
+                    echo 'メッセージ背景色';
+                    echo $this->Form->control('backgroundcolor');
+                    echo '二つ名';
+                    echo $this->Form->control('nickname');
+                    echo '所属';
+                    echo $this->Form->control('team');
+                    echo 'タグ';
+                    echo $this->Form->control('tag');
+                    echo 'URL';
+                    echo $this->Form->control('url');
+                    echo 'フリー欄';
+                    echo $this->Form->control('free1');
+                    echo '詳細';
+                    echo $this->Form->control('detail');
                 ?>
             </fieldset>
             <?= $this->Form->button(__('Submit')) ?>

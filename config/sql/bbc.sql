@@ -46,7 +46,7 @@ CREATE TABLE `chat_characters` (
   `id`              int unsigned NOT NULL AUTO_INCREMENT    COMMENT 'チャットキャラクターID',
   `user_id`         int unsigned NOT NULL                   COMMENT 'ユーザーID',
   `fullname`        varchar(50)  NOT NULL                   COMMENT 'キャラクター名',
-  `sex`             varchar(7)   NOT NULL                   COMMENT '性別',
+  `sex`             varchar(7)            DEFAULT NULL      COMMENT '性別',
   `color`           varchar(7)   NOT NULL DEFAULT '#ffffff' COMMENT 'メッセージ文字色',
   `backgroundcolor` varchar(7)   NOT NULL DEFAULT '#000000' COMMENT 'メッセージ背景色',
   `nickname`        varchar(20)           DEFAULT NULL      COMMENT '二つ名',

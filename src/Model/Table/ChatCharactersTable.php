@@ -92,8 +92,7 @@ class ChatCharactersTable extends Table
         $validator
             ->scalar('sex')
             ->maxLength('sex', 7)
-            ->requirePresence('sex', 'create')
-            ->notEmptyString('sex');
+            ->allowEmptyString('sex');
 
         $validator
             ->scalar('color')
