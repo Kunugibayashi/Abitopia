@@ -4,6 +4,9 @@
  * @var \App\Model\Entity\ChatLogWarehouse[]|\Cake\Collection\CollectionInterface $chatLogWarehouses
  */
 ?>
+<?php
+use Cake\I18n\DateTime;
+?>
 <div class="chatLogWarehouses index content">
     <h3><?= __('ログ倉庫') ?></h3>
     <div class="table-responsive">
@@ -12,8 +15,9 @@
                 <tr>
                     <th class="table-column-date"><?= $this->Paginator->sort('created', ['label' => '作成日', ]) ?></th>
                     <th class="table-column-chat-room-title"><?= $this->Paginator->sort('chat_room_title', ['label' => 'ルーム名', ]) ?></th>
+                    <th class="table-column-action1button"><?= __('表示') ?></th>
+                    <th class="table-column-action1button"><?= __('DL') ?></th>
                     <th class="table-column-characters"><?= $this->Paginator->sort('characters', ['label' => '参加者', ]) ?></th>
-                    <th class="actions"><?= __('') ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -21,10 +25,18 @@
                 <tr>
                     <td><?= h($chatLogWarehouse->created) ?></td>
                     <td><?= h($chatLogWarehouse->chat_room_title) ?></td>
-                    <td><?= h($chatLogWarehouse->characters) ?></td>
-                    <td class="actions">
-                        <?= $this->Html->link(__('DL'), ['action' => 'dl', $chatLogWarehouse->id]) ?>
+                    <td class="table-column-action1button">
+                        <?= $this->Html->link(__('表示'), ['action' => 'dl', $chatLogWarehouse->id]) ?>
                     </td>
+                    <td class="table-column-action1button">
+                        <?php
+                            $time = DateTime::parse($chatLogWarehouse->created);
+                            $chatroom = h($chatLogWarehouse->chat_room_title);
+                            $logfile = $time->format('Ymd_His_') .trim($chatroom) .'.html';
+                        ?>
+                        <?= $this->Html->link(__('DL'), ['action' => 'dl', $chatLogWarehouse->id], ['download' => $logfile]) ?>
+                    </td>
+                    <td><?= h($chatLogWarehouse->characters) ?></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>

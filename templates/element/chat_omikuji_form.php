@@ -8,7 +8,8 @@
     ?>
 </fieldset>
 <div class="omikuji-container">
-    <?= $this->Form->button(__('おみくじ1'), [
+    <?php $omikuji1Name = $chatRoom->omikuji1name; ?>
+    <?= $this->Form->button(__($omikuji1Name), [
             'type' => 'button',
             'class' => 'omikuji-button',
             'id' => 'id-omikuji1-button',
@@ -26,7 +27,8 @@
     ?>
 </fieldset>
 <div class="omikuji-container">
-    <?= $this->Form->button(__('おみくじ2'), [
+    <?php $omikuji2Name = $chatRoom->omikuji2name; ?>
+    <?= $this->Form->button(__($omikuji2Name), [
             'type' => 'button',
             'class' => 'omikuji-button',
             'id' => 'id-omikuji2-button',

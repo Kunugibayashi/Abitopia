@@ -27,7 +27,7 @@
                 <dl>
                     <dt>●対戦相手を選択する。</dt>
                     <dd>
-                        <?php echo $this->Html->image('manual/bt_01_01.png',
+                        <?php echo $this->Html->image('manual/bt_01_01.png' .'?date=' .CSS_UPDATE_DATE,
                             [
                                 'height' => 200, 'width' => 300,
                                 'url' => '/img/manual/bt_01_01.png',
@@ -40,7 +40,7 @@
                     </dd>
                     <dt>●覚醒スキル、パッシブスキル、戦闘スキルを選択する。</dt>
                     <dd>
-                        <?php echo $this->Html->image('manual/bt_01_02.png',
+                        <?php echo $this->Html->image('manual/bt_01_02.png' .'?date=' .CSS_UPDATE_DATE,
                             [
                                 'height' => 200, 'width' => 300,
                                 'url' => '/img/manual/bt_01_02.png',
@@ -53,7 +53,7 @@
                     </dd>
                     <dt>●宣戦布告を行う。</dt>
                     <dd>
-                        <?php echo $this->Html->image('manual/bt_01_03.png',
+                        <?php echo $this->Html->image('manual/bt_01_03.png' .'?date=' .CSS_UPDATE_DATE,
                             [
                                 'height' => 200, 'width' => 300,
                                 'url' => '/img/manual/bt_01_03.png',
@@ -67,7 +67,7 @@
                     </dd>
                     <dt>●防御側が防御スキルのセットを行う。</dt>
                     <dd>
-                        <?php echo $this->Html->image('manual/bt_02_01.png',
+                        <?php echo $this->Html->image('manual/bt_02_01.png' .'?date=' .CSS_UPDATE_DATE,
                             [
                                 'height' => 200, 'width' => 300,
                                 'url' => '/img/manual/bt_02_01.png',
@@ -84,7 +84,7 @@
                     </dd>
                     <dt>●攻撃側が攻撃スキルのセットを行い、攻撃する。</dt>
                     <dd>
-                        <?php echo $this->Html->image('manual/bt_03_01.png',
+                        <?php echo $this->Html->image('manual/bt_03_01.png' .'?date=' .CSS_UPDATE_DATE,
                             [
                                 'height' => 200, 'width' => 300,
                                 'url' => '/img/manual/bt_03_01.png',
@@ -103,7 +103,7 @@
                     </dd>
                         <dt>●どちらかが戦闘不能になるまで、防御セットと攻撃セットを繰り返す。</dt>
                         <dd>
-                            <?php echo $this->Html->image('manual/bt_04_01.png',
+                            <?php echo $this->Html->image('manual/bt_04_01.png' .'?date=' .CSS_UPDATE_DATE,
                                 [
                                     'height' => 200, 'width' => 300,
                                     'url' => '/img/manual/bt_04_01.png',
@@ -123,7 +123,7 @@
                 <dl>
                     <dt>中断する</dt>
                     <dd>
-                        <?php echo $this->Html->image('manual/bt_03_02.png',
+                        <?php echo $this->Html->image('manual/bt_03_02.png' .'?date=' .CSS_UPDATE_DATE,
                             [
                                 'height' => 100, 'width' => 300,
                                 'url' => '/img/manual/bt_03_02.png',
@@ -136,7 +136,7 @@
                     </dd>
                     <dt>再開する</dt>
                     <dd>
-                        <?php echo $this->Html->image('manual/bt_01_04.png',
+                        <?php echo $this->Html->image('manual/bt_01_04.png' .'?date=' .CSS_UPDATE_DATE,
                             [
                                 'height' => 200, 'width' => 300,
                                 'url' => '/img/manual/bt_01_04.png',
@@ -157,7 +157,7 @@
                     攻撃時、防御時に属性を指定します。属性の指定により攻撃の成功失敗が判定されます。<br>
                     属性は『炎』『地』『風』『水』の4つです。<br>
                     『炎』→『地』→『風』→『水』→『炎』の順で優劣が決まります。<br>
-                    <?php echo $this->Html->image('manual/skill_01.png',
+                    <?php echo $this->Html->image('manual/skill_01.png' .'?date=' .CSS_UPDATE_DATE,
                         [
                             'height' => 150, 'width' => 150,
                             'url' => '/img/manual/skill_01.png',
@@ -189,7 +189,7 @@
                 </p>
                 <p>
                     青が『有利』、黄色が『拮抗』、黒が『不利』として記載しています。<br>
-                    <?php echo $this->Html->image('manual/skill_02.png',
+                    <?php echo $this->Html->image('manual/skill_02.png' .'?date=' .CSS_UPDATE_DATE,
                         [
                         'height' => 150, 'width' => 150,
                         'url' => '/img/manual/skill_02.png',
@@ -295,7 +295,7 @@
                             <dt>【ガードブレイク】vs【防御専念】</dt>
                             <dd>
                                 攻撃が命中しやすくなります。<br>
-                                <?php echo $this->Html->image('manual/skill_03.png',
+                                <?php echo $this->Html->image('manual/skill_03.png' .'?date=' .CSS_UPDATE_DATE,
                                     [
                                         'height' => 150, 'width' => 150,
                                         'url' => '/img/manual/skill_03.png',
@@ -305,7 +305,7 @@
                             <dt>【ガードブレイク】vs【回避専念】</dt>
                             <dd>
                                 攻撃が命中しくくなります。<br>
-                                <?php echo $this->Html->image('manual/skill_04.png',
+                                <?php echo $this->Html->image('manual/skill_04.png' .'?date=' .CSS_UPDATE_DATE,
                                     [
                                         'height' => 150, 'width' => 150,
                                         'url' => '/img/manual/skill_04.png',
@@ -335,7 +335,7 @@
                             <dt>【ホーミング】vs【乱数回避】</dt>
                             <dd>
                                 全ての属性が命中します。<br>
-                                <?php echo $this->Html->image('manual/skill_10.png',
+                                <?php echo $this->Html->image('manual/skill_10.png' .'?date=' .CSS_UPDATE_DATE,
                                     [
                                         'height' => 150, 'width' => 150,
                                         'url' => '/img/manual/skill_10.png',
@@ -345,7 +345,7 @@
                             <dt>【ホーミング】vs【回避専念】</dt>
                             <dd>
                                 攻撃が命中しやすくなります。<br>
-                                <?php echo $this->Html->image('manual/skill_06.png',
+                                <?php echo $this->Html->image('manual/skill_06.png' .'?date=' .CSS_UPDATE_DATE,
                                     [
                                         'height' => 150, 'width' => 150,
                                         'url' => '/img/manual/skill_06.png',
@@ -355,7 +355,7 @@
                             <dt>【ホーミング】vs【防御専念】</dt>
                             <dd>
                                 攻撃が命中しにくくなります。<br>
-                                <?php echo $this->Html->image('manual/skill_07.png',
+                                <?php echo $this->Html->image('manual/skill_07.png' .'?date=' .CSS_UPDATE_DATE,
                                     [
                                         'height' => 150, 'width' => 150,
                                         'url' => '/img/manual/skill_07.png',
@@ -365,7 +365,7 @@
                             <dt>【ホーミング】vs【攻防一体/カウンター/他】</dt>
                             <dd>
                                 攻撃が命中しにくくなります。<br>
-                                <?php echo $this->Html->image('manual/skill_08.png',
+                                <?php echo $this->Html->image('manual/skill_08.png' .'?date=' .CSS_UPDATE_DATE,
                                     [
                                         'height' => 150, 'width' => 150,
                                         'url' => '/img/manual/skill_08.png',
@@ -417,7 +417,7 @@
                             <dt>【精密射撃/部位破壊/他】vs【乱数回避】</dt>
                             <dd>
                                 全ての属性が『拮抗』判定になります。<br>
-                                <?php echo $this->Html->image('manual/skill_09.png',
+                                <?php echo $this->Html->image('manual/skill_09.png' .'?date=' .CSS_UPDATE_DATE,
                                     [
                                         'height' => 150, 'width' => 150,
                                         'url' => '/img/manual/skill_09.png',
@@ -427,7 +427,7 @@
                             <dt>【ホーミング】vs【乱数回避】</dt>
                             <dd>
                                 全ての属性が命中します。<br>
-                                <?php echo $this->Html->image('manual/skill_10.png',
+                                <?php echo $this->Html->image('manual/skill_10.png' .'?date=' .CSS_UPDATE_DATE,
                                     [
                                         'height' => 150, 'width' => 150,
                                         'url' => '/img/manual/skill_10.png',

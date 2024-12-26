@@ -21,6 +21,9 @@
         <li><?= $this->Html->link(__('発言編集'), [
             'controller' => 'Manual', 'action' => 'setting', '#' => 'hatsugen'], ['class' => 'side-nav-item']) ?>
         </li>
+        <li><?= $this->Html->link(__('未読私書お知らせ'), [
+            'controller' => 'Manual', 'action' => 'setting', '#' => 'midoku'], ['class' => 'side-nav-item']) ?>
+        </li>
     </ul>
 
     <h4 class="heading"><?= $this->Html->link(__('チャットシステム'), [
@@ -35,6 +38,12 @@
         </li>
         <li><?= $this->Html->link(__('ダイス'), [
             'controller' => 'Manual', 'action' => 'chatSystem', '#' => 'daisu'], ['class' => 'side-nav-item']) ?>
+        </li>
+        <li><?= $this->Html->link(__('おみくじ'), [
+            'controller' => 'Manual', 'action' => 'chatSystem', '#' => 'omikuji'], ['class' => 'side-nav-item']) ?>
+        </li>
+        <li><?= $this->Html->link(__('手札'), [
+            'controller' => 'Manual', 'action' => 'chatSystem', '#' => 'tefuda'], ['class' => 'side-nav-item']) ?>
         </li>
         <li><?= $this->Html->link(__('自由設定ルーム変更'), [
             'controller' => 'Manual', 'action' => 'chatSystem', '#' => 'settei'], ['class' => 'side-nav-item']) ?>

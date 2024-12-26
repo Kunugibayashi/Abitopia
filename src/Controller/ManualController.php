@@ -28,6 +28,9 @@ class ManualController extends AppController
 
     public function index()
     {
+        $siteRules = $this->SiteSystemConfig->getMergeRule();
+
+        $this->set(compact('siteRules'));
     }
 
     public function siteRule()

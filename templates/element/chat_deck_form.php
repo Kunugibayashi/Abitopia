@@ -7,7 +7,8 @@
     ?>
 </fieldset>
 <div class="deck-container">
-    <?= $this->Form->button(__('山札'), [
+    <?php $deck1Name = $chatRoom->deck1name; ?>
+    <?= $this->Form->button(__($deck1Name), [
             'type' => 'button',
             'id' => 'id-deck-flip-button',
         ]) ?>
@@ -23,7 +24,8 @@
     ?>
 </fieldset>
 <div class="deck-container">
-    <?= $this->Form->button(__('山札リセット'), [
+    <?php $deck1Name = $chatRoom->deck1name; ?>
+    <?= $this->Form->button(__($deck1Name .'リセット'), [
             'type' => 'button',
             'id' => 'id-deck-reset-button',
         ]) ?>

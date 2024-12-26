@@ -15,7 +15,7 @@
                 <dl>
                     <dt>●入室</dt>
                     <dd>
-                        <?php echo $this->Html->image('manual/chat_01.png',
+                        <?php echo $this->Html->image('manual/chat_01.png' .'?date=' .CSS_UPDATE_DATE,
                             [
                                 'height' => 50, 'width' => 300,
                                 'url' => '/img/manual/chat_01.png',
@@ -27,9 +27,9 @@
                     </dd>
                     <dt>●発言・備考欄</dt>
                     <dd>
-                        <?php echo $this->Html->image('manual/chat_02.png',
+                        <?php echo $this->Html->image('manual/chat_02.png' .'?date=' .CSS_UPDATE_DATE,
                             [
-                                'height' => 160, 'width' => 300,
+                                'height' => 100, 'width' => 300,
                                 'url' => '/img/manual/chat_02.png',
                             ]
                         ); ?>
@@ -45,12 +45,6 @@
                     </dd>
                     <dt>●退出</dt>
                     <dd>
-                        <?php echo $this->Html->image('manual/chat_03.png',
-                            [
-                                'height' => 160, 'width' => 300,
-                                'url' => '/img/manual/chat_03.png',
-                            ]
-                        ); ?>
                         <p>
                             「退出」ボタンを押下することでチャットルームから退出します。<br>
                             チャットが終了した場合は必ず退出してください。<br>
@@ -71,10 +65,10 @@
                 <dl>
                     <dt>●別ウィンドウにログを表示</dt>
                     <dd>
-                        <?php echo $this->Html->image('manual/chat_04.png',
+                        <?php echo $this->Html->image('manual/chat_02.png' .'?date=' .CSS_UPDATE_DATE,
                             [
-                                'height' => 200, 'width' => 300,
-                                'url' => '/img/manual/chat_04.png',
+                                'height' => 100, 'width' => 300,
+                                'url' => '/img/manual/chat_02.png',
                             ]
                         ); ?>
                         <p>
@@ -94,9 +88,9 @@
                 <dl>
                     <dt>●ダイス</dt>
                     <dd>
-                        <?php echo $this->Html->image('manual/chat_05.png',
+                        <?php echo $this->Html->image('manual/chat_05.png' .'?date=' .CSS_UPDATE_DATE,
                             [
-                                'height' => 200, 'width' => 300,
+                                'height' => 50, 'width' => 300,
                                 'url' => '/img/manual/chat_05.png',
                             ]
                         ); ?>
@@ -111,6 +105,46 @@
             </div>
         </div>
         <div class="content">
+            <h3 id="omikuji">おみくじ</h3>
+            <div class="content-description">
+                <p>
+                    管理人がおみくじを設定している場合、おみくじを引くことができます。<br>
+                    設定されていない場合、表示されません。<br>
+                </p>
+                <dl>
+                    <dt>●おみくじ</dt>
+                    <dd>
+                        <?php echo $this->Html->image('manual/chat_05.png' .'?date=' .CSS_UPDATE_DATE,
+                            [
+                                'height' => 50, 'width' => 300,
+                                'url' => '/img/manual/chat_05.png',
+                            ]
+                        ); ?>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+        <div class="content">
+            <h3 id="tefuda">手札</h3>
+            <div class="content-description">
+                <p>
+                    管理人が手札を設定している場合、手札を引くことができます。山札がなくなったらリセットボタンを推して下さい。<br>
+                    設定されていない場合、表示されません。<br>
+                </p>
+                <dl>
+                    <dt>●手札</dt>
+                    <dd>
+                        <?php echo $this->Html->image('manual/chat_05.png' .'?date=' .CSS_UPDATE_DATE,
+                            [
+                                'height' => 50, 'width' => 300,
+                                'url' => '/img/manual/chat_05.png',
+                            ]
+                        ); ?>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+        <div class="content">
             <h3 id="settei">自由設定ルーム変更</h3>
             <div class="content-description">
                 <p>
@@ -119,9 +153,9 @@
                 <dl>
                     <dt>●自由設定画面表示</dt>
                     <dd>
-                        <?php echo $this->Html->image('manual/chat_06.png',
+                        <?php echo $this->Html->image('manual/chat_06.png' .'?date=' .CSS_UPDATE_DATE,
                             [
-                                'height' => 100, 'width' => 300,
+                                'height' => 80, 'width' => 300,
                                 'url' => '/img/manual/chat_06.png',
                             ]
                         ); ?>
@@ -131,9 +165,9 @@
                     </dd>
                     <dt>●部屋設定</dt>
                     <dd>
-                        <?php echo $this->Html->image('manual/chat_07.png',
+                        <?php echo $this->Html->image('manual/chat_07.png' .'?date=' .CSS_UPDATE_DATE,
                             [
-                                'height' => 100, 'width' => 300,
+                                'height' => 80, 'width' => 300,
                                 'url' => '/img/manual/chat_07.png',
                             ]
                         ); ?>
@@ -152,32 +186,19 @@
                 <p>
                     チャット参加後、ログ倉庫にログが出力され保存が可能です。<br>
                     ログが出力されるタイミングは、チャットルーム内の参加者が全員退出した後となります。<br>
-                    背景色や背景画像は当時の状態の保存が難しいためログ倉庫には出力されません。<br>
+                    チャットルーム用CSSが配置されていた場合は内容が出力されます。背景画像は保存が難しいためログには出力されません。<br>
                 </p>
                 <dl>
                     <dt>●ログ倉庫</dt>
                     <dd>
-                        <?php echo $this->Html->image('manual/log_dl_01.png',
+                        <?php echo $this->Html->image('manual/log_dl_01.png' .'?date=' .CSS_UPDATE_DATE,
                             [
-                                'height' => 80, 'width' => 300,
+                                'height' => 50, 'width' => 300,
                                 'url' => '/img/manual/log_dl_01.png',
                             ]
                         ); ?>
                         <p>
-                            「ログ倉庫」の「≫ More」を押下して、ログ一覧を表示してください。<br>
-                        </p>
-                    </dd>
-                    <dt>●ログ一覧</dt>
-                    <dd>
-                        <?php echo $this->Html->image('manual/log_dl_02.png',
-                            [
-                                'height' => 120, 'width' => 300,
-                                'url' => '/img/manual/log_dl_02.png',
-                            ]
-                        ); ?>
-                        <p>
-                            対象ログの「DL」を右クリックし、「リンク先を別名で保存」でログを保存することが可能です。<br>
-                            もしくは「DL」を押下しWEBページを表示した後、右クリックから「別名で保存」を選択してください。<br>
+                            対象ログの「表示」でログの表示、「DL」でログのDLが可能です。<br>
                         </p>
                     </dd>
                 </dl>

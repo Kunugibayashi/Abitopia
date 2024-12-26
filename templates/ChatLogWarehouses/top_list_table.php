@@ -13,7 +13,7 @@ use Cake\I18n\DateTime;
                 $chatroom = h($chatLogWarehouse->chat_room_title);
                 $logfile = $time->format('Ymd_His_') .trim($chatroom) .'.html';
             ?>
-            <td class="table-column-action1button"><?= $this->Html->link(__('DL'), ['action' => 'dl', $chatLogWarehouse->id], ['download' => $logfile]) ?></td></td>
+            <td class="table-column-action1button"><?= $this->Html->link(__('DL'), ['action' => 'dl', $chatLogWarehouse->id], ['download' => $logfile]) ?></td>
             <td class="table-column-characters"><?= h($chatLogWarehouse->characters) ?></td>
         </tr>
         <?php } ?>

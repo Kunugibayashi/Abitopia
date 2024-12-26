@@ -12,6 +12,21 @@
                 サイト管理人によって選択可能なため、サイトにより異なります。<br>
                 システム説明では全ての説明が表示されていますが、OFFの場合は適応されていません。<br>
             </p>
+            <table class="table-rule">
+                <tbody>
+                    <?php foreach ($siteRules as $siteRule): ?>
+                        <tr>
+                            <td class="table-rule-column-head"><?= h($siteRule['information']) ?></td>
+                            <td class="table-rule-column-onoff"><?php
+                                if ($siteRule['active']) {
+                                    echo '<div class="rule-point-on">ON</div>';
+                                } else {
+                                    echo '<div class="rule-point-off">OFF</div>';
+                                }
+                            ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
             </table>
         </div>
         <div class="content">
