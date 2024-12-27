@@ -132,6 +132,22 @@ class MessagesController extends AppController
         return $this->render('view');
     }
 
+    public function dlReceivedMessage($id = null)
+    {
+        $this->viewBuilder()->disableAutoLayout();
+
+        $userId = $this->Authentication->getIdentityData('id');
+
+        $receivedMessage = $this->ReceivedMessages->find()
+            ->contain(['Users'])
+            ->where(['user_id' =>  $userId])
+            ->where(['ReceivedMessages.id' => $id])
+            ->first();
+
+        $this->set('message', $receivedMessage);
+        return $this->render('dl_message');
+    }
+
     public function viewSendMessage($id = null)
     {
         $userId = $this->Authentication->getIdentityData('id');
@@ -144,6 +160,22 @@ class MessagesController extends AppController
 
         $this->set('message', $sendMessage);
         return $this->render('view');
+    }
+
+    public function dlSendMessage($id = null)
+    {
+        $this->viewBuilder()->disableAutoLayout();
+
+        $userId = $this->Authentication->getIdentityData('id');
+
+        $sendMessage = $this->SendMessages->find()
+            ->contain(['Users'])
+            ->where(['user_id' =>  $userId])
+            ->where(['SendMessages.id' => $id])
+            ->first();
+
+        $this->set('message', $sendMessage);
+        return $this->render('dl_message');
     }
 
     public function send($id = null)
