@@ -63,7 +63,7 @@ define('RULE_1TURN_DEXPLUS', 13); // 1ターンごとの命中率増加
 define('RULE_1TURN_DAMAGE', 14); // 1ターンごとの体力ダメージ
 return [
     'Site' => [
-        'title' => 'サイト名', // サイト名
+        'title' => 'Abitopia', // サイト名
         'admin' => 1, // 管理者の登録可能人数
         'logmax' => 10000, // ログを残す行数（全部屋合計）
     ],
