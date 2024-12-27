@@ -41,9 +41,14 @@ class SiteSystemConfigComponent extends Component
         if (is_null($siteSystemConfigs) || count($siteSystemConfigs->toArray()) <= 0) {
             return $siteRules;
         }
+        // $this->log(print_r($siteSystemConfigs, true), "debug");
 
         foreach ($siteSystemConfigs as $systemCnt => $siteSystemConfig) {
+            // $this->log($siteSystemConfig->id, "debug");
             foreach ($siteRules as $ruleCnt => $siteRule) {
+                if ($ruleCnt != $siteSystemConfig->id) {
+                    continue;
+                }
                 $siteRules[$ruleCnt]['active'] = $siteSystemConfig->active_flag;
             }
         }
@@ -58,7 +63,7 @@ class SiteSystemConfigComponent extends Component
             return 0;
         }
 
-        $siteSystemConfigs = $this->SiteSystemConfigs->find();
+        $siteSystemConfigs = $this->SiteSystemConfigs->find()->where(['id' => $id, ]);
         if (is_null($siteSystemConfigs) || count($siteSystemConfigs->toArray()) <= 0) {
             return 0;
         }
