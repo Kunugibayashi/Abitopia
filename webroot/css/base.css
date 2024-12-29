@@ -161,12 +161,11 @@ button + button {
 }
 .top-nav-links {
     display: grid;
-    width: 12rem;
     min-width: 12rem;
     grid-template-rows: 3rem 1fr;
     grid-template-columns: 1fr 5rem;
     align-items: center;
-    justify-items: center;
+    justify-items: stretch;
 }
 .top-nav-links-login-username {
     grid-column: 1 / 3;

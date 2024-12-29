@@ -12,8 +12,8 @@
     <?= $this->Form->create() ?>
     <fieldset>
         <legend><?= __('ユーザー名とパスワードを入力してください。') ?></legend>
-        <?= $this->Form->control('username', ['label' => 'ユーザー名']) ?>
-        <?= $this->Form->control('password', ['label' => 'パスワード']) ?>
+        <?= $this->Form->control('username', ['label' => 'ユーザー名', 'maxlength' => '50', ]) ?>
+        <?= $this->Form->control('password', ['label' => 'パスワード', 'maxlength' => '255', ]) ?>
     </fieldset>
     <div class="button-container">
         <?= $this->Form->button(__('ログイン'), [

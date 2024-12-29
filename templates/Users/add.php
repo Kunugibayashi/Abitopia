@@ -17,9 +17,9 @@
             <fieldset>
                 <legend><?= __('ユーザー登録') ?></legend>
                 <?php
-                    echo $this->Form->control('username', ['label' => 'ユーザー名']);
-                    echo $this->Form->control('password', ['label' => 'パスワード']);
-                    echo $this->Form->control('repassword', ['label' => 'パスワード再入力', 'type' => 'password', ]);
+                    echo $this->Form->control('username', ['label' => 'ユーザー名', 'maxlength' => '50', ]);
+                    echo $this->Form->control('password', ['label' => 'パスワード', 'maxlength' => '255', ]);
+                    echo $this->Form->control('repassword', ['label' => 'パスワード再入力', 'type' => 'password', 'maxlength' => '255', ]);
                     echo $this->Form->control('role', ['label' => '権限',
                         'options' => [
                         'author' => __('一般ユーザ'),
