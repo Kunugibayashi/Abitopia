@@ -39,6 +39,10 @@
                     <td><?= $this->Number->format($chatRoom->id) ?></td>
                 </tr>
                 <tr>
+                    <th><?= __('Design') ?></th>
+                    <td><?= $this->Number->format($chatRoom->design) ?></td>
+                </tr>
+                <tr>
                     <th><?= __('Published') ?></th>
                     <td><?= $this->Number->format($chatRoom->published) ?></td>
                 </tr>

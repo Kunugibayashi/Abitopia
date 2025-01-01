@@ -14,18 +14,25 @@ if (isset($chatRoomCss)) {
 <style>
 html { box-sizing: border-box; font-size: 62.5%; }
 body { color: #606c76; font-size: 1.6em; font-weight: 300; letter-spacing: .01em; line-height: 1.6; }
-.system { padding: 0 1rem; }
-.chat-log-contenar { margin: 1rem; }
-.chat-log { border-radius: 0.5rem; overflow: hidden; padding: 1rem;}
+<?php if ($chatRoom->design == 1) { ?>
+    .chat-log-contenar { margin: 1rem; }
+    .chat-log { border-radius: 0rem; overflow: hidden; padding: 0rem; line-height: 1.4; }
+    .chat-log-date-line { display: inline-block; text-align: right; font-size: 0.8rem; opacity: 0.5; }
+<?php } else { ?>
+    .chat-log-contenar { margin: 1rem; }
+    .chat-log { border-radius: 0.5rem; overflow: hidden; padding: 1rem;}
+    .chat-log-date-line { display: block; text-align: right; font-size: 0.8rem; opacity: 0.5; }
+<?php } ?>
 .chat-log-title { border-bottom: inset 1px; padding: 1rem 0;}
 .chat-log-title:hover + .chat-log-information { display: inline-block; }
-.chat-log-information { display: none; position: absolute; color: #000000; background-color: #ffffff; }
+.chat-log-information { display: none; position: absolute; color: #000000; background-color: #f5f7fa; padding: 0.5rem; margin: 0; z-index: 10; }
 .chat-log-fullname:hover + .chat-log-note { display: inline-block; }
-.chat-log-note { display: none; position: absolute; color: #000000; background-color: #ffffff; padding: 0.5rem; margin: 0; }
-.chat-log-date-line { display: block; text-align: right; font-size: 0.8rem; opacity: 0.5; }
+.chat-log-note { display: none; position: absolute; color: #000000; background-color: #f5f7fa; padding: 0.5rem; margin: 0; z-index: 10; }
 .battle-log-status { display: block; text-align: right; font-size: 1rem; opacity: 0.5; }
 .battle-log-narration { display: block; }
-.battle-log-memo { display: block; font-size: 1rem; opacity: 0.5; }
+.battle-log-narration:hover + .battle-log-memo { display: inline-block; }
+.battle-log-memo { display: none; position: absolute; color: #000000; background-color: #f5f7fa; padding: 0.5rem; margin: 0; z-index: 10; }
+.system { padding: 0 1.4rem; font-size: 1.4rem; }
 .chat-log-title, .chat-log-information, .chat-log-contenar, .chat-log, .chat-log-message, .chat-log-fullname, .chat-log-note, .chat-log-date, .system, .battle-log-narration, .battle-log-memo { word-break: break-all; }
 .bold { font-weight: bold; }
 .oblique { font-style: oblique; }
@@ -81,7 +88,7 @@ if (isset($isChatLogWindow) && $isChatLogWindow) {
 }
 ?>
 <?php
-if (!$chatRoom) {
+if (!$chatLog) {
     ?>
     <div class="chat-log-title">
         <?php echo __('ログが存在しません。'); ?>
@@ -90,36 +97,37 @@ if (!$chatRoom) {
     return;
 }
 ?>
-<h3 class="chat-log-title"><?php echo h($chatRoom->chat_room_title); ?></h3>
-<div class="chat-log-information"><?php echo h($chatRoom->chat_room_information); ?></div>
+<h3 class="chat-log-title"><?php echo h($chatLog->chat_room_title); ?></h3>
+<div class="chat-log-information"><?php echo h($chatLog->chat_room_information); ?></div>
 <?php
 foreach ($chatLogs as $chatLog) {
     $isSystem = ($chatLog->chat_character_key) ? '' : 'system';
     ?>
     <div class="chat-log-contenar">
-        <p class="chat-log <?= $isSystem ?>" style="<?php echo $this->Html->style([
-                'color' => $chatLog->color,
-                'background-color' => $chatLog->backgroundcolor,
-            ]); ?>">
+        <p class="chat-log <?= $isSystem ?>"
+            <?php if ($chatRoom->design == 1) { ?>
+                style="<?php echo $this->Html->style([ 'color' => $chatLog->color, 'background-color' => 'unset',]); ?>"
+            <?php } else { ?>
+                style="<?php echo $this->Html->style([ 'color' => $chatLog->color, 'background-color' => $chatLog->backgroundcolor,]); ?>"
+            <?php } ?>
+        >
             <?php if (!$isSystem) { ?>
                 <span class="chat-log-fullname"><?php echo h($chatLog->fullname); ?></span>
                 <span class="chat-log-note">note: <?php echo h($chatLog->note); ?></span>
                 <span class="chat-log-delimiter">≫</span>
             <?php } ?>
             <span class="chat-log-message"><?php echo $this->Htmltag->adapt(nl2br(h($chatLog->message))); ?></span>
-            <?php if ($chatLog->battle_log && $chatLog->battle_log->status) { ?>
-                <span class="battle-log-status"><?php echo nl2br($chatLog->battle_log->status); ?></span>
-            <?php } ?>
             <span class="chat-log-date-line">
                 <?php if ($chatLog->modified != $chatLog->created) { ?>
-                    <span class="chat-log-isedit">
-                        （編集済み）
-                    </span>
+                    <span class="chat-log-isedit">（編集済み）</span>
                 <?php } ?>
                 <span class="chat-log-date">
                     <?php echo h($chatLog->created); ?>
                 </span>
             </span>
+            <?php if ($chatLog->battle_log && $chatLog->battle_log->status) { ?>
+                <span class="battle-log-status"><?php echo nl2br($chatLog->battle_log->status); ?></span>
+            <?php } ?>
         </p>
         <?php if ($chatLog->battle_log) { ?>
         <p class="system">

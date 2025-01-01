@@ -76,9 +76,8 @@ class ChatLogsTable extends Table
 
         $validator
             ->scalar('chat_room_information')
-            ->maxLength('chat_room_information', 1023)
-            ->requirePresence('chat_room_information', 'create')
-            ->notEmptyString('chat_room_information');
+            ->maxLength('chat_room_information', 1000)
+            ->allowEmptyString('chat_room_information');
 
         $validator
             ->scalar('color')

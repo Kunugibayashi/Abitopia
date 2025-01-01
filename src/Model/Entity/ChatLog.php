@@ -12,7 +12,7 @@ use Cake\ORM\Entity;
  * @property string $entry_key
  * @property int $chat_room_key
  * @property string $chat_room_title
- * @property string $chat_room_information
+ * @property string|null $chat_room_information
  * @property string $color
  * @property string $backgroundcolor
  * @property int $chat_character_key

@@ -15,7 +15,6 @@
                     <th><?= $this->Paginator->sort('entry_key') ?></th>
                     <th><?= $this->Paginator->sort('chat_room_key') ?></th>
                     <th><?= $this->Paginator->sort('chat_room_title') ?></th>
-                    <th><?= $this->Paginator->sort('chat_room_information') ?></th>
                     <th><?= $this->Paginator->sort('color') ?></th>
                     <th><?= $this->Paginator->sort('backgroundcolor') ?></th>
                     <th><?= $this->Paginator->sort('chat_character_key') ?></th>
@@ -33,7 +32,6 @@
                     <td><?= h($chatLog->entry_key) ?></td>
                     <td><?= $this->Number->format($chatLog->chat_room_key) ?></td>
                     <td><?= h($chatLog->chat_room_title) ?></td>
-                    <td><?= h($chatLog->chat_room_information) ?></td>
                     <td><?= h($chatLog->color) ?></td>
                     <td><?= h($chatLog->backgroundcolor) ?></td>
                     <td><?= $this->Number->format($chatLog->chat_character_key) ?></td>

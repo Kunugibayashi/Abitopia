@@ -10,7 +10,8 @@ use Cake\ORM\Entity;
  *
  * @property int $id
  * @property string $title
- * @property string $information
+ * @property string|null $information
+ * @property int $design
  * @property int $published
  * @property int $readonly
  * @property int $displayno
@@ -42,6 +43,7 @@ class ChatRoom extends Entity
     protected array $_accessible = [
         'title' => true,
         'information' => true,
+        'design' => true,
         'published' => true,
         'readonly' => true,
         'displayno' => true,

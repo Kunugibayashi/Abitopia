@@ -21,6 +21,8 @@
                     echo $this->Form->control('title');
                     echo 'チャットルーム説明';
                     echo $this->Form->control('information');
+                    echo 'チャットログデザイン（0：文字色＆背景色ありのデフォルト 1：文字色のみ情報量重視）';
+                    echo $this->Form->control('design');
                     echo '公開するか？（0:非公開 1:公開）';
                     echo $this->Form->control('published');
                     echo '管理人のみルーム説明編集可能か？（0:ユーザーも可能な自由設定ルーム 1:管理人のみ可能）';

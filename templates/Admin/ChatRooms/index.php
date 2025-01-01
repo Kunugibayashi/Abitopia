@@ -13,6 +13,7 @@
                 <tr>
                     <th><?= $this->Paginator->sort('id') ?></th>
                     <th><?= $this->Paginator->sort('title') ?></th>
+                    <th><?= $this->Paginator->sort('design') ?></th>
                     <th><?= $this->Paginator->sort('published') ?></th>
                     <th><?= $this->Paginator->sort('readonly') ?></th>
                     <th><?= $this->Paginator->sort('displayno') ?></th>
@@ -32,6 +33,7 @@
                 <tr>
                     <td><?= $this->Number->format($chatRoom->id) ?></td>
                     <td><?= h($chatRoom->title) ?></td>
+                    <td><?= $this->Number->format($chatRoom->design) ?></td>
                     <td><?= $this->Number->format($chatRoom->published) ?></td>
                     <td><?= $this->Number->format($chatRoom->readonly) ?></td>
                     <td><?= $this->Number->format($chatRoom->displayno) ?></td>

@@ -27,10 +27,6 @@
                     <td><?= h($chatLog->chat_room_title) ?></td>
                 </tr>
                 <tr>
-                    <th><?= __('Chat Room Information') ?></th>
-                    <td><?= h($chatLog->chat_room_information) ?></td>
-                </tr>
-                <tr>
                     <th><?= __('Color') ?></th>
                     <td><?= h($chatLog->color) ?></td>
                 </tr>
@@ -71,6 +67,12 @@
                     <td><?= h($chatLog->created) ?></td>
                 </tr>
             </table>
+            <div class="text">
+                <strong><?= __('Chat Room Information') ?></strong>
+                <blockquote>
+                    <?= $this->Text->autoParagraph(h($chatLog->chat_room_information)); ?>
+                </blockquote>
+            </div>
             <div class="text">
                 <strong><?= __('Message') ?></strong>
                 <blockquote>

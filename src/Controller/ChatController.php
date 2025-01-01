@@ -484,23 +484,26 @@ class ChatController extends AppController
         }
 
         // toArray()を挟まないとこのIF文は機能しないので注意
-        $chatRoom = [];
+        $chatLog = [];
         if ($chatLogs) {
             // ルーム情報は最新のレコードから取得
             // 紐付けを行っておらず、部屋が削除されたあともログを出力するため
             // first() は絞り込まれてしまうため使えない
-            $chatRoom = $chatLogs[0];
+            $chatLog = $chatLogs[0];
         }
 
+        // 部屋情報
+        $chatRoom = $this->ChatRooms->get($chatRoomId);
         $chatRoomCssString = $this->CheckFile->getChatRoomCssString($chatRoomId);
 
         $colorCodes = Configure::read('ColorCodes');
 
         $this->set(compact('chatLogs'));
-        $this->set(compact('chatRoom'));
+        $this->set(compact('chatLog'));
         $this->set(compact('chatRoomId'));
         $this->set(compact('chatEntryKey'));
         $this->set(compact('colorCodes'));
+        $this->set(compact('chatRoom'));
         $this->set(compact('chatRoomCssString'));
 
         return $this->render('chatLog');

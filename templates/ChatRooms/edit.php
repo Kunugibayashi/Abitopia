@@ -14,6 +14,7 @@
                     echo $this->Form->control('title', ['label' => 'ルーム名']);
                     echo $this->Form->control('information', [
                         'label' => 'ルーム説明',
+                        'maxlength' => '1000',
                         'type' => 'textarea',
                     ]);
                 ?>

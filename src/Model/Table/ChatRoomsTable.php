@@ -68,9 +68,12 @@ class ChatRoomsTable extends Table
 
         $validator
             ->scalar('information')
-            ->maxLength('information', 1023)
-            ->requirePresence('information', 'create')
-            ->notEmptyString('information');
+            ->maxLength('information', 1000)
+            ->allowEmptyString('information');
+
+        $validator
+            ->nonNegativeInteger('design')
+            ->notEmptyString('design');
 
         $validator
             ->nonNegativeInteger('published')
