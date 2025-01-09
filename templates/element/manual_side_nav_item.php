@@ -33,6 +33,9 @@
         <li><?= $this->Html->link(__('チャット参加'), [
             'controller' => 'Manual', 'action' => 'chatSystem', '#' => 'sanka'], ['class' => 'side-nav-item']) ?>
         </li>
+        <li><?= $this->Html->link(__('表示切替'), [
+            'controller' => 'Manual', 'action' => 'chatSystem', '#' => 'hyouji'], ['class' => 'side-nav-item']) ?>
+        </li>
         <li><?= $this->Html->link(__('別ウィンドウにログを表示'), [
             'controller' => 'Manual', 'action' => 'chatSystem', '#' => 'betsu'], ['class' => 'side-nav-item']) ?>
         </li>

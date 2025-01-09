@@ -10,6 +10,7 @@
             'controller' => 'Chat',
             'action' => 'htmlTagList'
         ], [
+            'id' => 'id-allow-tag',
             'target' => '_blank'
         ]);
         echo $this->Form->control('note', ['label' => '備考',]);

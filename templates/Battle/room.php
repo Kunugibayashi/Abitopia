@@ -105,6 +105,7 @@ jQuery(function(){
         jQuery('#note').parent('.input').toggle();
         jQuery('#id-character-fullname').toggle();
         jQuery('label[for="message"]').toggle();
+        jQuery('#id-allow-tag').toggle();
     });
 });
 </script>

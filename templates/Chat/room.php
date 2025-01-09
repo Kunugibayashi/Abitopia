@@ -49,6 +49,7 @@ jQuery(function(){
         jQuery('#note').parent('.input').toggle();
         jQuery('#id-character-fullname').toggle();
         jQuery('label[for="message"]').toggle();
+        jQuery('#id-allow-tag').toggle();
         // 通常画面は戦闘項目も隠す
         jQuery('#id-battle-entry-form-wrap').toggle();
     });

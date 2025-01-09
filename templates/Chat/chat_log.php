@@ -13,32 +13,38 @@ if (isset($chatRoomCss)) {
 <div id="id-chat-log-content">
 <style>
 html { box-sizing: border-box; font-size: 62.5%; }
-body { color: #606c76; font-size: 1.6em; font-weight: 300; letter-spacing: .01em; line-height: 1.6; }
-<?php if ($chatRoom->design == 1) { ?>
-    .chat-log-contenar { margin: 1rem; }
-    .chat-log { border-radius: 0rem; overflow: hidden; padding: 0rem; line-height: 1.4; }
-    .chat-log-date-line { display: inline-block; text-align: right; font-size: 0.8rem; opacity: 0.5; }
-<?php } else { ?>
-    .chat-log-contenar { margin: 1rem; }
-    .chat-log { border-radius: 0.5rem; overflow: hidden; padding: 1rem;}
-    .chat-log-date-line { display: block; text-align: right; font-size: 0.8rem; opacity: 0.5; }
-<?php } ?>
-.chat-log-title { border-bottom: inset 1px; padding: 1rem 0;}
+body { color: #606c76; font-size: 1.6rem; font-weight: 300; letter-spacing: .01em; line-height: 1.6; }
+.chat-log-title, .chat-log-information, .chat-log-contenar, .chat-log, .chat-log-message, .chat-log-fullname, .chat-log-note, .chat-log-date, .system, .battle-log-narration, .battle-log-memo { word-break: break-all; }
+/* マウスオーバーデザイン */ 
+.chat-log-information { display: none; position: absolute; color: #000000; background-color: #f5f7fa; border-radius: 0.5rem; border: 0.1rem solid #606c76; padding: 0.5rem; margin: 0; z-index: 10; }
+.chat-log-note { display: none; position: absolute; color: #000000; background-color: #f5f7fa; border-radius: 0.5rem; border: 0.1rem solid #606c76; padding: 0.5rem; margin: 0; z-index: 10; }
+.battle-log-memo { display: none; position: absolute; color: #000000; background-color: #f5f7fa; border-radius: 0.5rem; border: 0.1rem solid #606c76; padding: 0.5rem; margin: 0; z-index: 10; }
+/* マウスオーバー動作 */ 
 .chat-log-title:hover + .chat-log-information { display: inline-block; }
-.chat-log-information { display: none; position: absolute; color: #000000; background-color: #f5f7fa; padding: 0.5rem; margin: 0; z-index: 10; }
 .chat-log-fullname:hover + .chat-log-note { display: inline-block; }
-.chat-log-note { display: none; position: absolute; color: #000000; background-color: #f5f7fa; padding: 0.5rem; margin: 0; z-index: 10; }
+.battle-log-narration:hover + .battle-log-memo { display: inline-block; }
+/* チャットルーム用 */ 
+.chat-log-contenar { margin: 1rem; }
+<?php if ($chatRoom->design == 1) { ?>
+    .chat-log { border-radius: 0rem; padding: 0rem; line-height: 1.4; }
+<?php } else { ?>
+    .chat-log { border-radius: 0.5rem; padding: 1rem;}
+<?php } ?>
+.chat-log-date-line { display: inline-block; text-align: right; font-size: 0.8rem; opacity: 0.5; margin-left: 1rem }
+.chat-log-title { border-bottom: inset 1px; padding: 1rem 0;}
 .battle-log-status { display: block; text-align: right; font-size: 1rem; opacity: 0.5; }
 .battle-log-narration { display: block; }
-.battle-log-narration:hover + .battle-log-memo { display: inline-block; }
-.battle-log-memo { display: none; position: absolute; color: #000000; background-color: #f5f7fa; padding: 0.5rem; margin: 0; z-index: 10; }
 .system { padding: 0 1.4rem; font-size: 1.4rem; }
-.chat-log-title, .chat-log-information, .chat-log-contenar, .chat-log, .chat-log-message, .chat-log-fullname, .chat-log-note, .chat-log-date, .system, .battle-log-narration, .battle-log-memo { word-break: break-all; }
+/* チャットタグ用 */ 
 .bold { font-weight: bold; }
 .oblique { font-style: oblique; }
 .line-through { text-decoration: line-through; }
 .font50 { font-size: 50%; } .font150 { font-size: 150%; } .font200 { font-size: 200%; }
-<?php foreach ($colorCodes as $value) { ?><?php echo "." .$value['name'] ?> { color: <?= $value['code'] ?>; } <?php } ?>
+<?php foreach ($colorCodes as $value) { ?><?php echo "." .$value['name'] ?> { color: <?= $value['code'] ?>; } <?php }
+// 下記改行用空白
+?>
+
+/* ルーム個別デザイン用 */
 
 <?php
 // 上記改行用空白

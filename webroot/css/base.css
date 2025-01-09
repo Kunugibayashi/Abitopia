@@ -344,7 +344,7 @@ button + button {
 }
 .detail-wrap {
     padding: 0 1rem;
-    border-left: 0.5rem solid #e1e1e1 ;
+    border-left: 0.5rem solid #e1e1e1;
 }
 table tbody {
     display: flex;
@@ -353,11 +353,9 @@ table tbody {
 }
 table tbody tr {
     width: 100%;
-    border-right: none;
 }
 table tbody tr td {
     width: 100%;
-    border-bottom: none;
 }
 table tbody tr td:last-of-type {
     width: 100%;
@@ -501,6 +499,21 @@ table tbody tr td:last-of-type {
     .table-column-opend {
         width: 8rem;
         min-width: 8rem;
+    }
+}
+@media screen and (max-width: 640px) {
+    table thead {
+        display: none;
+    }
+    table th {
+        border: none;
+    }
+    table tbody tr {
+        border-right: none;
+        border-left: none;
+    }
+    table tbody tr td {
+        border-bottom: none;
     }
 }
 

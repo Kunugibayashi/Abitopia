@@ -15,6 +15,7 @@ if (!$battleTurn || $battleTurn->battle_status == BT_ST_KETYAKU) {
             'controller' => 'Chat',
             'action' => 'htmlTagList'
         ], [
+            'id' => 'id-allow-tag',
             'target' => '_blank'
         ]);
         echo $this->Form->control('note', [

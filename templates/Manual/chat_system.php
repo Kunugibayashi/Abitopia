@@ -54,6 +54,35 @@
             </div>
         </div>
         <div class="content">
+            <h3 id="hyouji">表示切替</h3>
+            <div class="content-description">
+                <p>
+                    「表示切替」ボタンを押下すると、発言機能を重視したシンプルなチャット入力画面になります。<br>
+                    もう一度押下すると元に戻ります。<br>
+                </p>
+                <dl>
+                    <dt>●通常チャット時</dt>
+                    <dd>
+                        <?php echo $this->Html->image('manual/chat_03.png' .'?date=' .CSS_UPDATE_DATE,
+                            [
+                                'height' => 60, 'width' => 300,
+                                'url' => '/img/manual/chat_03.png',
+                            ]
+                        ); ?>
+                    </dd>
+                    <dt>●戦闘チャット時</dt>
+                    <dd>
+                        <?php echo $this->Html->image('manual/chat_04.png' .'?date=' .CSS_UPDATE_DATE,
+                            [
+                                'height' => 150, 'width' => 300,
+                                'url' => '/img/manual/chat_04.png',
+                            ]
+                        ); ?>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+        <div class="content">
             <h3 id="betsu">別ウィンドウにログを表示</h3>
             <div class="content-description">
                 <p>
