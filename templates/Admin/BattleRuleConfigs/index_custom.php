@@ -1,27 +1,28 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var iterable<\App\Model\Entity\SiteSystemConfig> $siteSystemConfigs
+ * @var iterable<\App\Model\Entity\BattleRuleConfig> $battleRuleConfigs
  */
 ?>
 <div class="column">
-    <div class="siteSystemConfigs form content">
-    <h3><?= __('サイト設定カスタム画面') ?></h3>
+    <div class="battleRuleConfigs form content">
+    <h3><?= __('戦闘ルール設定カスタム画面') ?></h3>
         <?= $this->Form->create() ?>
         <fieldset>
         <table>
-            <?php foreach ($siteRules as $siteRule): ?>
+            <?php foreach ($battleRules as $battleRule): ?>
                 <tr>
-                    <th><?= h($siteRule['information']) ?></th>
+                    <th><?= h($battleRule['information']) ?></th>
                     <td><?php
-                        $inputName = 'actives[' .$siteRule['code']. ']';
+                        $inputName = 'actives[' .$battleRule['code']. ']';
                         echo $this->Form->control($inputName, [
                             'label' => '有効化',
                             'type' => 'checkbox',
                             'name' => $inputName,
                             'value' => '1',
-                            'checked' => $siteRule['active'],
-                        ]); ?></td>
+                            'checked' => $battleRule['active'],
+                        ]); ?>
+                    </td>
                 </tr>
             <?php endforeach; ?>
         </table>

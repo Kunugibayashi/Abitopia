@@ -347,8 +347,8 @@ class ChatController extends AppController
         // Routesにて、正規表現で数値制限済み
         $chatRoomId = $this->request->getParam('chatRoomId');
 
-        $this->log(__CLASS__.":".__FUNCTION__.":" ."userId = $userId, chatCharacterId = $chatCharacterId", 'debug');
-        $this->log(__CLASS__.":".__FUNCTION__.":" ."chatRoomId = $chatRoomId", 'debug');
+        // $this->log(__CLASS__.":".__FUNCTION__.":" ."userId = $userId, chatCharacterId = $chatCharacterId", 'debug');
+        // $this->log(__CLASS__.":".__FUNCTION__.":" ."chatRoomId = $chatRoomId", 'debug');
 
         $chatEntry = $this->ChatEntries->find()
             ->where(['chat_room_id' => $chatRoomId])

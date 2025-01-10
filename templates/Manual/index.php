@@ -6,28 +6,64 @@
     </aside>
     <div class="column-responsive main-container">
         <div class="content">
-            <h3>サイト適応ルール</h3>
-            <p>
-                サイト内で適応されているルールを確認します。<br>
-                サイト管理人によって選択可能なため、サイトにより異なります。<br>
-                システム説明では全ての説明が表示されていますが、OFFの場合は適応されていません。<br>
-            </p>
-            <table class="table-rule">
-                <tbody>
-                    <?php foreach ($siteRules as $siteRule): ?>
-                        <tr>
-                            <td class="table-rule-column-head"><?= h($siteRule['information']) ?></td>
-                            <td class="table-rule-column-onoff"><?php
-                                if ($siteRule['active']) {
-                                    echo '<div class="rule-point-on">ON</div>';
-                                } else {
-                                    echo '<div class="rule-point-off">OFF</div>';
-                                }
-                            ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+            <h3>適応ルール一覧</h3>
+            <div class="content-description">
+                <p>
+                    サイト内で適応されているルールを確認します。<br>
+                    サイト管理人によって選択可能なため、サイトにより異なります。<br>
+                </p>
+                <p>
+                    サイト適応ルールでは底力、かすり傷などの特殊ルールのON・OFFが確認可能です。<br>
+                    サイト適応ルールがOFFの場合は適応されていません。<br>
+                </p>
+                <p>
+                    戦闘補正値はスキル使用時の腕力や回避率の補正値の確認が可能です。<br>
+                    戦闘補正値が設定されていない場合は、デフォルトの設定が適応されます。<br>
+                    システム説明では全ての戦闘補正値がデフォルト値で表示されていますので、ご注意ください。<br>
+                </p>
+                <p>
+                    <?php 
+                    $battleRuleFlg = false;
+                    foreach ($battleRules as $battleRule):
+                        if ($battleRule['active']) {
+                            $battleRuleFlg = true;
+                            break;
+                        }
+                    endforeach;
+                    $battleCorrectionFlg = false;
+                    foreach ($battleCorrections as $battleCorrection):
+                        if ($battleCorrection['active']) {
+                            $battleCorrectionFlg = true;
+                            break;
+                        }
+                    endforeach;
+                    ?>
+                    <table class="table-rule">
+                        <tbody>
+                                <tr>
+                                    <td class="table-rule-column-head">サイト適応ルール</td>
+                                    <td class="table-rule-column-onoff"><?php
+                                        if ($battleRuleFlg) {
+                                            echo '<div class="rule-point-on">変更あり</div>';
+                                        } else {
+                                            echo '<div class="rule-point-off">変更なし</div>';
+                                        }
+                                    ?></td>
+                                </tr>
+                                <tr>
+                                    <td class="table-rule-column-head">戦闘補正値</td>
+                                    <td class="table-rule-column-onoff"><?php
+                                        if ($battleCorrectionFlg) {
+                                            echo '<div class="rule-point-on">変更あり</div>';
+                                        } else {
+                                            echo '<div class="rule-point-off">変更なし</div>';
+                                        }
+                                    ?></td>
+                                </tr>
+                        </tbody>
+                    </table>
+                </p>
+            </div>
         </div>
         <div class="content">
             <h3>設定</h3>

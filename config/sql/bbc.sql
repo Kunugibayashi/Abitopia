@@ -28,9 +28,9 @@ CREATE TABLE `users` (
   COMMENT='ユーザー'
 ;
 
-CREATE TABLE `site_system_configs` (
-  `id`                int unsigned NOT NULL AUTO_INCREMENT COMMENT 'サイト設定ID',
-  `site_rule_code`    int unsigned NOT NULL DEFAULT '0'    COMMENT 'サイトルールコード',
+CREATE TABLE `battle_rule_configs` (
+  `id`                int unsigned NOT NULL AUTO_INCREMENT COMMENT '戦闘ルール設定ID',
+  `battle_rule_code`  int unsigned NOT NULL DEFAULT '0'    COMMENT '戦闘ルールコード',
   `active_flag`       int unsigned NOT NULL DEFAULT '0'    COMMENT '有効フラグ',
   `modified`          datetime     NOT NULL                COMMENT '更新日',
   `created`           datetime     NOT NULL                COMMENT '作成日',
@@ -39,7 +39,22 @@ CREATE TABLE `site_system_configs` (
   ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_general_ci
-  COMMENT='サイト設定'
+  COMMENT='戦闘ルール設定'
+;
+
+CREATE TABLE `battle_correction_configs` (
+  `id`                       int unsigned NOT NULL AUTO_INCREMENT COMMENT '戦闘補正値設定ID',
+  `battle_correction_code`   int unsigned NOT NULL DEFAULT '0'    COMMENT '戦闘補正値コード',
+  `battle_correction_value`  int          NOT NULL DEFAULT '0'    COMMENT '戦闘補正値',
+  `active_flag`              int unsigned NOT NULL DEFAULT '0'    COMMENT '有効フラグ（0：デフォルト  1：戦闘補正値を適応）',
+  `modified`                 datetime     NOT NULL                COMMENT '更新日',
+  `created`                  datetime     NOT NULL                COMMENT '作成日',
+  PRIMARY KEY (`id`)
+)
+  ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_general_ci
+  COMMENT='戦闘補正値設定'
 ;
 
 CREATE TABLE `chat_characters` (

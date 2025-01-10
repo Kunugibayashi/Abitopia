@@ -8,7 +8,10 @@
             <?php echo $this->Html->link('チャットルーム', '/admin/ChatRooms'); ?>
         </li>
         <li>
-            <?php echo $this->Html->link('サイト設定カスタム画面', '/admin/SiteSystemConfigs/indexCustom'); ?>
+            <?php echo $this->Html->link('戦闘ルール設定カスタム画面', '/admin/BattleRuleConfigs/indexCustom'); ?>
+        </li>
+        <li>
+            <?php echo $this->Html->link('戦闘補正値カスタム画面', '/admin/BattleCorrectionConfigs/indexCustom'); ?>
         </li>
     </ul>
 </div>
@@ -59,7 +62,10 @@
             <?php echo $this->Html->link('セッション', '/admin/Sessions'); ?>
         </li>
         <li>
-            <?php echo $this->Html->link('サイト設定', '/admin/SiteSystemConfigs'); ?>
+            <?php echo $this->Html->link('戦闘ルール設定', '/admin/BattleRuleConfigs'); ?>
+        </li>
+        <li>
+            <?php echo $this->Html->link('戦闘補正値設定', '/admin/BattleCorrectionConfigs'); ?>
         </li>
     </ul>
 </div>

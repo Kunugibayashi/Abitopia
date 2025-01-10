@@ -8,16 +8,15 @@ use Cake\Core\Configure;
 use App\Controller\AppController;
 
 /**
- * SiteSystemConfigs Controller
+ * BattleRuleConfigs Controller
  *
- * @property \App\Model\Table\SiteSystemConfigsTable $SiteSystemConfigs
  */
-class SiteSystemConfigsController extends AppController
+class BattleRuleConfigsController extends AppController
 {
     public function initialize(): void
     {
         parent::initialize();
-        $this->loadComponent('SiteSystemConfig');
+        $this->loadComponent('BattleRuleConfig');
     }
 
     /**
@@ -27,23 +26,23 @@ class SiteSystemConfigsController extends AppController
      */
     public function index()
     {
-        $query = $this->SiteSystemConfigs->find();
-        $siteSystemConfigs = $this->paginate($query);
+        $query = $this->BattleRuleConfigs->find();
+        $battleRuleConfigs = $this->paginate($query);
 
-        $this->set(compact('siteSystemConfigs'));
+        $this->set(compact('battleRuleConfigs'));
     }
 
     /**
      * View method
      *
-     * @param string|null $id Site System Config id.
+     * @param string|null $id Battle Rule Config id.
      * @return \Cake\Http\Response|null|void Renders view
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function view($id = null)
     {
-        $siteSystemConfig = $this->SiteSystemConfigs->get($id, contain: []);
-        $this->set(compact('siteSystemConfig'));
+        $battleRuleConfig = $this->BattleRuleConfigs->get($id, contain: []);
+        $this->set(compact('battleRuleConfig'));
     }
 
     /**
@@ -53,56 +52,56 @@ class SiteSystemConfigsController extends AppController
      */
     public function add()
     {
-        $siteSystemConfig = $this->SiteSystemConfigs->newEmptyEntity();
+        $battleRuleConfig = $this->BattleRuleConfigs->newEmptyEntity();
         if ($this->request->is('post')) {
-            $siteSystemConfig = $this->SiteSystemConfigs->patchEntity($siteSystemConfig, $this->request->getData());
-            if ($this->SiteSystemConfigs->save($siteSystemConfig)) {
-                $this->Flash->success(__('The site system config has been saved.'));
+            $battleRuleConfig = $this->BattleRuleConfigs->patchEntity($battleRuleConfig, $this->request->getData());
+            if ($this->BattleRuleConfigs->save($battleRuleConfig)) {
+                $this->Flash->success(__('The battle rule config has been saved.'));
 
                 return $this->redirect(['action' => 'index']);
             }
-            $this->Flash->error(__('The site system config could not be saved. Please, try again.'));
+            $this->Flash->error(__('The battle rule config could not be saved. Please, try again.'));
         }
-        $this->set(compact('siteSystemConfig'));
+        $this->set(compact('battleRuleConfig'));
     }
 
     /**
      * Edit method
      *
-     * @param string|null $id Site System Config id.
+     * @param string|null $id Battle Rule Config id.
      * @return \Cake\Http\Response|null|void Redirects on successful edit, renders view otherwise.
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function edit($id = null)
     {
-        $siteSystemConfig = $this->SiteSystemConfigs->get($id, contain: []);
+        $battleRuleConfig = $this->BattleRuleConfigs->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
-            $siteSystemConfig = $this->SiteSystemConfigs->patchEntity($siteSystemConfig, $this->request->getData());
-            if ($this->SiteSystemConfigs->save($siteSystemConfig)) {
-                $this->Flash->success(__('The site system config has been saved.'));
+            $battleRuleConfig = $this->BattleRuleConfigs->patchEntity($battleRuleConfig, $this->request->getData());
+            if ($this->BattleRuleConfigs->save($battleRuleConfig)) {
+                $this->Flash->success(__('The battle rule config has been saved.'));
 
                 return $this->redirect(['action' => 'index']);
             }
-            $this->Flash->error(__('The site system config could not be saved. Please, try again.'));
+            $this->Flash->error(__('The battle rule config could not be saved. Please, try again.'));
         }
-        $this->set(compact('siteSystemConfig'));
+        $this->set(compact('battleRuleConfig'));
     }
 
     /**
      * Delete method
      *
-     * @param string|null $id Site System Config id.
+     * @param string|null $id Battle Rule Config id.
      * @return \Cake\Http\Response|null Redirects to index.
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
-        $siteSystemConfig = $this->SiteSystemConfigs->get($id);
-        if ($this->SiteSystemConfigs->delete($siteSystemConfig)) {
-            $this->Flash->success(__('The site system config has been deleted.'));
+        $battleRuleConfig = $this->BattleRuleConfigs->get($id);
+        if ($this->BattleRuleConfigs->delete($battleRuleConfig)) {
+            $this->Flash->success(__('The battle rule config has been deleted.'));
         } else {
-            $this->Flash->error(__('The site system config could not be deleted. Please, try again.'));
+            $this->Flash->error(__('The battle rule config could not be deleted. Please, try again.'));
         }
 
         return $this->redirect(['action' => 'index']);
@@ -125,14 +124,14 @@ class SiteSystemConfigsController extends AppController
             foreach ($codeAndActives as $code => $activeFlag) {
                 // $this->log(__CLASS__.":".__FUNCTION__.":" ."code = $code / activeFlag = $activeFlag", 'debug');
 
-                $siteSystemConfig = $this->SiteSystemConfigs->newEmptyEntity();
-                $siteSystemConfig->set('id', $code);
-                $siteSystemConfig->set('site_rule_code', $code);
-                $siteSystemConfig->set('active_flag', $activeFlag);
+                $battleRuleConfig = $this->BattleRuleConfigs->newEmptyEntity();
+                $battleRuleConfig->set('id', $code);
+                $battleRuleConfig->set('battle_rule_code', $code);
+                $battleRuleConfig->set('active_flag', $activeFlag);
 
                 // リクエスト分DB更新
-                if (!$this->SiteSystemConfigs->save($siteSystemConfig)) {
-                    $errorMessage = 'The site system config could not be saved. Please, try again.';
+                if (!$this->BattleRuleConfigs->save($battleRuleConfig)) {
+                    $errorMessage = 'The battle rule config could not be saved. Please, try again.';
                 }
             }
 
@@ -140,18 +139,18 @@ class SiteSystemConfigsController extends AppController
             if (!empty($errorMessage)){
                 $this->Flash->error(__($errorMessage));
             } else {
-                $this->Flash->success(__('The site system config has been saved.'));
+                $this->Flash->success(__('The battle rule config has been saved.'));
             }
 
             // 最新の情報を取得
-            $siteRules = $this->SiteSystemConfig->getMergeRule();
-            $this->set(compact('siteRules'));
+            $battleRules = $this->BattleRuleConfig->getMergeBattleRule();
+            $this->set(compact('battleRules'));
 
             return $this->redirect(['action' => 'indexCustom']);
         }
 
         // 最新の情報を取得
-        $siteRules = $this->SiteSystemConfig->getMergeRule();
-        $this->set(compact('siteRules'));
+        $battleRules = $this->BattleRuleConfig->getMergeBattleRule();
+        $this->set(compact('battleRules'));
     }
 }

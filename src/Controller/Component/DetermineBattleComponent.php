@@ -54,7 +54,7 @@ class DetermineBattleComponent extends Component
     private $isDetermineScratchString = 0; // 半減ダメージ、ダイスをふった場合の文字列
     private $isScratch = 0; // かすり傷が発動したか？
 
-    protected array $components = ['SiteSystemConfig'];
+    protected array $components = ['BattleRuleConfig', 'BattleCorrectionConfig'];
 
     public function initialize($config): void
     {
@@ -76,13 +76,15 @@ class DetermineBattleComponent extends Component
         $this->battleSkills += [BT_AT_NASHI => '無し'];
         $this->battleSkills += [BT_DF_NASHI => '無し'];
 
-        //$this->log(print_r($this->battleSkills,true), "debug");
-        //$this->log(print_r($this->limitSkills,true), "debug");
+        //$this->log(print_r($this->battleSkills, true), "debug");
+        //$this->log(print_r($this->limitSkills, true), "debug");
     }
 
     public function createBattleLog() {
         $memo = [];
         $narration = [];
+
+        $this->log('BattleCorrection = ' .$this->BattleCorrectionConfig->print(), "debug");
 
         // VS
         $format = Configure::read('Battle.narration.NARR_BATTLE_SKILL');
@@ -101,7 +103,7 @@ class DetermineBattleComponent extends Component
             if ($this->recoveryHp > 0) {
                 // 発動
                 $format = "";
-                if ($this->SiteSystemConfig->isInputTechniqueName()) {
+                if ($this->BattleRuleConfig->isInputTechniqueName()) {
                     $format = Configure::read('Battle.narration.NARR_SENI_UP');
                 } else {
                     $format = Configure::read('Battle.narration.NARR_SENI_UP_NOT_SELECT');
@@ -114,7 +116,7 @@ class DetermineBattleComponent extends Component
             } else {
                 // 不発
                 $format = "";
-                if ($this->SiteSystemConfig->isInputTechniqueName()) {
+                if ($this->BattleRuleConfig->isInputTechniqueName()) {
                     $format = Configure::read('Battle.narration.NARR_SENI_FUHATSU');
                 } else {
                     $format = Configure::read('Battle.narration.NARR_SENI_FUHATSU_NOT_SELECT');
@@ -129,7 +131,7 @@ class DetermineBattleComponent extends Component
             if ($this->recoverySp > 0) {
                 // 発動
                 $format = "";
-                if ($this->SiteSystemConfig->isInputTechniqueName()) {
+                if ($this->BattleRuleConfig->isInputTechniqueName()) {
                     $format = Configure::read('Battle.narration.NARR_SEISHIN_UP');
                 } else {
                     $format = Configure::read('Battle.narration.NARR_SEISHIN_UP_NOT_SELECT');
@@ -142,7 +144,7 @@ class DetermineBattleComponent extends Component
             } else {
                 // 不発
                 $format = "";
-                if ($this->SiteSystemConfig->isInputTechniqueName()) {
+                if ($this->BattleRuleConfig->isInputTechniqueName()) {
                     $format = Configure::read('Battle.narration.NARR_SEISHIN_FUHATSU');
                 } else {
                     $format = Configure::read('Battle.narration.NARR_SEISHIN_FUHATSU_NOT_SELECT');
@@ -157,7 +159,7 @@ class DetermineBattleComponent extends Component
             // 命中していること
             // かすり傷でないこと
             $format = "";
-            if ($this->SiteSystemConfig->isInputTechniqueName()) {
+            if ($this->BattleRuleConfig->isInputTechniqueName()) {
                 $format = Configure::read('Battle.narration.NARR_MEITYU');
             } else {
                 $format = Configure::read('Battle.narration.NARR_MEITYU_NOT_SELECT');
@@ -174,7 +176,7 @@ class DetermineBattleComponent extends Component
             // 外れの場合
             // かすり傷でもナレーションを入れる
             $format = "";
-            if ($this->SiteSystemConfig->isInputTechniqueName()) {
+            if ($this->BattleRuleConfig->isInputTechniqueName()) {
                 $format = Configure::read('Battle.narration.NARR_HAZURE');
             } else {
                 $format = Configure::read('Battle.narration.NARR_HAZURE_NOT_SELECT');
@@ -253,14 +255,14 @@ class DetermineBattleComponent extends Component
         // 戦闘不能の場合は処理をしない、デュアルドライブの連続攻撃時には処理しない
         if (!$this->isKo && !$this->isContinuous) {
             // 1ターン持続命中率増加
-            if ($this->SiteSystemConfig->is1TurnDexplus()) {
+            if ($this->BattleRuleConfig->is1TurnDexplus()) {
                 $format = Configure::read('Battle.narration.NARR_1TURN_DEXPLUS');
                 $narration[] = __($format,
                     $this->attackChatCharacter->fullname,
                 );
             }
             // 1ターン持続ダメージ
-            if ($this->SiteSystemConfig->is1TurnDamage()) {
+            if ($this->BattleRuleConfig->is1TurnDamage()) {
                 $format = Configure::read('Battle.narration.NARR_1TURN_DAMAGE');
                 $narration[] = __($format,
                     $this->attackChatCharacter->fullname,
@@ -462,13 +464,13 @@ class DetermineBattleComponent extends Component
         // 選択ルールでONの場合は処理
         if (!$this->isKo && !$this->isContinuous) {
             // 1ターン持続命中率増加
-            if ($this->SiteSystemConfig->is1TurnDexplus()) {
+            if ($this->BattleRuleConfig->is1TurnDexplus()) {
                 $this->attackBattleCharacter->set('permanent_hit_rate',
                     ($this->attackBattleCharacter->get('permanent_hit_rate') + 10)
                 );
             }
             // 1ターン持続ダメージ。このダメージでは死なない、覚醒スキルも発動させないため最後に処理
-            if ($this->SiteSystemConfig->is1TurnDamage()) {
+            if ($this->BattleRuleConfig->is1TurnDamage()) {
                 $tmpHp = $this->attackBattleCharacter->get('hp') - 5;
                 if ($tmpHp <= 0) {
                     $tmpHp = 1;
@@ -482,15 +484,27 @@ class DetermineBattleComponent extends Component
             $this->defenseBattleCharacter->set('is_limit', 1);
         }
         if ($this->isCounter) {
-            // カウンター
+            $correctionCounterStr = 0;
+            // カウンター補正値
+            if ($this->BattleCorrectionConfig->isCorrectKauntaStr()) {
+                $correctionCounterStr = $this->BattleCorrectionConfig->getKauntaStrValue();
+            } else {
+                $correctionCounterStr = $this->BattleCorrectionConfig->getKauntaStrDefault();
+            }
             $this->defenseBattleCharacter->set('temporary_strength',
-                ($this->defenseBattleCharacter->temporary_strength + 2)
+                ($this->defenseBattleCharacter->temporary_strength + $correctionCounterStr)
             );
         }
         if ($this->isKoubouittai) {
-            // 攻防一体
+            $correctionKoubouittaiStr = 0;
+            // 攻防一体補正値
+            if ($this->BattleCorrectionConfig->isCorrectKoubouStr()) {
+                $correctionKoubouittaiStr = $this->BattleCorrectionConfig->getKoubouStrValue();
+            } else {
+                $correctionKoubouittaiStr = $this->BattleCorrectionConfig->getKoubouStrDefault();
+            }
             $this->defenseBattleCharacter->set('temporary_strength',
-                ($this->defenseBattleCharacter->temporary_strength + 3)
+                ($this->defenseBattleCharacter->temporary_strength + $correctionKoubouittaiStr)
             );
         }
         if ($this->isLimit
@@ -612,7 +626,7 @@ class DetermineBattleComponent extends Component
     public function determineResurrection()
     {
         // 選択ルールでOFFの場合は処理しない
-        if (!$this->SiteSystemConfig->isResurrection()) {
+        if (!$this->BattleRuleConfig->isResurrection()) {
             return;
         }
         // 戦闘不能でない場合は処理しない
@@ -708,8 +722,15 @@ class DetermineBattleComponent extends Component
         }
         $this->useCombo = $this->attackBattleCharacter->combo;
 
-        // 回復 コンボ数＊２+1
-        $this->recoverySp = $this->useCombo * 2;
+        $correctionRecoverySp = 0;
+        // 精神統一補正値
+        if ($this->BattleCorrectionConfig->isCorrectSeisinKaifuku()) {
+            $correctionRecoveryHp = $this->BattleCorrectionConfig->getSeisinKaifukuValue();
+        } else {
+            $correctionRecoveryHp = $this->BattleCorrectionConfig->getSeisinKaifukuDefault();
+        }
+
+        $this->recoverySp = $this->useCombo * $correctionRecoverySp;
     }
 
     public function determineRecoveryHp()
@@ -724,8 +745,15 @@ class DetermineBattleComponent extends Component
         }
         $this->useCombo = $this->attackBattleCharacter->combo;
 
-        // 回復 コンボ数×4+2
-        $this->recoveryHp = $this->useCombo * 4;
+        $correctionRecoveryHp = 0;
+        // 戦意高揚補正値
+        if ($this->BattleCorrectionConfig->isCorrectSeniKaifuku()) {
+            $correctionRecoveryHp = $this->BattleCorrectionConfig->getSeniKaifukuValue();
+        } else {
+            $correctionRecoveryHp = $this->BattleCorrectionConfig->getSeniKaifukuDefault();
+        }
+
+        $this->recoveryHp = $this->useCombo * $correctionRecoveryHp;
     }
 
     public function determineComboUp()
@@ -777,8 +805,12 @@ class DetermineBattleComponent extends Component
             || ($attackSkillCode == BT_AT_BUI_03 && $attackSkillAttribute == BT_ATTR_03)
             || ($attackSkillCode == BT_AT_BUI_04 && $attackSkillAttribute == BT_ATTR_04)
         ) {
-            // 部位破壊
-            $correctionASkill = 4;
+            // 部位破壊補正値
+            if ($this->BattleCorrectionConfig->isCorrectBuiStr()) {
+                $correctionASkill = $this->BattleCorrectionConfig->getBuiStrValue();
+            } else {
+                $correctionASkill = $this->BattleCorrectionConfig->getBuiStrDefault();
+            }
         }
 
         // 必殺補正
@@ -819,7 +851,7 @@ class DetermineBattleComponent extends Component
         $damage = round($damage);
 
         $format = "";
-        if ($this->SiteSystemConfig->isInputTechniqueName()) {
+        if ($this->BattleRuleConfig->isInputTechniqueName()) {
             $format = Configure::read('Battle.narration.NARR_BATTLE_DMG');
         } else {
             $format = Configure::read('Battle.narration.NARR_BATTLE_DMG_NOT_SELECT');
@@ -862,7 +894,7 @@ class DetermineBattleComponent extends Component
 
     public function determineScratch() {
         // 選択ルールでOFFの場合は処理しない
-        if (!$this->SiteSystemConfig->isScratch()) {
+        if (!$this->BattleRuleConfig->isScratch()) {
             return;
         }
         // フラグが立っていない場合は処理しない
@@ -1053,20 +1085,40 @@ class DetermineBattleComponent extends Component
             || ($attackSkillCode == BT_AT_SEI_03 && $attackSkillAttribute == BT_ATTR_03)
             || ($attackSkillCode == BT_AT_SEI_04 && $attackSkillAttribute == BT_ATTR_04)
         ) {
-            $correctionASkill = 35;
+            // 精密射撃補正値
+            if ($this->BattleCorrectionConfig->isCorrectSeimitsuKaihi()) {
+                $correctionASkill = $this->BattleCorrectionConfig->getSeimitsuKaihiValue();
+            } else {
+                $correctionASkill = $this->BattleCorrectionConfig->getSeimitsuKaihiDefault();
+            }
         }
 
         // 防御スキル補正
         $correctionDSkill = 0;
         if($defenseSkillCode == BT_DF_BOU || $defenseSkillCode == BT_DF_KAI
         ) {
-            $correctionDSkill = 25;
+            // 防御専念／回避専念補正値
+            if ($this->BattleCorrectionConfig->isCorrectSennenKaihi()) {
+                $correctionDSkill = $this->BattleCorrectionConfig->getSennenKaihiValue();
+            } else {
+                $correctionDSkill = $this->BattleCorrectionConfig->getSennenKaihiDefault();
+            }
         }
         if($defenseSkillCode == BT_DF_RAN) {
-            $correctionDSkill = 15;
+            // 乱数回避補正値
+            if ($this->BattleCorrectionConfig->isCorrectRansuKaihi()) {
+                $correctionDSkill = $this->BattleCorrectionConfig->getRansuKaihiValue();
+            } else {
+                $correctionDSkill = $this->BattleCorrectionConfig->getRansuKaihiDefault();
+            }
         }
         if($defenseSkillCode == BT_DF_KAUNTA) {
-            $correctionDSkill = 15;
+            // カウンター補正値
+            if ($this->BattleCorrectionConfig->isCorrectKauntaKaihi()) {
+                $correctionDSkill = $this->BattleCorrectionConfig->getKauntaKaihiValue();
+            } else {
+                $correctionDSkill = $this->BattleCorrectionConfig->getKauntaKaihiDefault();
+            }
         }
 
         // 判定
@@ -1161,8 +1213,23 @@ class DetermineBattleComponent extends Component
         if($this->useCombo <= 0){
             return;
         }
-        $this->attackBattleCharacter->temporary_strength += $this->useCombo + 1;
-        $this->attackBattleCharacter->temporary_hit_rate += $this->useCombo * 10;
+
+        $correctionStr = 0;
+        $correctionHitRate = 0;
+        // コンビネーション補正値
+        if ($this->BattleCorrectionConfig->isCorrectKonbiStr()) {
+            $correctionStr = $this->BattleCorrectionConfig->getKonbiStrValue();
+        } else {
+            $correctionStr = $this->BattleCorrectionConfig->getKonbiStrDefault();
+        }
+        if ($this->BattleCorrectionConfig->isCorrectKonbiMeityu()) {
+            $correctionHitRate = $this->BattleCorrectionConfig->getKonbiMeityuValue();
+        } else {
+            $correctionHitRate = $this->BattleCorrectionConfig->getKonbiMeityuDefault();
+        }
+
+        $this->attackBattleCharacter->temporary_strength += $this->useCombo + $correctionStr;
+        $this->attackBattleCharacter->temporary_hit_rate += $this->useCombo * $correctionHitRate;
     }
 
 }

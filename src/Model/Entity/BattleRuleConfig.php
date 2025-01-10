@@ -6,15 +6,15 @@ namespace App\Model\Entity;
 use Cake\ORM\Entity;
 
 /**
- * SiteSystemConfig Entity
+ * BattleRuleConfig Entity
  *
  * @property int $id
- * @property int $site_rule_code
+ * @property int $battle_rule_code
  * @property int $active_flag
  * @property \Cake\I18n\DateTime $modified
  * @property \Cake\I18n\DateTime $created
  */
-class SiteSystemConfig extends Entity
+class BattleRuleConfig extends Entity
 {
     /**
      * Fields that can be mass assigned using newEntity() or patchEntity().
@@ -26,7 +26,7 @@ class SiteSystemConfig extends Entity
      * @var array<string, bool>
      */
     protected array $_accessible = [
-        'site_rule_code' => true,
+        'battle_rule_code' => true,
         'active_flag' => true,
         'modified' => true,
         'created' => true,

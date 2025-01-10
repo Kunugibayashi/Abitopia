@@ -38,7 +38,7 @@ class BattleController extends AppController
         $this->loadComponent('CheckFile');
         $this->loadComponent('DetermineBattle');
         $this->loadComponent('ActionLog');
-        $this->loadComponent('SiteSystemConfig');
+        $this->loadComponent('BattleRuleConfig');
 
         $this->ChatEntries = $this->fetchTable('ChatEntries');
         $this->ChatCharacters = $this->fetchTable('ChatCharacters');
@@ -108,7 +108,7 @@ class BattleController extends AppController
         // 別窓にログを表示するか
         $openLogWindow = $this->ChatSession->getOpenLogWindow();
 
-        $siteRules = $this->SiteSystemConfig->getMergeRule();
+        $battleRules = $this->BattleRuleConfig->getMergeBattleRule();
 
         $this->set(compact('openLogWindow'));
         $this->set(compact('chatCharacter'));
@@ -116,7 +116,7 @@ class BattleController extends AppController
         $this->set(compact('chatRoomId'));
         $this->set(compact('chatLog'));
         $this->set(compact('chatCharacterId'));
-        $this->set(compact('siteRules'));
+        $this->set(compact('battleRules'));
     }
 
     public function suspend()
@@ -614,8 +614,8 @@ class BattleController extends AppController
             ->where(['chat_character_id' => $chatCharacterId])
             ->first();
 
-        $this->log(__CLASS__.":".__FUNCTION__.":" ."userId = $userId, chatCharacterId = $chatCharacterId", 'debug');
-        $this->log(__CLASS__.":".__FUNCTION__.":" ."chatRoomId = $chatRoomId", 'debug');
+        // $this->log(__CLASS__.":".__FUNCTION__.":" ."userId = $userId, chatCharacterId = $chatCharacterId", 'debug');
+        // $this->log(__CLASS__.":".__FUNCTION__.":" ."chatRoomId = $chatRoomId", 'debug');
 
         $chatEntry = $this->ChatEntries->find()
             ->where(['chat_room_id' => $chatRoomId])
@@ -703,8 +703,8 @@ class BattleController extends AppController
         // Routesにて、正規表現で数値制限済み
         $chatRoomId = $this->request->getParam('chatRoomId');
 
-        $this->log(__CLASS__.":".__FUNCTION__.":" ."userId = $userId, chatCharacterId = $chatCharacterId", 'debug');
-        $this->log(__CLASS__.":".__FUNCTION__.":" ."chatRoomId = $chatRoomId", 'debug');
+        // $this->log(__CLASS__.":".__FUNCTION__.":" ."userId = $userId, chatCharacterId = $chatCharacterId", 'debug');
+        // $this->log(__CLASS__.":".__FUNCTION__.":" ."chatRoomId = $chatRoomId", 'debug');
 
         $chatEntry = $this->ChatEntries->find()
             ->where(['chat_room_id' => $chatRoomId])
@@ -801,7 +801,8 @@ class BattleController extends AppController
             $defenseBattleCharacter, $defenseChatCharacter,
             $attackBattleCharacter, $attackChatCharacter);
         $this->DetermineBattle->determine();
-        $this->DetermineBattle->debugLog();
+
+        // $this->DetermineBattle->debugLog();
 
         $connection = ConnectionManager::get('default');
         $connection->begin();

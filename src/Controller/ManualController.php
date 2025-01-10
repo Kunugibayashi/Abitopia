@@ -15,7 +15,8 @@ class ManualController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->loadComponent('SiteSystemConfig');
+        $this->loadComponent('BattleRuleConfig');
+        $this->loadComponent('BattleCorrectionConfig');
     }
 
     public function beforeFilter(\Cake\Event\EventInterface $event)
@@ -28,16 +29,20 @@ class ManualController extends AppController
 
     public function index()
     {
-        $siteRules = $this->SiteSystemConfig->getMergeRule();
+        $battleRules = $this->BattleRuleConfig->getMergeBattleRule();
+        $battleCorrections = $this->BattleCorrectionConfig->getMergeBattleCorrection();
 
-        $this->set(compact('siteRules'));
+        $this->set(compact('battleRules'));
+        $this->set(compact('battleCorrections'));
     }
 
-    public function siteRule()
+    public function ruleSelect()
     {
-        $siteRules = $this->SiteSystemConfig->getMergeRule();
+        $battleRules = $this->BattleRuleConfig->getMergeBattleRule();
+        $battleCorrections = $this->BattleCorrectionConfig->getMergeBattleCorrection();
 
-        $this->set(compact('siteRules'));
+        $this->set(compact('battleRules'));
+        $this->set(compact('battleCorrections'));
     }
 
     public function setting()

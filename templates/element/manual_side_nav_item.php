@@ -1,10 +1,13 @@
 <div class="side-nav">
-    <h4 class="heading"><?= $this->Html->link(__('サイト適応ルール'), [
-        'controller' => 'Manual', 'action' => 'siteRule'], ['class' => 'side-nav-item']) ?>
+    <h4 class="heading"><?= $this->Html->link(__('適応ルール一覧'), [
+        'controller' => 'Manual', 'action' => 'ruleSelect'], ['class' => 'side-nav-item']) ?>
     </h4>
     <ul class="manual-menu">
-        <li><?= $this->Html->link(__('ルール一覧'), [
-            'controller' => 'Manual', 'action' => 'siteRule'], ['class' => 'side-nav-item']) ?>
+        <li><?= $this->Html->link(__('戦闘適応ルール'), [
+            'controller' => 'Manual', 'action' => 'ruleSelect', '#' => 'batorururu'], ['class' => 'side-nav-item']) ?>
+        </li>
+        <li><?= $this->Html->link(__('戦闘補正値'), [
+            'controller' => 'Manual', 'action' => 'ruleSelect', '#' => 'hosei'], ['class' => 'side-nav-item']) ?>
         </li>
     </ul>
 

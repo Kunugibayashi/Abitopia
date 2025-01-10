@@ -4,10 +4,10 @@ declare(strict_types=1);
 namespace App\Controller;
 
 /**
- * SiteSystemConfigs Controller
+ * BattleRuleConfigs Controller
  *
  */
-class SiteSystemConfigsController extends AppController
+class BattleRuleConfigsController extends AppController
 {
     /**
      * Index method
@@ -16,10 +16,10 @@ class SiteSystemConfigsController extends AppController
      */
     public function index()
     {
-        $query = $this->SiteSystemConfigs->find();
-        $siteSystemConfigs = $this->paginate($query);
+        $query = $this->BattleRuleConfigs->find();
+        $battleRuleConfigs = $this->paginate($query);
 
-        $this->set(compact('siteSystemConfigs'));
+        $this->set(compact('battleRuleConfigs'));
     }
 
     /**
@@ -31,8 +31,8 @@ class SiteSystemConfigsController extends AppController
      */
     public function view($id = null)
     {
-        $siteSystemConfig = $this->SiteSystemConfigs->get($id, contain: []);
-        $this->set(compact('siteSystemConfig'));
+        $battleRuleConfig = $this->BattleRuleConfigs->get($id, contain: []);
+        $this->set(compact('battleRuleConfig'));
     }
 
     /**
@@ -42,17 +42,17 @@ class SiteSystemConfigsController extends AppController
      */
     public function add()
     {
-        $siteSystemConfig = $this->SiteSystemConfigs->newEmptyEntity();
+        $battleRuleConfig = $this->BattleRuleConfigs->newEmptyEntity();
         if ($this->request->is('post')) {
-            $siteSystemConfig = $this->SiteSystemConfigs->patchEntity($siteSystemConfig, $this->request->getData());
-            if ($this->SiteSystemConfigs->save($siteSystemConfig)) {
+            $battleRuleConfig = $this->BattleRuleConfigs->patchEntity($battleRuleConfig, $this->request->getData());
+            if ($this->BattleRuleConfigs->save($battleRuleConfig)) {
                 $this->Flash->success(__('The site system config has been saved.'));
 
                 return $this->redirect(['action' => 'index']);
             }
             $this->Flash->error(__('The site system config could not be saved. Please, try again.'));
         }
-        $this->set(compact('siteSystemConfig'));
+        $this->set(compact('battleRuleConfig'));
     }
 
     /**
@@ -64,17 +64,17 @@ class SiteSystemConfigsController extends AppController
      */
     public function edit($id = null)
     {
-        $siteSystemConfig = $this->SiteSystemConfigs->get($id, contain: []);
+        $battleRuleConfig = $this->BattleRuleConfigs->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
-            $siteSystemConfig = $this->SiteSystemConfigs->patchEntity($siteSystemConfig, $this->request->getData());
-            if ($this->SiteSystemConfigs->save($siteSystemConfig)) {
+            $battleRuleConfig = $this->BattleRuleConfigs->patchEntity($battleRuleConfig, $this->request->getData());
+            if ($this->BattleRuleConfigs->save($battleRuleConfig)) {
                 $this->Flash->success(__('The site system config has been saved.'));
 
                 return $this->redirect(['action' => 'index']);
             }
             $this->Flash->error(__('The site system config could not be saved. Please, try again.'));
         }
-        $this->set(compact('siteSystemConfig'));
+        $this->set(compact('battleRuleConfig'));
     }
 
     /**
@@ -87,8 +87,8 @@ class SiteSystemConfigsController extends AppController
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
-        $siteSystemConfig = $this->SiteSystemConfigs->get($id);
-        if ($this->SiteSystemConfigs->delete($siteSystemConfig)) {
+        $battleRuleConfig = $this->BattleRuleConfigs->get($id);
+        if ($this->BattleRuleConfigs->delete($battleRuleConfig)) {
             $this->Flash->success(__('The site system config has been deleted.'));
         } else {
             $this->Flash->error(__('The site system config could not be deleted. Please, try again.'));

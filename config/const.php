@@ -1,6 +1,6 @@
 <?php
 // CSS更新用文字列
-define('CSS_UPDATE_DATE', '202412101730'); // リリース時用文字列。'202412120101' など数値のみ日付推奨。テスト時推奨： define('CSS_UPDATE_DATE', date("YmdHis"));
+define('CSS_UPDATE_DATE', '202501102233'); // リリース時用文字列。'202412120101' など数値のみ日付推奨。テスト時推奨： define('CSS_UPDATE_DATE', date("YmdHis"));
 define('SITE_DEBUG_MODE', 0); // テスト用。デバッグ用の関数や出力を表示。リリース時は0にすること。テスト時推奨： define('SITE_DEBUG_MODE', 1);
 // PHPメモリ上限
 define('PHP_MEMORY_LIMIT', '3072M');
@@ -55,12 +55,24 @@ define('BT_ST_KETYAKU', 9); // 決着
 define('BT_COM_FURI', 1); // 不利
 define('BT_COM_KIKKOU', 5); // 拮抗
 define('BT_COM_YUURI', 9); // 有利
-// 選択ルール
-define('RULE_INPUT_TECHNIQUE_NAME', 10); // 技名の入力
-define('RULE_RESURRECTION', 11); // 底力の発動
-define('RULE_SCRATCH', 12); // かすり傷の発動
-define('RULE_1TURN_DEXPLUS', 13); // 1ターンごとの命中率増加
-define('RULE_1TURN_DAMAGE', 14); // 1ターンごとの体力ダメージ
+// 戦闘選択ルール
+define('BT_RULE_INPUT_TECHNIQUE_NAME', 10); // 技名の入力
+define('BT_RULE_RESURRECTION', 11); // 底力の発動
+define('BT_RULE_SCRATCH', 12); // かすり傷の発動
+define('BT_RULE_1TURN_DEXPLUS', 13); // 1ターンごとの命中率増加
+define('BT_RULE_1TURN_DAMAGE', 14); // 1ターンごとの体力ダメージ
+// 戦闘補正値コード
+define('BT_CORRECTION_SEIMITSU_KAIHI', 101); // 精密攻撃
+define('BT_CORRECTION_BUI_STR', 102); // 部位破壊
+define('BT_CORRECTION_KONBI_STR', 103); //コンビネーション
+define('BT_CORRECTION_KONBI_MEITYU', 104); //コンビネーション
+define('BT_CORRECTION_SENI_KAIFUKU', 105); // 戦意高揚
+define('BT_CORRECTION_SEISIN_KAIFUKU', 106); // 精神統一
+define('BT_CORRECTION_SENNEN_KAIHI', 107); // 防御専念／回避専念
+define('BT_CORRECTION_RANSU_KAIHI', 108); // 乱数回避
+define('BT_CORRECTION_KOUBOU_STR', 109); // 攻防一体
+define('BT_CORRECTION_KAUNTA_STR', 110); // カウンター
+define('BT_CORRECTION_KAUNTA_KAIHI', 111); // カウンター
 return [
     'Site' => [
         'title' => 'Abitopia', // サイト名
@@ -75,31 +87,121 @@ return [
         'deck'      => '{0}：[{1}]{2}種...({3} / {4}) = {5}',
         'deckreset' => '{0}：[{1}]...山札をリセットしました。',
     ],
-    'Rule' => [ // ONOFFはDBで管理。INSERTでデータを登録すると文言の変更等がしにくくなるためconstで設定
-        RULE_INPUT_TECHNIQUE_NAME => [
-            'code'  => RULE_INPUT_TECHNIQUE_NAME,
+    'BattleRule' => [ // ONOFFはDBで管理。INSERTでデータを登録すると文言の変更等がしにくくなるためconstで設定
+        BT_RULE_INPUT_TECHNIQUE_NAME => [
+            'code'  => BT_RULE_INPUT_TECHNIQUE_NAME,
             'information'  => '技名を手動で入力',
             'active'  => 0,
         ],
-        RULE_RESURRECTION => [
-            'code'  => RULE_RESURRECTION,
+        BT_RULE_RESURRECTION => [
+            'code'  => BT_RULE_RESURRECTION,
             'information'  => '体力が0になった時、一定の確率で復活（底力）',
             'active'  => 0,
         ],
-        RULE_SCRATCH => [
-            'code'  => RULE_SCRATCH,
+        BT_RULE_SCRATCH => [
+            'code'  => BT_RULE_SCRATCH,
             'information'  => '攻撃を外した時、一定の確率で半減ダメージを与える（かすり傷）',
             'active'  => 0,
         ],
-        RULE_1TURN_DEXPLUS => [
-            'code'  => RULE_1TURN_DEXPLUS,
+        BT_RULE_1TURN_DEXPLUS => [
+            'code'  => BT_RULE_1TURN_DEXPLUS,
             'information'  => '攻撃時、1ターンごとに命中率が10%増加（1ターン持続命中率増加）',
             'active'  => 0,
         ],
-        RULE_1TURN_DAMAGE => [
-            'code'  => RULE_1TURN_DAMAGE,
+        BT_RULE_1TURN_DAMAGE => [
+            'code'  => BT_RULE_1TURN_DAMAGE,
             'information'  => '攻撃時、1ターンごとに覚醒スキル発動不可ダメージを5を受ける（1ターン持続ダメージ）',
             'active'  => 0,
+        ],
+    ],
+    'BattleCorrection' => [ // ONOFFはDBで管理。INSERTでデータを登録すると文言の変更等がしにくくなるためconstで設定
+        BT_CORRECTION_SEIMITSU_KAIHI => [
+            'code'        => BT_CORRECTION_SEIMITSU_KAIHI,
+            'information' => '精密攻撃',
+            'formula'     => '命中率+{0}%',
+            'default'     => 35,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_BUI_STR => [
+            'code'        => BT_CORRECTION_BUI_STR,
+            'information' => '部位破壊',
+            'formula'     => '腕力+{0}',
+            'default'     => 2,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_KONBI_STR => [
+            'code'        => BT_CORRECTION_KONBI_STR,
+            'information' => 'コンビネーション',
+            'formula'     => '腕力+（コンボ数+{0}）',
+            'default'     => 1,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_KONBI_MEITYU => [
+            'code'        => BT_CORRECTION_KONBI_MEITYU,
+            'information' => 'コンビネーション',
+            'formula'     => '命中率+（コンボ数*{0}）%',
+            'default'     => 10,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_SENI_KAIFUKU => [
+            'code'        => BT_CORRECTION_SENI_KAIFUKU,
+            'information' => '戦意高揚',
+            'formula'     => '（コンボ数*{0}）HP回復',
+            'default'     => 4,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_SEISIN_KAIFUKU => [
+            'code'        => BT_CORRECTION_SEISIN_KAIFUKU,
+            'information' => '精神統一',
+            'formula'     => '（コンボ数*{0}）SP回復',
+            'default'     => 2,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_SENNEN_KAIHI => [
+            'code'        => BT_CORRECTION_SENNEN_KAIHI,
+            'information' => '防御専念／回避専念',
+            'formula'     => '回避率+{0}%',
+            'default'     => 25,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_RANSU_KAIHI => [
+            'code'        => BT_CORRECTION_RANSU_KAIHI,
+            'information' => '乱数回避',
+            'formula'     => '回避率+{0}%',
+            'default'     => 15,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_KOUBOU_STR => [
+            'code'        => BT_CORRECTION_KOUBOU_STR,
+            'information' => '攻防一体',
+            'formula'     => '腕力+{0}',
+            'default'     => 2,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_KAUNTA_STR => [
+            'code'        => BT_CORRECTION_KAUNTA_STR,
+            'information' => 'カウンター',
+            'formula'     => '腕力+{0}',
+            'default'     => 1,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_KAUNTA_KAIHI => [
+            'code'        => BT_CORRECTION_KAUNTA_KAIHI,
+            'information' => 'カウンター',
+            'formula'     => '回避率+{0}%',
+            'default'     => 15,
+            'value'       => 0,
+            'active'      => 0,
         ],
     ],
     'Battle' => [

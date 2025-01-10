@@ -396,9 +396,9 @@ table tbody tr td:last-of-type {
     }
     table.table-rule tbody tr td.table-rule-column-onoff
     {
-        width: 10rem;
-        min-width: 10rem;
-        max-width: 10rem;
+        width: 13rem;
+        min-width: 13rem;
+        max-width: 13rem;
     }
 
     .table-column-date {
@@ -633,11 +633,21 @@ ul.manual-menu a {
     margin: 0;
     padding: 0;
 }
-.table-rule-column-head {
+.table-rule tbody tr th,
+.table-rule tbody tr td {
     vertical-align: middle;
 }
+.table-rule-column-formula {
+    text-align: left;
+    width: 28rem;
+}
+.table-rule-column-arrow {
+    text-align: center;
+    width: 3rem;
+    max-width: 3rem;
+    min-width: 3rem;
+}
 .table-rule-column-onoff {
-    vertical-align: middle;
     text-align: right;
 }
 .rule-point-on,
