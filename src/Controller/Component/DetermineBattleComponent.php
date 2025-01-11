@@ -256,16 +256,34 @@ class DetermineBattleComponent extends Component
         if (!$this->isKo && !$this->isContinuous) {
             // 1ターン持続命中率増加
             if ($this->BattleRuleConfig->is1TurnDexplus()) {
+                // 補正値
+                $correctionTurnDexplus = 0;
+                if ($this->BattleCorrectionConfig->isCorrectTurnDexplus()) {
+                    $correctionTurnDexplus = $this->BattleCorrectionConfig->getTurnDexplusValue();
+                } else {
+                    $correctionTurnDexplus = $this->BattleCorrectionConfig->getTurnDexplusDefault();
+                }
+
                 $format = Configure::read('Battle.narration.NARR_1TURN_DEXPLUS');
                 $narration[] = __($format,
                     $this->attackChatCharacter->fullname,
+                    $correctionTurnDexplus,
                 );
             }
             // 1ターン持続ダメージ
             if ($this->BattleRuleConfig->is1TurnDamage()) {
+                // 補正値
+                $correctionTurnDamage = 0;
+                if ($this->BattleCorrectionConfig->isCorrectTurnDamage()) {
+                    $correctionTurnDamage = $this->BattleCorrectionConfig->getTurnDamageValue();
+                } else {
+                    $correctionTurnDamage = $this->BattleCorrectionConfig->getTurnDamageDefault();
+                }
+
                 $format = Configure::read('Battle.narration.NARR_1TURN_DAMAGE');
                 $narration[] = __($format,
                     $this->attackChatCharacter->fullname,
+                    $correctionTurnDamage,
                 );
             }
         }
@@ -462,16 +480,33 @@ class DetermineBattleComponent extends Component
             );
         }
         // 選択ルールでONの場合は処理
+        // KO済みでない時、または、連続攻撃でない時のみ
         if (!$this->isKo && !$this->isContinuous) {
             // 1ターン持続命中率増加
             if ($this->BattleRuleConfig->is1TurnDexplus()) {
+                // 補正値
+                $correctionTurnDexplus = 0;
+                if ($this->BattleCorrectionConfig->isCorrectTurnDexplus()) {
+                    $correctionTurnDexplus = $this->BattleCorrectionConfig->getTurnDexplusValue();
+                } else {
+                    $correctionTurnDexplus = $this->BattleCorrectionConfig->getTurnDexplusDefault();
+                }
+
                 $this->attackBattleCharacter->set('permanent_hit_rate',
-                    ($this->attackBattleCharacter->get('permanent_hit_rate') + 10)
+                    ($this->attackBattleCharacter->get('permanent_hit_rate') + $correctionTurnDexplus)
                 );
             }
             // 1ターン持続ダメージ。このダメージでは死なない、覚醒スキルも発動させないため最後に処理
             if ($this->BattleRuleConfig->is1TurnDamage()) {
-                $tmpHp = $this->attackBattleCharacter->get('hp') - 5;
+                // 補正値
+                $correctionTurnDamage = 0;
+                if ($this->BattleCorrectionConfig->isCorrectTurnDamage()) {
+                    $correctionTurnDamage = $this->BattleCorrectionConfig->getTurnDamageValue();
+                } else {
+                    $correctionTurnDamage = $this->BattleCorrectionConfig->getTurnDamageDefault();
+                }
+
+                $tmpHp = $this->attackBattleCharacter->get('hp') - $correctionTurnDamage;
                 if ($tmpHp <= 0) {
                     $tmpHp = 1;
                 }
@@ -511,21 +546,49 @@ class DetermineBattleComponent extends Component
             && $this->defenseBattleCharacter->limit_skill_code == BT_LIMIT_01
         ) {
             // リミットブレイク
+            // 補正値
+            $correctionLimit01Str = 0;
+            if ($this->BattleCorrectionConfig->isCorrectLimit01Str()) {
+                $correctionLimit01Str = $this->BattleCorrectionConfig->getLimit01StrValue();
+            } else {
+                $correctionLimit01Str = $this->BattleCorrectionConfig->getLimit01StrDefault();
+            }
+
             $this->defenseBattleCharacter->set('permanent_strength',
-                ($this->defenseBattleCharacter->permanent_strength + 5)
+                ($this->defenseBattleCharacter->permanent_strength + $correctionLimit01Str)
             );
         } elseif ($this->isLimit
             && $this->defenseBattleCharacter->limit_skill_code == BT_LIMIT_02
         ) {
             // コンセントレイト
+            // 補正値
+            $correctionLimit02Sp = 0;
+            if ($this->BattleCorrectionConfig->isCorrectLimit02Sp()) {
+                $correctionLimit02Sp = $this->BattleCorrectionConfig->getLimit02SpValue();
+            } else {
+                $correctionLimit02Sp = $this->BattleCorrectionConfig->getLimit02SpDefault();
+            }
+            $correctionLimit02Meityu = 0;
+            if ($this->BattleCorrectionConfig->isCorrectLimit02Meityu()) {
+                $correctionLimit02Meityu = $this->BattleCorrectionConfig->getLimit02MeityuValue();
+            } else {
+                $correctionLimit02Meityu = $this->BattleCorrectionConfig->getLimit02MeityuDefault();
+            }
+            $correctionLimit02Kaihi = 0;
+            if ($this->BattleCorrectionConfig->isCorrectLimit02Kaihi()) {
+                $correctionLimit02Kaihi = $this->BattleCorrectionConfig->getLimit02KaihiValue();
+            } else {
+                $correctionLimit02Kaihi = $this->BattleCorrectionConfig->getLimit02KaihiDefault();
+            }
+
             $this->defenseBattleCharacter->set('sp',
-                ($this->defenseBattleCharacter->sp + 4)
+                ($this->defenseBattleCharacter->sp + $correctionLimit02Sp)
             );
             $this->defenseBattleCharacter->set('permanent_hit_rate',
-                ($this->defenseBattleCharacter->permanent_hit_rate + 20)
+                ($this->defenseBattleCharacter->permanent_hit_rate + $correctionLimit02Meityu)
             );
             $this->defenseBattleCharacter->set('permanent_dodge_rate',
-                ($this->defenseBattleCharacter->permanent_dodge_rate + 20)
+                ($this->defenseBattleCharacter->permanent_dodge_rate + $correctionLimit02Kaihi)
             );
         }
         if ($this->isContinuous) {
@@ -638,10 +701,18 @@ class DetermineBattleComponent extends Component
             return;
         }
 
-        // 底力確率 SP + (コンボ * 2)
+        // 底力確率
+        // 補正値
+        $correctionSoko = 0;
+        if ($this->BattleCorrectionConfig->isCorrectSoko()) {
+            $correctionSoko = $this->BattleCorrectionConfig->getSokoValue();
+        } else {
+            $correctionSoko = $this->BattleCorrectionConfig->getSokoDefault();
+        }
+
         [$spot, $diseString] = $this->dice();
         $borderline = ($this->defenseBattleCharacter->sp);
-        $borderline += ($this->defenseBattleCharacter->combo * 2);
+        $borderline += ($this->defenseBattleCharacter->combo * $correctionSoko);
         if ($spot <= $borderline) {
             $this->isResurrection = 1;
             $this->isKo = 0;
@@ -1214,9 +1285,9 @@ class DetermineBattleComponent extends Component
             return;
         }
 
+        // コンビネーション補正値
         $correctionStr = 0;
         $correctionHitRate = 0;
-        // コンビネーション補正値
         if ($this->BattleCorrectionConfig->isCorrectKonbiStr()) {
             $correctionStr = $this->BattleCorrectionConfig->getKonbiStrValue();
         } else {

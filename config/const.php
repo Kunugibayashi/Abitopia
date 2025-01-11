@@ -62,17 +62,28 @@ define('BT_RULE_SCRATCH', 12); // かすり傷の発動
 define('BT_RULE_1TURN_DEXPLUS', 13); // 1ターンごとの命中率増加
 define('BT_RULE_1TURN_DAMAGE', 14); // 1ターンごとの体力ダメージ
 // 戦闘補正値コード
-define('BT_CORRECTION_SEIMITSU_KAIHI', 101); // 精密攻撃
-define('BT_CORRECTION_BUI_STR', 102); // 部位破壊
-define('BT_CORRECTION_KONBI_STR', 103); //コンビネーション
-define('BT_CORRECTION_KONBI_MEITYU', 104); //コンビネーション
-define('BT_CORRECTION_SENI_KAIFUKU', 105); // 戦意高揚
-define('BT_CORRECTION_SEISIN_KAIFUKU', 106); // 精神統一
-define('BT_CORRECTION_SENNEN_KAIHI', 107); // 防御専念／回避専念
-define('BT_CORRECTION_RANSU_KAIHI', 108); // 乱数回避
-define('BT_CORRECTION_KOUBOU_STR', 109); // 攻防一体
-define('BT_CORRECTION_KAUNTA_STR', 110); // カウンター
-define('BT_CORRECTION_KAUNTA_KAIHI', 111); // カウンター
+define('BT_CORRECTION_1TURN_DEXPLUS', 1); // 1ターン持続命中率増加
+define('BT_CORRECTION_1TURN_DAMAGE' , 2); // 1ターン持続ダメージ
+define('BT_CORRECTION_SOKO'           , 500); // 底力
+define('BT_CORRECTION_LIMIT_01_STR'     , 300); // リミットブレイク
+define('BT_CORRECTION_LIMIT_02_SP'      , 301); // コンセントレイト
+define('BT_CORRECTION_LIMIT_02_MEITYU'  , 302); // コンセントレイト
+define('BT_CORRECTION_LIMIT_02_KAIHI'   , 303); // コンセントレイト
+define('BT_CORRECTION_PAV_KOU'      , 400); // パッシブ攻撃力強化
+define('BT_CORRECTION_PAV_MEI'      , 401); // パッシブ命中率強化
+define('BT_CORRECTION_PAV_SP'       , 402); // パッシブSP強化
+define('BT_CORRECTION_PAV_KONBO'    , 403); // パッシブコンボ充填
+define('BT_CORRECTION_SEIMITSU_KAIHI' , 101); // 精密攻撃
+define('BT_CORRECTION_BUI_STR'        , 102); // 部位破壊
+define('BT_CORRECTION_KONBI_STR'      , 103); //コンビネーション
+define('BT_CORRECTION_KONBI_MEITYU'   , 104); //コンビネーション
+define('BT_CORRECTION_SENI_KAIFUKU'   , 105); // 戦意高揚
+define('BT_CORRECTION_SEISIN_KAIFUKU' , 106); // 精神統一
+define('BT_CORRECTION_SENNEN_KAIHI'   , 107); // 防御専念／回避専念
+define('BT_CORRECTION_RANSU_KAIHI'    , 108); // 乱数回避
+define('BT_CORRECTION_KOUBOU_STR'     , 109); // 攻防一体
+define('BT_CORRECTION_KAUNTA_STR'     , 110); // カウンター
+define('BT_CORRECTION_KAUNTA_KAIHI'   , 111); // カウンター
 return [
     'Site' => [
         'title' => 'Abitopia', // サイト名
@@ -105,19 +116,107 @@ return [
         ],
         BT_RULE_1TURN_DEXPLUS => [
             'code'  => BT_RULE_1TURN_DEXPLUS,
-            'information'  => '攻撃時、1ターンごとに命中率が10%増加（1ターン持続命中率増加）',
+            'information'  => '攻撃時、1ターンごとに命中率が増加（1ターン持続命中率増加）',
             'active'  => 0,
         ],
         BT_RULE_1TURN_DAMAGE => [
             'code'  => BT_RULE_1TURN_DAMAGE,
-            'information'  => '攻撃時、1ターンごとに覚醒スキル発動不可ダメージを5を受ける（1ターン持続ダメージ）',
+            'information'  => '攻撃時、1ターンごとに覚醒スキル発動不可ダメージを受ける（1ターン持続ダメージ）',
             'active'  => 0,
         ],
     ],
     'BattleCorrection' => [ // ONOFFはDBで管理。INSERTでデータを登録すると文言の変更等がしにくくなるためconstで設定
+        BT_CORRECTION_1TURN_DEXPLUS => [
+            'code'        => BT_CORRECTION_1TURN_DEXPLUS,
+            'information' => '1ターン持続命中率増加',
+            'formula'     => '命中率+{0}%',
+            'default'     => 10,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_1TURN_DAMAGE => [
+            'code'        => BT_CORRECTION_1TURN_DAMAGE,
+            'information' => '1ターン持続ダメージ',
+            'formula'     => '{0}ダメージ',
+            'default'     => 5,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_SOKO => [
+            'code'        => BT_CORRECTION_SOKO,
+            'information' => '底力',
+            'formula'     => '発動率（SP+コンボ*{0}）%',
+            'default'     => 2,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_LIMIT_01_STR => [
+            'code'        => BT_CORRECTION_LIMIT_01_STR,
+            'information' => '▲リミットブレイク',
+            'formula'     => '腕力+{0}',
+            'default'     => 5,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_LIMIT_02_SP => [
+            'code'        => BT_CORRECTION_LIMIT_02_SP,
+            'information' => '▲コンセントレイト',
+            'formula'     => 'SP+{0}',
+            'default'     => 4,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_LIMIT_02_MEITYU => [
+            'code'        => BT_CORRECTION_LIMIT_02_MEITYU,
+            'information' => '▲コンセントレイト',
+            'formula'     => '命中率+{0}%',
+            'default'     => 20,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_LIMIT_02_KAIHI => [
+            'code'        => BT_CORRECTION_LIMIT_02_KAIHI,
+            'information' => '▲コンセントレイト',
+            'formula'     => '回避率+{0}%',
+            'default'     => 20,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_PAV_KOU => [
+            'code'        => BT_CORRECTION_PAV_KOU,
+            'information' => '△攻撃力強化パッシブスキル',
+            'formula'     => '腕力+{0}',
+            'default'     => 1,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_PAV_MEI => [
+            'code'        => BT_CORRECTION_PAV_MEI,
+            'information' => '△命中率強化パッシブスキル',
+            'formula'     => '命中率+{0}%',
+            'default'     => 10,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_PAV_SP => [
+            'code'        => BT_CORRECTION_PAV_SP,
+            'information' => '△SP強化パッシブスキル',
+            'formula'     => '初期SP+{0}',
+            'default'     => 3,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_PAV_KONBO => [
+            'code'        => BT_CORRECTION_PAV_KONBO,
+            'information' => '△コンボ充填パッシブスキル',
+            'formula'     => '初期コンボ+{0}',
+            'default'     => 2,
+            'value'       => 0,
+            'active'      => 0,
+        ],
         BT_CORRECTION_SEIMITSU_KAIHI => [
             'code'        => BT_CORRECTION_SEIMITSU_KAIHI,
-            'information' => '精密攻撃',
+            'information' => '○精密射撃',
             'formula'     => '命中率+{0}%',
             'default'     => 35,
             'value'       => 0,
@@ -125,7 +224,7 @@ return [
         ],
         BT_CORRECTION_BUI_STR => [
             'code'        => BT_CORRECTION_BUI_STR,
-            'information' => '部位破壊',
+            'information' => '○部位破壊',
             'formula'     => '腕力+{0}',
             'default'     => 2,
             'value'       => 0,
@@ -133,7 +232,7 @@ return [
         ],
         BT_CORRECTION_KONBI_STR => [
             'code'        => BT_CORRECTION_KONBI_STR,
-            'information' => 'コンビネーション',
+            'information' => '○コンビネーション',
             'formula'     => '腕力+（コンボ数+{0}）',
             'default'     => 1,
             'value'       => 0,
@@ -141,7 +240,7 @@ return [
         ],
         BT_CORRECTION_KONBI_MEITYU => [
             'code'        => BT_CORRECTION_KONBI_MEITYU,
-            'information' => 'コンビネーション',
+            'information' => '○コンビネーション',
             'formula'     => '命中率+（コンボ数*{0}）%',
             'default'     => 10,
             'value'       => 0,
@@ -149,7 +248,7 @@ return [
         ],
         BT_CORRECTION_SENI_KAIFUKU => [
             'code'        => BT_CORRECTION_SENI_KAIFUKU,
-            'information' => '戦意高揚',
+            'information' => '◉戦意高揚',
             'formula'     => '（コンボ数*{0}）HP回復',
             'default'     => 4,
             'value'       => 0,
@@ -157,7 +256,7 @@ return [
         ],
         BT_CORRECTION_SEISIN_KAIFUKU => [
             'code'        => BT_CORRECTION_SEISIN_KAIFUKU,
-            'information' => '精神統一',
+            'information' => '◉精神統一',
             'formula'     => '（コンボ数*{0}）SP回復',
             'default'     => 2,
             'value'       => 0,
@@ -165,7 +264,7 @@ return [
         ],
         BT_CORRECTION_SENNEN_KAIHI => [
             'code'        => BT_CORRECTION_SENNEN_KAIHI,
-            'information' => '防御専念／回避専念',
+            'information' => '■防御専念／■回避専念',
             'formula'     => '回避率+{0}%',
             'default'     => 25,
             'value'       => 0,
@@ -173,7 +272,7 @@ return [
         ],
         BT_CORRECTION_RANSU_KAIHI => [
             'code'        => BT_CORRECTION_RANSU_KAIHI,
-            'information' => '乱数回避',
+            'information' => '■乱数回避',
             'formula'     => '回避率+{0}%',
             'default'     => 15,
             'value'       => 0,
@@ -181,7 +280,7 @@ return [
         ],
         BT_CORRECTION_KOUBOU_STR => [
             'code'        => BT_CORRECTION_KOUBOU_STR,
-            'information' => '攻防一体',
+            'information' => '■攻防一体',
             'formula'     => '腕力+{0}',
             'default'     => 2,
             'value'       => 0,
@@ -189,7 +288,7 @@ return [
         ],
         BT_CORRECTION_KAUNTA_STR => [
             'code'        => BT_CORRECTION_KAUNTA_STR,
-            'information' => 'カウンター',
+            'information' => '■カウンター',
             'formula'     => '腕力+{0}',
             'default'     => 1,
             'value'       => 0,
@@ -197,7 +296,7 @@ return [
         ],
         BT_CORRECTION_KAUNTA_KAIHI => [
             'code'        => BT_CORRECTION_KAUNTA_KAIHI,
-            'information' => 'カウンター',
+            'information' => '■カウンター',
             'formula'     => '回避率+{0}%',
             'default'     => 15,
             'value'       => 0,
@@ -255,9 +354,9 @@ return [
             // 底力
             'NARR_SOKOJIKARA' => '{0}の底力が発動！　戦闘続行！',
             // 1ターン持続命中率増加
-            'NARR_1TURN_DEXPLUS' => '1ターン経過により{0}の命中率が上昇！',
+            'NARR_1TURN_DEXPLUS' => '1ターン経過により{0}の命中率が {1} %上昇！',
             // 1ターン持続ダメージ
-            'NARR_1TURN_DAMAGE' => '1ターン経過により{0}に 5 のダメージ！',
+            'NARR_1TURN_DAMAGE' => '1ターン経過により{0}に {1} のダメージ！',
         ],
         'attributes' => [
             BT_ATTR_01 => '炎',

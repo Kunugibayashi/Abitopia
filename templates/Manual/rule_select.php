@@ -29,16 +29,16 @@
             <table class="table-rule">
                 <tbody>
                     <tr>
-                        <th>対応スキル名</th>
-                        <th>デフォルト適応式</th>
-                        <th><!-- ⇒ --></th>
-                        <th>現在の適応式</th>
-                        <th><!-- onoff --></th>
+                        <th class="table-rule-column-skill-name">対応スキル名</th>
+                        <th class="table-rule-column-formula">デフォルト適応式</th>
+                        <th class="table-rule-column-arrow"><!-- ⇒ --></th>
+                        <th class="table-rule-column-formula2">現在の適応式</th>
+                        <th class="table-rule-column-onoff"><!-- onoff --></th>
                     </tr>
                     <?php foreach ($battleCorrections as  $configCode => $battleCorrection): ?>
                         <tr>
-                            <td class="table-rule-column-head"><?= h($battleCorrection['information']) ?></td>
-                            <td class="table-rule-column-formula"><?php
+                            <td><?= h($battleCorrection['information']) ?></td>
+                            <td><?php
                                 $format = $battleCorrection['formula'];
                                 $formula = __($format, [
                                     $battleCorrection['default'],
@@ -46,8 +46,8 @@
                                 ?><?= h($formula) ?>
                             </td>
                             <?php if ($battleCorrection['active']) { ?>
-                                <td class="table-rule-column-arrow">⇒</td>
-                                <td class="table-rule-column-formula"><?php
+                                <td>⇒</td>
+                                <td><?php
                                     $format = $battleCorrection['formula'];
                                     $formula = __($format, [
                                         $battleCorrection['value'],
@@ -58,9 +58,9 @@
                                     <div class="rule-point-on">変更あり</div>
                                 </td>
                             <?php } else { ?>
-                                <td class="table-rule-column-arrow"><!-- ⇒表示なし --></td>
-                                <td class="table-rule-column-formula"><!-- 変更なし --></td>
-                                <td class="table-rule-column-onoff">
+                                <td><!-- 表示なし --></td>
+                                <td><!-- 表示なし --></td>
+                                <td>
                                     <div class="rule-point-off">デフォルト</div>
                                 </td>
                             <?php } ?>

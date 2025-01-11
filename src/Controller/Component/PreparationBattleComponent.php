@@ -2,9 +2,16 @@
 namespace App\Controller\Component;
 
 use Cake\Controller\Component;
+use Cake\Core\Configure;
+use Cake\ORM\Locator\LocatorAwareTrait;
+use Cake\Datasource\ConnectionManager;
 
 class PreparationBattleComponent extends Component
 {
+    use LocatorAwareTrait;
+
+    protected array $components = ['BattleCorrectionConfig'];
+
     public function determineAttackOrDeffence($battleCharacter, $enemyBattleCharacter) {
         $dex1 = $battleCharacter->dexterity;
         $dex2 = $enemyBattleCharacter->dexterity;
@@ -111,29 +118,65 @@ class PreparationBattleComponent extends Component
 
         // SP: 4+spirit×2
         $sp = (4 + $battleCharacterStatus->spirit * 2);
+
+        // SP強化パッシブスキル
         if ($battleSaveSkill->passive_skill_code == BT_PAV_SP) {
-            $sp += 3;
+            // 補正値
+            $correctionPavSp = 0;
+            if ($this->BattleCorrectionConfig->isCorrectPavSp()) {
+                $correctionPavSp = $this->BattleCorrectionConfig->getPavSpValue();
+            } else {
+                $correctionPavSp = $this->BattleCorrectionConfig->getPavSpDefault();
+            }
+
+            $sp += $correctionPavSp;
         }
         $battleCharacter->set('sp', $sp);
 
-        // コンボ
         $combo = 0;
+        // コンボ充填パッシブスキル
         if ($battleSaveSkill->passive_skill_code == BT_PAV_KONBO) {
-            $combo += 2;
+            // 補正値
+            $correctionPavKonbo = 0;
+            if ($this->BattleCorrectionConfig->isCorrectPavKonbo()) {
+                $correctionPavKonbo = $this->BattleCorrectionConfig->getPavKonboValue();
+            } else {
+                $correctionPavKonbo = $this->BattleCorrectionConfig->getPavKonboDefault();
+            }
+
+            $combo += $correctionPavKonbo;
         }
         $battleCharacter->set('combo', $combo);
 
         $battleCharacter->set('limit_skill_code', $battleSaveSkill->limit_skill_code);
 
         $permanent_strength = 0;
+        // 攻撃力強化パッシブスキル
         if ($battleSaveSkill->passive_skill_code == BT_PAV_KOU) {
-            $permanent_strength += 1;
+            // 補正値
+            $correctionPavKou = 0;
+            if ($this->BattleCorrectionConfig->isCorrectPavKou()) {
+                $correctionPavKou = $this->BattleCorrectionConfig->getPavKouValue();
+            } else {
+                $correctionPavKou = $this->BattleCorrectionConfig->getPavKouDefault();
+            }
+
+            $permanent_strength += $correctionPavKou;
         }
         $battleCharacter->set('permanent_strength', $permanent_strength);
 
         $permanent_hit_rate = 0;
+        // 命中率強化パッシブスキル
         if ($battleSaveSkill->passive_skill_code == BT_PAV_MEI) {
-            $permanent_hit_rate += 10;
+            // 補正値
+            $correctionPavMei = 0;
+            if ($this->BattleCorrectionConfig->isCorrectPavMei()) {
+                $correctionPavMei = $this->BattleCorrectionConfig->getPavMeiValue();
+            } else {
+                $correctionPavMei = $this->BattleCorrectionConfig->getPavMeiDefault();
+            }
+
+            $permanent_hit_rate += $correctionPavMei;
         }
         $battleCharacter->set('permanent_hit_rate', $permanent_hit_rate);
 

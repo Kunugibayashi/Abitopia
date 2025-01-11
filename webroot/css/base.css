@@ -637,9 +637,17 @@ ul.manual-menu a {
 .table-rule tbody tr td {
     vertical-align: middle;
 }
+.table-rule-column-skill-name {
+    text-align: left;
+    width: 35rem;
+}
 .table-rule-column-formula {
     text-align: left;
-    width: 28rem;
+    width: 30rem;
+}
+.table-rule-column-formula2 {
+    text-align: left;
+    width: auto;
 }
 .table-rule-column-arrow {
     text-align: center;

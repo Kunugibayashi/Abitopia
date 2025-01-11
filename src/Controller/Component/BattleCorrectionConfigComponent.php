@@ -11,6 +11,50 @@ class BattleCorrectionConfigComponent extends Component
 
     public $BattleCorrectionConfigs = null;
 
+    public $isCorrectTurnDexplus = 0;
+    public $turnDexplusValue = 0;
+    public $turnDexplusDefault = 0;
+
+    public $isCorrectTurnDamage = 0;
+    public $turnDamageValue = 0;
+    public $turnDamageDefault = 0;
+
+    public $isCorrectSoko = 0;
+    public $sokoValue = 0;
+    public $sokoDefault = 0;
+
+    public $isCorrectLimit01Str = 0;
+    public $limit01StrValue = 0;
+    public $limit01StrDefault = 0;
+
+    public $isCorrectLimit02Sp = 0;
+    public $limit02SpValue = 0;
+    public $limit02SpDefault = 0;
+
+    public $isCorrectLimit02Meityu = 0;
+    public $limit02MeityuValue = 0;
+    public $limit02MeityuDefault = 0;
+
+    public $isCorrectLimit02Kaihi = 0;
+    public $limit02KaihiValue = 0;
+    public $limit02KaihiDefault = 0;
+
+    public $isCorrectPavKou = 0;
+    public $pavKouValue = 0;
+    public $pavKouDefault = 0;
+
+    public $isCorrectPavMei = 0;
+    public $pavMeiValue = 0;
+    public $pavMeiDefault = 0;
+
+    public $isCorrectPavSp = 0;
+    public $pavSpValue = 0;
+    public $pavSpDefault = 0;
+
+    public $isCorrectPavKonbo = 0;
+    public $pavKonboValue = 0;
+    public $pavKonboDefault = 0;
+
     public $isCorrectSeimitsuKaihi = 0;
     public $seimitsuKaihiValue = 0;
     public $seimitsuKaihiDefault = 0;
@@ -119,6 +163,17 @@ class BattleCorrectionConfigComponent extends Component
     }
 
     private function setBattleCorrectionConfig() {
+        [$this->isCorrectTurnDexplus, $this->turnDexplusValue, $this->turnDexplusDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_1TURN_DEXPLUS);
+        [$this->isCorrectTurnDamage, $this->turnDamageValue, $this->turnDamageDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_1TURN_DAMAGE);
+        [$this->isCorrectSoko, $this->sokoValue, $this->sokoDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_SOKO);
+        [$this->isCorrectLimit01Str, $this->limit01StrValue, $this->limit01StrDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_LIMIT_01_STR);
+        [$this->isCorrectLimit02Sp, $this->limit02SpValue, $this->limit02SpDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_LIMIT_02_SP);
+        [$this->isCorrectLimit02Meityu, $this->limit02MeityuValue, $this->limit02MeityuDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_LIMIT_02_MEITYU);
+        [$this->isCorrectLimit02Kaihi, $this->limit02KaihiValue, $this->limit02KaihiDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_LIMIT_02_KAIHI);
+        [$this->isCorrectPavKou, $this->pavKouValue, $this->pavKouDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_PAV_KOU);
+        [$this->isCorrectPavMei, $this->pavMeiValue, $this->pavMeiDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_PAV_MEI);
+        [$this->isCorrectPavSp, $this->pavSpValue, $this->pavSpDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_PAV_SP);
+        [$this->isCorrectPavKonbo, $this->pavKonboValue, $this->pavKonboDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_PAV_KONBO);
         [$this->isCorrectSeimitsuKaihi, $this->seimitsuKaihiValue, $this->seimitsuKaihiDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_SEIMITSU_KAIHI);
         [$this->isCorrectBuiStr       , $this->buiStrValue       , $this->buiStrDefault       ] = $this->getBattleCorrectionConfig(BT_CORRECTION_BUI_STR);
         [$this->isCorrectKonbiStr     , $this->konbiStrValue     , $this->konbiStrDefault     ] = $this->getBattleCorrectionConfig(BT_CORRECTION_KONBI_STR);
@@ -133,7 +188,19 @@ class BattleCorrectionConfigComponent extends Component
     }
 
     public function print() {
-        return implode(',', [$this->isCorrectSeimitsuKaihi, $this->seimitsuKaihiValue, $this->seimitsuKaihiDefault]). '／'.
+        return
+        implode(',', [$this->isCorrectTurnDexplus, $this->turnDexplusValue, $this->turnDexplusDefault]). '／'.
+        implode(',', [$this->isCorrectTurnDamage, $this->turnDamageValue, $this->turnDamageDefault]). '／'.
+        implode(',', [$this->isCorrectSoko, $this->sokoValue, $this->sokoDefault]). '／'.
+        implode(',', [$this->isCorrectLimit01Str, $this->limit01StrValue, $this->limit01StrDefault]). '／'.
+        implode(',', [$this->isCorrectLimit02Sp, $this->limit02SpValue, $this->limit02SpDefault]). '／'.
+        implode(',', [$this->isCorrectLimit02Meityu, $this->limit02MeityuValue, $this->limit02MeityuDefault]). '／'.
+        implode(',', [$this->isCorrectLimit02Kaihi, $this->limit02KaihiValue, $this->limit02KaihiDefault]). '／'.
+        implode(',', [$this->isCorrectPavKou, $this->pavKouValue, $this->pavKouDefault]). '／'.
+        implode(',', [$this->isCorrectPavMei, $this->pavMeiValue, $this->pavMeiDefault]). '／'.
+        implode(',', [$this->isCorrectPavSp, $this->pavSpValue, $this->pavSpDefault]). '／'.
+        implode(',', [$this->isCorrectPavKonbo, $this->pavKonboValue, $this->pavKonboDefault]). '／'.
+        implode(',', [$this->isCorrectSeimitsuKaihi, $this->seimitsuKaihiValue, $this->seimitsuKaihiDefault]). '／'.
         implode(',', [$this->isCorrectBuiStr       , $this->buiStrValue       , $this->buiStrDefault       ]). '／'.
         implode(',', [$this->isCorrectKonbiStr     , $this->konbiStrValue     , $this->konbiStrDefault     ]). '／'.
         implode(',', [$this->isCorrectKonbiMeityu  , $this->konbiMeityuValue  , $this->konbiMeityuDefault  ]). '／'.
@@ -144,6 +211,116 @@ class BattleCorrectionConfigComponent extends Component
         implode(',', [$this->isCorrectKoubouStr    , $this->koubouStrValue    , $this->koubouStrDefault    ]). '／'.
         implode(',', [$this->isCorrectKauntaStr    , $this->kauntaStrValue    , $this->kauntaStrDefault    ]). '／'.
         implode(',', [$this->isCorrectKauntaKaihi  , $this->kauntaKaihiValue  , $this->kauntaKaihiDefault  ]);
+    }
+
+    public function isCorrectTurnDexplus() {
+        return $this->isCorrectTurnDexplus;
+    }
+    public function getTurnDexplusValue() {
+        return $this->turnDexplusValue;
+    }
+    public function getTurnDexplusDefault() {
+        return $this->turnDexplusDefault;
+    }
+
+    public function isCorrectTurnDamage() {
+        return $this->isCorrectTurnDamage;
+    }
+    public function getTurnDamageValue() {
+        return $this->turnDamageValue;
+    }
+    public function getTurnDamageDefault() {
+        return $this->turnDamageDefault;
+    }
+
+    public function isCorrectSoko() {
+        return $this->isCorrectSoko;
+    }
+    public function getSokoValue() {
+        return $this->sokoValue;
+    }
+    public function getSokoDefault() {
+        return $this->sokoDefault;
+    }
+
+    public function isCorrectLimit01Str() {
+        return $this->isCorrectLimit01Str;
+    }
+    public function getLimit01StrValue() {
+        return $this->limit01StrValue;
+    }
+    public function getLimit01StrDefault() {
+        return $this->limit01StrDefault;
+    }
+
+    public function isCorrectLimit02Sp() {
+        return $this->isCorrectLimit02Sp;
+    }
+    public function getLimit02SpValue() {
+        return $this->limit02SpValue;
+    }
+    public function getLimit02SpDefault() {
+        return $this->limit02SpDefault;
+    }
+
+    public function isCorrectLimit02Meityu() {
+        return $this->isCorrectLimit02Meityu;
+    }
+    public function getLimit02MeityuValue() {
+        return $this->limit02MeityuValue;
+    }
+    public function getLimit02MeityuDefault() {
+        return $this->limit02MeityuDefault;
+    }
+
+    public function isCorrectLimit02Kaihi() {
+        return $this->isCorrectLimit02Kaihi;
+    }
+    public function getLimit02KaihiValue() {
+        return $this->limit02KaihiValue;
+    }
+    public function getLimit02KaihiDefault() {
+        return $this->limit02KaihiDefault;
+    }
+
+    public function isCorrectPavKou() {
+        return $this->isCorrectPavKou;
+    }
+    public function getPavKouValue() {
+        return $this->pavKouValue;
+    }
+    public function getPavKouDefault() {
+        return $this->pavKouDefault;
+    }
+
+    public function isCorrectPavMei() {
+        return $this->isCorrectPavMei;
+    }
+    public function getPavMeiValue() {
+        return $this->pavMeiValue;
+    }
+    public function getPavMeiDefault() {
+        return $this->pavMeiDefault;
+    }
+
+    public function isCorrectPavSp() {
+        return $this->isCorrectPavSp;
+    }
+    public function getPavSpValue() {
+        return $this->pavSpValue;
+    }
+    public function getPavSpDefault() {
+        return $this->pavSpDefault;
+    }
+
+    public function isCorrectPavKonbo() {
+        return $this->isCorrectPavKonbo;
+    }
+    public function getPavKonboValue() {
+        return $this->pavKonboValue;
+    }
+    public function getPavKonboDefault() {
+        return $this->pavKonboDefault;
     }
 
     public function isCorrectSeimitsuKaihi() {
