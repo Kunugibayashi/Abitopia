@@ -104,45 +104,45 @@ jQuery(function(){
         jQuery('select[name="limit_skill_code"]').val('<?= BT_LIMIT_01 ?>');
         jQuery('select[name="passive_skill_code"]').val('<?= BT_PAV_KOU ?>');
         jQuery('select[name="battle_skill1_code"]').val('<?= BT_AT_SEI_01 ?>');
-        jQuery('select[name="battle_skill2_code"]').val('<?= BT_AT_SEI_02 ?>');
-        jQuery('select[name="battle_skill3_code"]').val('<?= BT_AT_SEI_03 ?>');
-        jQuery('select[name="battle_skill4_code"]').val('<?= BT_AT_SEI_04 ?>');
-        jQuery('select[name="battle_skill5_code"]').val('<?= BT_AT_KONBI ?>');
+        jQuery('select[name="battle_skill2_code"]').val('<?= BT_AT_BUI_01 ?>');
+        jQuery('select[name="battle_skill3_code"]').val('<?= BT_AT_KONBI ?>');
+        jQuery('select[name="battle_skill4_code"]').val('<?= BT_AT_SENI ?>');
+        jQuery('select[name="battle_skill5_code"]').val('<?= BT_AT_SEISIN ?>');
         jQuery('select[name="battle_skill6_code"]').val('<?= BT_AT_MEIKYO ?>');
         jQuery('select[name="battle_skill7_code"]').val('<?= BT_DF_KAKUGO ?>');
     });
     jQuery('.set-auto-skill-2').on('click', function(){
         jQuery('select[name="limit_skill_code"]').val('<?= BT_LIMIT_02 ?>');
         jQuery('select[name="passive_skill_code"]').val('<?= BT_PAV_MEI ?>');
-        jQuery('select[name="battle_skill1_code"]').val('<?= BT_AT_BUI_01 ?>');
-        jQuery('select[name="battle_skill2_code"]').val('<?= BT_AT_BUI_02 ?>');
-        jQuery('select[name="battle_skill3_code"]').val('<?= BT_AT_BUI_03 ?>');
-        jQuery('select[name="battle_skill4_code"]').val('<?= BT_AT_BUI_04 ?>');
+        jQuery('select[name="battle_skill1_code"]').val('<?= BT_DF_BOU ?>');
+        jQuery('select[name="battle_skill2_code"]').val('<?= BT_DF_KAI ?>');
+        jQuery('select[name="battle_skill3_code"]').val('<?= BT_DF_RAN ?>');
+        jQuery('select[name="battle_skill4_code"]').val('<?= BT_DF_KOUBOU ?>');
         jQuery('select[name="battle_skill5_code"]').val('<?= BT_AT_KONBI ?>');
-        jQuery('select[name="battle_skill6_code"]').val('<?= BT_AT_MEIKYO ?>');
+        jQuery('select[name="battle_skill6_code"]').val('<?= BT_DF_KAUNTA ?>');
         jQuery('select[name="battle_skill7_code"]').val('<?= BT_DF_KAKUGO ?>');
     });
     jQuery('.set-auto-skill-3').on('click', function(){
         jQuery('select[name="limit_skill_code"]').val('<?= BT_LIMIT_03 ?>');
         jQuery('select[name="passive_skill_code"]').val('<?= BT_PAV_SP ?>');
-        jQuery('select[name="battle_skill1_code"]').val('<?= BT_AT_GADO ?>');
-        jQuery('select[name="battle_skill2_code"]').val('<?= BT_AT_HOMI ?>');
-        jQuery('select[name="battle_skill3_code"]').val('<?= BT_DF_BOU ?>');
-        jQuery('select[name="battle_skill4_code"]').val('<?= BT_DF_KAI ?>');
-        jQuery('select[name="battle_skill5_code"]').val('<?= BT_DF_RAN ?>');
-        jQuery('select[name="battle_skill6_code"]').val('<?= BT_DF_KOUBOU ?>');
-        jQuery('select[name="battle_skill7_code"]').val('<?= BT_DF_KAUNTA ?>');
+        jQuery('select[name="battle_skill1_code"]').val('<?= BT_AT_SEI_02 ?>');
+        jQuery('select[name="battle_skill2_code"]').val('<?= BT_AT_SEI_03 ?>');
+        jQuery('select[name="battle_skill3_code"]').val('<?= BT_AT_HOMI ?>');
+        jQuery('select[name="battle_skill4_code"]').val('<?= BT_AT_KONBI ?>');
+        jQuery('select[name="battle_skill5_code"]').val('<?= BT_DF_BOU ?>');
+        jQuery('select[name="battle_skill6_code"]').val('<?= BT_AT_MEIKYO ?>');
+        jQuery('select[name="battle_skill7_code"]').val('<?= BT_DF_KAKUGO ?>');
     });
     jQuery('.set-auto-skill-4').on('click', function(){
         jQuery('select[name="limit_skill_code"]').val('<?= BT_LIMIT_01 ?>');
         jQuery('select[name="passive_skill_code"]').val('<?= BT_PAV_KONBO ?>');
-        jQuery('select[name="battle_skill1_code"]').val('<?= BT_AT_KONBI ?>');
-        jQuery('select[name="battle_skill2_code"]').val('<?= BT_AT_SENI ?>');
-        jQuery('select[name="battle_skill3_code"]').val('<?= BT_AT_SEISIN ?>');
-        jQuery('select[name="battle_skill4_code"]').val('<?= BT_AT_MEIKYO ?>');
-        jQuery('select[name="battle_skill5_code"]').val('<?= BT_DF_KAKUGO ?>');
-        jQuery('select[name="battle_skill6_code"]').val('<?= BT_AT_GADO ?>');
-        jQuery('select[name="battle_skill7_code"]').val('<?= BT_AT_HOMI ?>');
+        jQuery('select[name="battle_skill1_code"]').val('<?= BT_AT_BUI_02 ?>');
+        jQuery('select[name="battle_skill2_code"]').val('<?= BT_AT_BUI_03 ?>');
+        jQuery('select[name="battle_skill3_code"]').val('<?= BT_AT_GADO ?>');
+        jQuery('select[name="battle_skill4_code"]').val('<?= BT_AT_SENI ?>');
+        jQuery('select[name="battle_skill5_code"]').val('<?= BT_DF_KAI ?>');
+        jQuery('select[name="battle_skill6_code"]').val('<?= BT_AT_MEIKYO ?>');
+        jQuery('select[name="battle_skill7_code"]').val('<?= BT_DF_KAKUGO ?>');
     });
 </script>
 <?php } ?>

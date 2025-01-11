@@ -526,6 +526,7 @@ class DetermineBattleComponent extends Component
             } else {
                 $correctionCounterStr = $this->BattleCorrectionConfig->getKauntaStrDefault();
             }
+
             $this->defenseBattleCharacter->set('temporary_strength',
                 ($this->defenseBattleCharacter->temporary_strength + $correctionCounterStr)
             );
@@ -538,6 +539,7 @@ class DetermineBattleComponent extends Component
             } else {
                 $correctionKoubouittaiStr = $this->BattleCorrectionConfig->getKoubouStrDefault();
             }
+
             $this->defenseBattleCharacter->set('temporary_strength',
                 ($this->defenseBattleCharacter->temporary_strength + $correctionKoubouittaiStr)
             );

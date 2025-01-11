@@ -60,7 +60,7 @@
                             <?php } else { ?>
                                 <td><!-- 表示なし --></td>
                                 <td><!-- 表示なし --></td>
-                                <td>
+                                <td class="table-rule-column-onoff">
                                     <div class="rule-point-off">デフォルト</div>
                                 </td>
                             <?php } ?>
