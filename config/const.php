@@ -64,7 +64,8 @@ define('BT_RULE_1TURN_DAMAGE', 14); // 1ターンごとの体力ダメージ
 // 戦闘補正値コード
 define('BT_CORRECTION_1TURN_DEXPLUS', 1); // 1ターン持続命中率増加
 define('BT_CORRECTION_1TURN_DAMAGE' , 2); // 1ターン持続ダメージ
-define('BT_CORRECTION_SOKO'           , 500); // 底力
+define('BT_CORRECTION_KASURI'         , 500); // かすり傷
+define('BT_CORRECTION_SOKO'           , 501); // 底力
 define('BT_CORRECTION_LIMIT_01_STR'     , 300); // リミットブレイク
 define('BT_CORRECTION_LIMIT_02_SP'      , 301); // コンセントレイト
 define('BT_CORRECTION_LIMIT_02_MEITYU'  , 302); // コンセントレイト
@@ -143,10 +144,18 @@ return [
             'value'       => 0,
             'active'      => 0,
         ],
+        BT_CORRECTION_KASURI => [
+            'code'        => BT_CORRECTION_KASURI,
+            'information' => 'かすり傷',
+            'formula'     => '発動率(20+敏捷*{0})%',
+            'default'     => 10,
+            'value'       => 0,
+            'active'      => 0,
+        ],
         BT_CORRECTION_SOKO => [
             'code'        => BT_CORRECTION_SOKO,
             'information' => '底力',
-            'formula'     => '発動率（SP+コンボ*{0}）%',
+            'formula'     => '発動率(SP+コンボ*{0})%',
             'default'     => 2,
             'value'       => 0,
             'active'      => 0,
@@ -242,7 +251,7 @@ return [
         BT_CORRECTION_KONBI_STR => [
             'code'        => BT_CORRECTION_KONBI_STR,
             'information' => '○コンビネーション',
-            'formula'     => '腕力+（コンボ数+{0}）',
+            'formula'     => '腕力+(コンボ数+{0})',
             'default'     => 1,
             'value'       => 0,
             'active'      => 0,
@@ -250,7 +259,7 @@ return [
         BT_CORRECTION_KONBI_MEITYU => [
             'code'        => BT_CORRECTION_KONBI_MEITYU,
             'information' => '○コンビネーション',
-            'formula'     => '命中率+（コンボ数*{0}）%',
+            'formula'     => '命中率+(コンボ数*{0})%',
             'default'     => 10,
             'value'       => 0,
             'active'      => 0,
@@ -258,7 +267,7 @@ return [
         BT_CORRECTION_SENI_KAIFUKU => [
             'code'        => BT_CORRECTION_SENI_KAIFUKU,
             'information' => '◉戦意高揚',
-            'formula'     => '（コンボ数*{0}）HP回復',
+            'formula'     => '(コンボ数*{0})HP回復',
             'default'     => 4,
             'value'       => 0,
             'active'      => 0,
@@ -266,7 +275,7 @@ return [
         BT_CORRECTION_SEISIN_KAIFUKU => [
             'code'        => BT_CORRECTION_SEISIN_KAIFUKU,
             'information' => '◉精神統一',
-            'formula'     => '（コンボ数*{0}）SP回復',
+            'formula'     => '(コンボ数*{0})SP回復',
             'default'     => 2,
             'value'       => 0,
             'active'      => 0,
@@ -326,46 +335,46 @@ return [
             'NARR_BATTLE_DMG' => 'ダメージ計算 / ((5+{0})+({1})+({2}+{3}))*({4})*({5})*({6})={7}dmg',
             'NARR_BATTLE_DMG_NOT_SELECT' => 'ダメージ計算 / ((5+{0})+({1})+({2}+{3}))*({4})*({5})={7}dmg',
             // (20+敏捷*10)+(攻撃スキル補正)+(恒久命中率補正+一時命中率補正)-(防御スキル補正+恒久回避率補正+一時回避率補正)=命中率 / ダイス / 結果
-            'NARR_BATTLE_RENZOKU' => '連撃判定 / (20+{0}*10)={1}% / {2} / {3}',
+            'NARR_BATTLE_RENZOKU' => '連撃判定 / (20+{0}*{1})={2}% / {3} / {4}',
             // (SP)+(コンボ*2)=底力発生率 / ダイス / 結果
-            'NARR_BATTLE_SOKOJIKARA' => '底力判定 / ({0})+({1}*2)={2}% / {3} / {4}',
-            // 20+敏捷*10)+(攻撃スキル補正)+(恒久命中率補正+一時命中率補正)-(防御スキル補正+恒久回避率補正+一時回避率補正)=命中率 / ダイス / 結果
+            'NARR_BATTLE_SOKOJIKARA' => '底力判定 / ({0})+({1}*{2})={3}% / {4} / {5}',
+            // (20+敏捷*10)+(攻撃スキル補正)+(恒久命中率補正+一時命中率補正)-(防御スキル補正+恒久回避率補正+一時回避率補正)=命中率 / ダイス / 結果
             'NARR_BATTLE_MEITYU' => '命中判定 / (20+{0}*10)+({1})+({2}+{3})-({4}+{5}+{6})={7}% / {8} / {9}',
             // (20+敏捷*10)=かすり傷命中率 / ダイス / 結果
-            'NARR_BATTLE_KASURI' => 'かすり傷判定 / (20+{0}*10)={1}% / {2} / {3}',
+            'NARR_BATTLE_KASURI' => 'かすり傷判定 / (20+{0}*{1})={2}% / {3} / {4}',
             // 攻撃スキル結果
-            'NARR_MEITYU' => '{0}の『{1}』が{2}に命中！ {3} の{4}ダメージ！',
-            'NARR_MEITYU_NOT_SELECT' => '{2}に命中！ {3} の{4}ダメージ！',
+            'NARR_MEITYU' => '{0}の『{1}』が{2}に命中！　{3}の{4}ダメージ！',
+            'NARR_MEITYU_NOT_SELECT' => '{2}に命中！　{3}の{4}ダメージ！',
             // 防御スキル結果
             'NARR_HAZURE' => '{0}は{1}の『{2}』を{3}した！', // 回避、防御、相殺
             'NARR_HAZURE_NOT_SELECT' => '{0}は{3}した！', // 回避、防御、相殺
             // かすり傷
-            'NARR_KASURI' => 'しかし、{0}しきれず {1} の半減ダメージ！', // 回避、防御、相殺
+            'NARR_KASURI' => '　しかし、{0}しきれず{1}の半減ダメージ！', // 回避、防御、相殺
             // 反撃スキル
-            'NARR_HATUDOU' => '{0}の{1}が発動！', // 攻防一体、カウンター
+            'NARR_HATUDOU' => '　{0}の{1}が発動！', // 攻防一体、カウンター
             // コンビネーション
-            'NARR_KONBI' => ' {0} コンボバースト！',
-            'NARR_KONBI_FUHATSU' => 'コンビネーション不発！',
+            'NARR_KONBI' => '　{0}コンボバースト！',
+            'NARR_KONBI_FUHATSU' => '　コンビネーション不発！',
             // デュアルドライブ
-            'NARR_RENXOKU_HATSUDOU' => '連続攻撃！',
+            'NARR_RENXOKU_HATSUDOU' => '　連続攻撃！',
             // 戦意高揚
-            'NARR_SENI_UP' => '{0}は『{1}』を使用！　戦意高揚、HP {2} の回復！',
-            'NARR_SENI_UP_NOT_SELECT' => '{0}は戦意高揚を使用！　HP {2} の回復！',
+            'NARR_SENI_UP' => '{0}は『{1}』を使用！　戦意高揚、HP{2}の回復！',
+            'NARR_SENI_UP_NOT_SELECT' => '{0}は戦意高揚を使用！　HP{2}の回復！',
             // 戦意高揚不発
             'NARR_SENI_FUHATSU' => '{0}は『{1}』を使用！　戦意高揚不発！',
             'NARR_SENI_FUHATSU_NOT_SELECT' => '{0}は戦意高揚を使用！　戦意高揚不発！',
             // 精神統一
-            'NARR_SEISHIN_UP' => '{0}は『{1}』を使用。精神統一、SP {2} の回復！',
-            'NARR_SEISHIN_UP_NOT_SELECT' => '{0}は精神統一を使用。SP {2} の回復！',
+            'NARR_SEISHIN_UP' => '{0}は『{1}』を使用。精神統一、SP{2}の回復！',
+            'NARR_SEISHIN_UP_NOT_SELECT' => '{0}は精神統一を使用。SP{2}の回復！',
             // 精神統一不発
             'NARR_SEISHIN_FUHATSU' => '{0}は『{1}』を使用！　精神統一不発！',
             'NARR_SEISHIN_FUHATSU_NOT_SELECT' => '{0}は精神統一を使用！　精神統一不発！',
             // 底力
             'NARR_SOKOJIKARA' => '{0}の底力が発動！　戦闘続行！',
             // 1ターン持続命中率増加
-            'NARR_1TURN_DEXPLUS' => '1ターン経過により{0}の命中率が {1} %上昇！',
+            'NARR_1TURN_DEXPLUS' => '1ターン経過により{0}の命中率が{1}%上昇！',
             // 1ターン持続ダメージ
-            'NARR_1TURN_DAMAGE' => '1ターン経過により{0}に {1} のダメージ！',
+            'NARR_1TURN_DAMAGE' => '1ターン経過により{0}に{1}のダメージ！',
         ],
         'attributes' => [
             BT_ATTR_01 => '炎',

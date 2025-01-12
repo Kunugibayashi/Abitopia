@@ -41,7 +41,7 @@
                     <table class="table-rule">
                         <tbody>
                                 <tr>
-                                    <td class="table-rule-column-head">サイト適応ルール</td>
+                                    <td class="table-rule-column-head">戦闘適応ルール</td>
                                     <td class="table-rule-column-onoff"><?php
                                         if ($battleRuleFlg) {
                                             echo '<div class="rule-point-on">変更あり</div>';

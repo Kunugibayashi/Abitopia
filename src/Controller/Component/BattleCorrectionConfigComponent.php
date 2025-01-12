@@ -19,6 +19,10 @@ class BattleCorrectionConfigComponent extends Component
     public $turnDamageValue = 0;
     public $turnDamageDefault = 0;
 
+    public $isCorrectKasuri = 0;
+    public $kasuriValue = 0;
+    public $kasuriDefault = 0;
+
     public $isCorrectSoko = 0;
     public $sokoValue = 0;
     public $sokoDefault = 0;
@@ -169,6 +173,7 @@ class BattleCorrectionConfigComponent extends Component
     private function setBattleCorrectionConfig() {
         [$this->isCorrectTurnDexplus, $this->turnDexplusValue, $this->turnDexplusDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_1TURN_DEXPLUS);
         [$this->isCorrectTurnDamage, $this->turnDamageValue, $this->turnDamageDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_1TURN_DAMAGE);
+        [$this->isCorrectKasuri, $this->kasuriValue, $this->kasuriDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_KASURI);
         [$this->isCorrectSoko, $this->sokoValue, $this->sokoDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_SOKO);
         [$this->isCorrectLimit01Str, $this->limit01StrValue, $this->limit01StrDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_LIMIT_01_STR);
         [$this->isCorrectLimit02Sp, $this->limit02SpValue, $this->limit02SpDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_LIMIT_02_SP);
@@ -196,6 +201,7 @@ class BattleCorrectionConfigComponent extends Component
         return
         implode(',', [$this->isCorrectTurnDexplus, $this->turnDexplusValue, $this->turnDexplusDefault]). '／'.
         implode(',', [$this->isCorrectTurnDamage, $this->turnDamageValue, $this->turnDamageDefault]). '／'.
+        implode(',', [$this->isCorrectKasuri, $this->kasuriValue, $this->kasuriDefault]). '／'.
         implode(',', [$this->isCorrectSoko, $this->sokoValue, $this->sokoDefault]). '／'.
         implode(',', [$this->isCorrectLimit01Str, $this->limit01StrValue, $this->limit01StrDefault]). '／'.
         implode(',', [$this->isCorrectLimit02Sp, $this->limit02SpValue, $this->limit02SpDefault]). '／'.
@@ -237,6 +243,16 @@ class BattleCorrectionConfigComponent extends Component
     }
     public function getTurnDamageDefault() {
         return $this->turnDamageDefault;
+    }
+
+    public function isCorrectKasuri() {
+        return $this->isCorrectKasuri;
+    }
+    public function getKasuriValue() {
+        return $this->kasuriValue;
+    }
+    public function getKasuriDefault() {
+        return $this->kasuriDefault;
     }
 
     public function isCorrectSoko() {

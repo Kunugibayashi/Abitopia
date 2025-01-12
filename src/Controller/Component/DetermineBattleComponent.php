@@ -724,6 +724,7 @@ class DetermineBattleComponent extends Component
         $this->isResurrectionString = __($format,
             $this->defenseBattleCharacter->sp,
             $this->defenseBattleCharacter->combo,
+            $correctionSoko,
             $borderline,
             $diseString,
             ($this->isResurrection) ? '成功' : '失敗',
@@ -786,6 +787,7 @@ class DetermineBattleComponent extends Component
         $format = Configure::read('Battle.narration.NARR_BATTLE_RENZOKU');
         $this->isContinuousString = __($format,
             $this->attackBattleCharacter->dexterity,
+            $correctionLimit03Meityu,
             $borderline,
             $diseString,
             ($this->isContinuous) ? '成功' : '失敗',
@@ -989,8 +991,15 @@ class DetermineBattleComponent extends Component
         }
 
         // かすり傷
-        // (20+dexterity*10)
-        $borderline = (20 + $this->attackBattleCharacter->dexterity * 10);
+        // 補正値
+        $correctionKasuri = 0;
+        if ($this->BattleCorrectionConfig->isCorrectKasuri()) {
+            $correctionKasuri = $this->BattleCorrectionConfig->getKasuriValue();
+        } else {
+            $correctionKasuri = $this->BattleCorrectionConfig->getKasuriDefault();
+        }
+
+        $borderline = (20 + $this->attackBattleCharacter->dexterity * $correctionKasuri);
         [$spot, $diseString] = $this->dice();
         $result = 0;
         if ($spot <= $borderline) {
@@ -998,10 +1007,10 @@ class DetermineBattleComponent extends Component
         }
 
         // 命中率
-        // (20+dexterity*10)
         $format = Configure::read('Battle.narration.NARR_BATTLE_KASURI');
         $resultString = __($format,
             $this->attackBattleCharacter->dexterity,
+            $correctionKasuri,
             $borderline,
             $diseString,
             ($result ? '成功' : '失敗')
