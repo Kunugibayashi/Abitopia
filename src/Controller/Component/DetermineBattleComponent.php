@@ -767,9 +767,18 @@ class DetermineBattleComponent extends Component
             return;
         }
 
-        // 当たっていなかったら確率で連続 (20+dexterity*10)
+        // デュアルドライブ
+        // 補正値
+        $correctionLimit03Meityu = 0;
+        if ($this->BattleCorrectionConfig->isCorrectLimit03Meityu()) {
+            $correctionLimit03Meityu = $this->BattleCorrectionConfig->getLimit03MeityuValue();
+        } else {
+            $correctionLimit03Meityu = $this->BattleCorrectionConfig->getLimit03MeityuDefault();
+        }
+
+        // 当たっていなかったら確率で連続
         [$spot, $diseString] = $this->dice();
-        $borderline = (20 + $this->attackBattleCharacter->dexterity * 10);
+        $borderline = (20 + $this->attackBattleCharacter->dexterity * $correctionLimit03Meityu);
         if ($spot <= $borderline) {
             $this->isContinuous = 1;
         }

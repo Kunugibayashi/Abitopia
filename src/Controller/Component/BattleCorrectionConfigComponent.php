@@ -39,6 +39,10 @@ class BattleCorrectionConfigComponent extends Component
     public $limit02KaihiValue = 0;
     public $limit02KaihiDefault = 0;
 
+    public $isCorrectLimit03Meityu = 0;
+    public $limit03MeityuValue = 0;
+    public $limit03MeityuDefault = 0;
+
     public $isCorrectPavKou = 0;
     public $pavKouValue = 0;
     public $pavKouDefault = 0;
@@ -170,6 +174,7 @@ class BattleCorrectionConfigComponent extends Component
         [$this->isCorrectLimit02Sp, $this->limit02SpValue, $this->limit02SpDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_LIMIT_02_SP);
         [$this->isCorrectLimit02Meityu, $this->limit02MeityuValue, $this->limit02MeityuDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_LIMIT_02_MEITYU);
         [$this->isCorrectLimit02Kaihi, $this->limit02KaihiValue, $this->limit02KaihiDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_LIMIT_02_KAIHI);
+        [$this->isCorrectLimit03Meityu, $this->limit03MeityuValue, $this->limit03MeityuDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_LIMIT_03_MEITYU);
         [$this->isCorrectPavKou, $this->pavKouValue, $this->pavKouDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_PAV_KOU);
         [$this->isCorrectPavMei, $this->pavMeiValue, $this->pavMeiDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_PAV_MEI);
         [$this->isCorrectPavSp, $this->pavSpValue, $this->pavSpDefault] = $this->getBattleCorrectionConfig(BT_CORRECTION_PAV_SP);
@@ -196,6 +201,7 @@ class BattleCorrectionConfigComponent extends Component
         implode(',', [$this->isCorrectLimit02Sp, $this->limit02SpValue, $this->limit02SpDefault]). '／'.
         implode(',', [$this->isCorrectLimit02Meityu, $this->limit02MeityuValue, $this->limit02MeityuDefault]). '／'.
         implode(',', [$this->isCorrectLimit02Kaihi, $this->limit02KaihiValue, $this->limit02KaihiDefault]). '／'.
+        implode(',', [$this->isCorrectLimit03Meityu, $this->limit03MeityuValue, $this->limit03MeityuDefault]). '／'.
         implode(',', [$this->isCorrectPavKou, $this->pavKouValue, $this->pavKouDefault]). '／'.
         implode(',', [$this->isCorrectPavMei, $this->pavMeiValue, $this->pavMeiDefault]). '／'.
         implode(',', [$this->isCorrectPavSp, $this->pavSpValue, $this->pavSpDefault]). '／'.
@@ -281,6 +287,16 @@ class BattleCorrectionConfigComponent extends Component
     }
     public function getLimit02KaihiDefault() {
         return $this->limit02KaihiDefault;
+    }
+
+    public function isCorrectLimit03Meityu() {
+        return $this->isCorrectLimit03Meityu;
+    }
+    public function getLimit03MeityuValue() {
+        return $this->limit03MeityuValue;
+    }
+    public function getLimit03MeityuDefault() {
+        return $this->limit03MeityuDefault;
     }
 
     public function isCorrectPavKou() {

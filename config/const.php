@@ -1,6 +1,6 @@
 <?php
 // CSS更新用文字列
-define('CSS_UPDATE_DATE', '202501102233'); // リリース時用文字列。'202412120101' など数値のみ日付推奨。テスト時推奨： define('CSS_UPDATE_DATE', date("YmdHis"));
+define('CSS_UPDATE_DATE', '202501120915'); // リリース時用文字列。'202412120101' など数値のみ日付推奨。テスト時推奨： define('CSS_UPDATE_DATE', date("YmdHis"));
 define('SITE_DEBUG_MODE', 0); // テスト用。デバッグ用の関数や出力を表示。リリース時は0にすること。テスト時推奨： define('SITE_DEBUG_MODE', 1);
 // PHPメモリ上限
 define('PHP_MEMORY_LIMIT', '3072M');
@@ -69,6 +69,7 @@ define('BT_CORRECTION_LIMIT_01_STR'     , 300); // リミットブレイク
 define('BT_CORRECTION_LIMIT_02_SP'      , 301); // コンセントレイト
 define('BT_CORRECTION_LIMIT_02_MEITYU'  , 302); // コンセントレイト
 define('BT_CORRECTION_LIMIT_02_KAIHI'   , 303); // コンセントレイト
+define('BT_CORRECTION_LIMIT_03_MEITYU'  , 304); // デュアルドライブ
 define('BT_CORRECTION_PAV_KOU'      , 400); // パッシブ攻撃力強化
 define('BT_CORRECTION_PAV_MEI'      , 401); // パッシブ命中率強化
 define('BT_CORRECTION_PAV_SP'       , 402); // パッシブSP強化
@@ -179,6 +180,14 @@ return [
             'information' => '▲コンセントレイト',
             'formula'     => '回避率+{0}%',
             'default'     => 20,
+            'value'       => 0,
+            'active'      => 0,
+        ],
+        BT_CORRECTION_LIMIT_03_MEITYU => [
+            'code'        => BT_CORRECTION_LIMIT_03_MEITYU,
+            'information' => '▲デュアルドライブ',
+            'formula'     => '連撃発生率(20+敏捷*{0})%',
+            'default'     => 10,
             'value'       => 0,
             'active'      => 0,
         ],
