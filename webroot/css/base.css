@@ -104,9 +104,14 @@ button.warning {
     background-color: #8b0000;
     color: #ffffff;
 }
+button.mismatch {
+    background-color: #ff8c00;
+    color: #ffffff;
+}
 button:hover,
 button.information:hover,
-button.warning:hover {
+button.warning:hover,
+button.mismatch:hover {
     opacity: 0.8;
     filter: invert();
 }
@@ -116,6 +121,10 @@ button:focus {
 }
 button.warning:focus {
     background-color: #ff0000;
+    color: #000000;
+}
+button.mismatch:focus {
+    background-color: #ffff00;
     color: #000000;
 }
 button + button {
