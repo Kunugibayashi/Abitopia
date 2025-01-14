@@ -41,7 +41,14 @@
                     <table class="table-rule">
                         <tbody>
                                 <tr>
-                                    <td class="table-rule-column-head">戦闘適応ルール</td>
+                                    <td class="table-rule-column-head">
+                                        <?= $this->Html->link(__('戦闘適応ルール'), [
+                                                'controller' => 'Manual',
+                                                'action' => 'ruleSelect',
+                                                '#' => 'batorururu',
+                                            ])
+                                        ?>
+                                    </td>
                                     <td class="table-rule-column-onoff"><?php
                                         if ($battleRuleFlg) {
                                             echo '<div class="rule-point-on">変更あり</div>';
@@ -51,7 +58,14 @@
                                     ?></td>
                                 </tr>
                                 <tr>
-                                    <td class="table-rule-column-head">戦闘補正値</td>
+                                    <td class="table-rule-column-head">
+                                        <?= $this->Html->link(__('戦闘補正値'), [
+                                                'controller' => 'Manual',
+                                                'action' => 'ruleSelect',
+                                                '#' => 'hosei',
+                                            ])
+                                        ?>
+                                    </td>
                                     <td class="table-rule-column-onoff"><?php
                                         if ($battleCorrectionFlg) {
                                             echo '<div class="rule-point-on">変更あり</div>';
