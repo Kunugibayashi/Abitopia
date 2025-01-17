@@ -1204,11 +1204,14 @@ class DetermineBattleComponent extends Component
             }
         }
         if($defenseSkillCode == BT_DF_KAUNTA) {
-            // カウンター補正値
-            if ($this->BattleCorrectionConfig->isCorrectKauntaKaihi()) {
-                $correctionDSkill = $this->BattleCorrectionConfig->getKauntaKaihiValue();
-            } else {
-                $correctionDSkill = $this->BattleCorrectionConfig->getKauntaKaihiDefault();
+            // ホーミングvsカウンターの場合、カウンターは回避率に影響させない
+            if($attackSkillCode != BT_AT_HOMI) {
+                // カウンター補正値
+                if ($this->BattleCorrectionConfig->isCorrectKauntaKaihi()) {
+                    $correctionDSkill = $this->BattleCorrectionConfig->getKauntaKaihiValue();
+                } else {
+                    $correctionDSkill = $this->BattleCorrectionConfig->getKauntaKaihiDefault();
+                }
             }
         }
 
