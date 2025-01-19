@@ -15,15 +15,15 @@ if (isset($chatRoomCss)) {
 html { box-sizing: border-box; font-size: 62.5%; }
 body { color: #606c76; font-size: 1.6rem; font-weight: 300; letter-spacing: .01em; line-height: 1.6; }
 .chat-log-title, .chat-log-information, .chat-log-contenar, .chat-log, .chat-log-message, .chat-log-fullname, .chat-log-note, .chat-log-date, .system, .battle-log-narration, .battle-log-memo { word-break: break-all; }
-/* マウスオーバーデザイン */ 
+/* マウスオーバーデザイン */
 .chat-log-information { display: none; position: absolute; color: #000000; background-color: #f5f7fa; border-radius: 0.5rem; border: 0.1rem solid #606c76; padding: 0.5rem; margin: 0; z-index: 10; }
 .chat-log-note { display: none; position: absolute; color: #000000; background-color: #f5f7fa; border-radius: 0.5rem; border: 0.1rem solid #606c76; padding: 0.5rem; margin: 0; z-index: 10; }
-.battle-log-memo { display: none; position: absolute; color: #000000; background-color: #f5f7fa; border-radius: 0.5rem; border: 0.1rem solid #606c76; padding: 0.5rem; margin: 0; z-index: 10; }
-/* マウスオーバー動作 */ 
+.battle-log-memo { display: none; position: absolute; right: 2rem; color: #000000; background-color: #f5f7fa; border-radius: 0.5rem; border: 0.1rem solid #606c76; padding: 0.5rem; margin: 0; z-index: 10; }
+/* マウスオーバー動作 */
 .chat-log-title:hover + .chat-log-information { display: inline-block; }
 .chat-log-fullname:hover + .chat-log-note { display: inline-block; }
 .battle-log-narration:hover + .battle-log-memo { display: inline-block; }
-/* チャットルーム用 */ 
+/* チャットルーム用 */
 .chat-log-contenar { margin: 1rem; }
 <?php if ($chatRoom->design == 1) { ?>
     .chat-log { border-radius: 0rem; padding: 0rem; line-height: 1.4; }
@@ -34,8 +34,9 @@ body { color: #606c76; font-size: 1.6rem; font-weight: 300; letter-spacing: .01e
 .chat-log-title { border-bottom: inset 1px; padding: 1rem 0;}
 .battle-log-status { display: block; text-align: right; font-size: 1rem; opacity: 0.5; }
 .battle-log-narration { display: block; }
-.system { padding: 0 1.4rem; font-size: 1.4rem; }
-/* チャットタグ用 */ 
+.system { padding: 0 0 0 1.4rem; font-size: 1.4rem; }
+.system:has(.battle-log-narration) { text-align: right; }
+/* チャットタグ用 */
 .bold { font-weight: bold; }
 .oblique { font-style: oblique; }
 .line-through { text-decoration: line-through; }

@@ -1,6 +1,6 @@
 <?php
 // CSS更新用文字列
-define('CSS_UPDATE_DATE', '202501120915'); // リリース時用文字列。'202412120101' など数値のみ日付推奨。テスト時推奨： define('CSS_UPDATE_DATE', date("YmdHis"));
+define('CSS_UPDATE_DATE', '202501190001'); // リリース時用文字列。'202412120101' など数値のみ日付推奨。テスト時推奨： define('CSS_UPDATE_DATE', date("YmdHis"));
 define('SITE_DEBUG_MODE', 0); // テスト用。デバッグ用の関数や出力を表示。リリース時は0にすること。テスト時推奨： define('SITE_DEBUG_MODE', 1);
 // PHPメモリ上限
 define('PHP_MEMORY_LIMIT', '3072M');
@@ -132,7 +132,7 @@ return [
             'code'        => BT_CORRECTION_1TURN_DEXPLUS,
             'information' => '1ターン持続命中率増加',
             'formula'     => '命中率+{0}%',
-            'default'     => 10,
+            'default'     => 5,
             'value'       => 0,
             'active'      => 0,
         ],
@@ -140,7 +140,7 @@ return [
             'code'        => BT_CORRECTION_1TURN_DAMAGE,
             'information' => '1ターン持続ダメージ',
             'formula'     => '{0}ダメージ',
-            'default'     => 5,
+            'default'     => 3,
             'value'       => 0,
             'active'      => 0,
         ],
