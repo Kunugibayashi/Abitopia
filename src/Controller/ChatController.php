@@ -241,7 +241,8 @@ class ChatController extends AppController
 
         $chatRoom = $this->ChatRooms->get($chatRoomId);
 
-        $logs = $this->chatLog($chatRoomId, $chatEntryKey);
+        $outputChatLogFlg = 1;
+        $logs = $this->chatLog($chatRoomId, $chatEntryKey, $outputChatLogFlg);
 
         $characters = $this->ChatLogs->find()
             ->where(['chat_room_key' => $chatRoomId])
@@ -432,7 +433,7 @@ class ChatController extends AppController
         return $this->chatLog($chatRoomId);
     }
 
-    public function chatLog($chatRoomId = null, $chatEntryKey = null, $chatLoglimit = 10000)
+    public function chatLog($chatRoomId = null, $chatEntryKey = null, $outputChatLogFlg = 0, $chatLoglimit = 10000)
     {
         // 引数はRoutesにて、正規表現で数値制限済み
         // 他から呼び出すため getParam を使用しない
@@ -505,6 +506,7 @@ class ChatController extends AppController
         $this->set(compact('colorCodes'));
         $this->set(compact('chatRoom'));
         $this->set(compact('chatRoomCssString'));
+        $this->set('outputChatLogFlg', $outputChatLogFlg);
 
         return $this->render('chatLog');
     }
