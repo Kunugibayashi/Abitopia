@@ -39,6 +39,7 @@ body { color: #606c76; font-size: 1.6rem; font-weight: 300; letter-spacing: .01e
 <?php if (isset($outputChatLogFlg) && $outputChatLogFlg == 1) { ?>
 /* ログ出力時のみ出力 */
 .battle-log-memo { display: block; position: unset; right: unset; color: inherit; background-color: unset; border-radius: unset; border: unset; padding: 0; margin: 0; z-index: 10; }
+.battle-log-narration:hover + .battle-log-memo { display: block; }
 .battle-log-memo { font-size: 1rem; }
 <?php } ?>
 /* チャットタグ用 */

@@ -10,11 +10,13 @@
             <h4 class="heading"><?= __('メニュー') ?></h4>
             <?= $this->Html->link(__('名簿一覧'), ['action' => 'search'], ['class' => 'side-nav-item']) ?>
             <?= $this->Html->link(__('登録キャラクター編集'), ['action' => 'index'], ['class' => 'side-nav-item']) ?>
-            <?= $this->Html->link(__('私書送信'), [
-                    'controller' => 'Messages',
-                    'action' => 'send',
-                    $chatCharacter->id,
-                ], ['class' => 'side-nav-item']) ?>
+            <?php if (isset($siteLetterflg) && $siteLetterflg == 1) { ?>
+                <?= $this->Html->link(__('私書送信'), [
+                        'controller' => 'Messages',
+                        'action' => 'send',
+                        $chatCharacter->id,
+                    ], ['class' => 'side-nav-item']) ?>
+            <?php } ?>
         </div>
     </aside>
     <div class="column-responsive main-container">

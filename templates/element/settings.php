@@ -4,16 +4,19 @@
         <?php echo $this->Html->image('site/gear.png', ['alt' => '設定', 'width' => '16px', 'height' => '16px', ]); ?>
         <div class="top-nav-links-settings-title"><?php echo __('設定'); ?></div>
     </button>
-    <button class="top-nav-links-img-site-letter-button">
-        <?php echo $this->Html->image('site/letter.png', [
-            'alt' => '新しい私書',
-            'id' => 'id-img-site-letter',
-            'class' => 'letter-animation',
-            'width' => '16px',
-            'height' => '16px',
-            ]);
-        ?>
-    </button>
+    <?php if (isset($siteLetterflg) && $siteLetterflg == 1) { ?>
+        <button class="top-nav-links-img-site-letter-button">
+            <?php echo $this->Html->image('site/letter.png', [
+                'alt' => '新しい私書',
+                'id' => 'id-img-site-letter',
+                'class' => 'letter-animation',
+                'width' => '16px',
+                'height' => '16px',
+                ]);
+            ?>
+        </button>
+    <?php } ?>
+
 </div>
 <div class="modal-template" id="id-modal-template">
     <div class="modal-mask">

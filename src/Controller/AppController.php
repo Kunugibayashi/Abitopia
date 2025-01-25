@@ -62,6 +62,7 @@ class AppController extends Controller
         //$this->Authentication->addUnauthenticatedActions(['index', 'view']);
         // サイトの定数設定
         $this->set('siteTitle', Configure::read('Site.title'));
+        $this->set('siteLetterflg', Configure::read('Site.letterflg'));
         // 管理ページか？
         $isAdmin = $this->request->getParam('prefix') === 'Admin' ? 1 : 0;
         $this->set('isAdmin', $isAdmin);

@@ -1,3 +1,4 @@
+<?php if (isset($siteLetterflg) && $siteLetterflg == 1) { ?>
 <div class="content" id="id-messages">
     <header class="content-header">
         <h3><?= __('私書') ?></h3>
@@ -37,3 +38,4 @@ jQuery(function(){
     getMessages();
 });
 </script>
+<?php } ?>

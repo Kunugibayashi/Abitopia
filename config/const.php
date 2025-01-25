@@ -1,6 +1,6 @@
 <?php
 // CSS更新用文字列
-define('CSS_UPDATE_DATE', '202501190001'); // リリース時用文字列。'202412120101' など数値のみ日付推奨。テスト時推奨： define('CSS_UPDATE_DATE', date("YmdHis"));
+define('CSS_UPDATE_DATE', '202501250001'); // リリース時用文字列。'202412120101' など数値のみ日付推奨。テスト時推奨： define('CSS_UPDATE_DATE', date("YmdHis"));
 define('SITE_DEBUG_MODE', 0); // テスト用。デバッグ用の関数や出力を表示。リリース時は0にすること。テスト時推奨： define('SITE_DEBUG_MODE', 1);
 // PHPメモリ上限
 define('PHP_MEMORY_LIMIT', '3072M');
@@ -88,9 +88,10 @@ define('BT_CORRECTION_KAUNTA_STR'     , 110); // カウンター
 define('BT_CORRECTION_KAUNTA_KAIHI'   , 111); // カウンター
 return [
     'Site' => [
-        'title' => 'Abitopia', // サイト名
-        'admin' => 1, // 管理者の登録可能人数
-        'logmax' => 10000, // ログを残す行数（全部屋合計）
+        'title'     => 'Abitopia', // サイト名
+        'admin'     => 1, // 管理者の登録可能人数
+        'logmax'    => 10000, // ログを残す行数（全部屋合計）
+        'letterflg' => 0, // 私書を表示するか（0：表示しない／1：表示する）
     ],
     'Room' => [
         'entering'  => '{0}に{1}が入室しました。',
