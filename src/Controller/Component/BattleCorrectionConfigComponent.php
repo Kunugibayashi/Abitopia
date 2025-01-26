@@ -399,7 +399,7 @@ class BattleCorrectionConfigComponent extends Component
         return $this->isCorrectSeniKaifuku;
     }
     public function getSeniKaifukuValue() {
-        return $this->buiStrValue;
+        return $this->seniKaifukuValue;
     }
     public function getSeniKaifukuDefault() {
         return $this->seniKaifukuDefault;

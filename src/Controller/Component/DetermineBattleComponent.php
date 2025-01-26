@@ -310,6 +310,14 @@ class DetermineBattleComponent extends Component
         if ($this->isResurrectionString) {
             $memo[] = $this->isResurrectionString;
         }
+        // 戦意高揚計算式
+        if ($this->isSeniString) {
+            $memo[] = $this->isSeniString;
+        }
+        // 精神統一計算式
+        if ($this->isSeishinString) {
+            $memo[] = $this->isSeishinString;
+        }
 
         $memoString = implode("\n", $memo);
         $narrationString = implode("\n", $narration);
@@ -347,6 +355,8 @@ class DetermineBattleComponent extends Component
             'isKo' => $this->isKo,
             'isResurrection' => $this->isResurrection,
             'isResurrectionString' => $this->isResurrectionString,
+            'isSeniString' => $this->isSeniString,
+            'isSeishinString' => $this->isSeishinString,
             'isLimit' => $this->isLimit,
             'isCounter' => $this->isCounter,
             'isKoubouittai' => $this->isKoubouittai,
@@ -809,12 +819,19 @@ class DetermineBattleComponent extends Component
         $correctionRecoverySp = 0;
         // 精神統一補正値
         if ($this->BattleCorrectionConfig->isCorrectSeisinKaifuku()) {
-            $correctionRecoveryHp = $this->BattleCorrectionConfig->getSeisinKaifukuValue();
+            $correctionRecoverySp = $this->BattleCorrectionConfig->getSeisinKaifukuValue();
         } else {
-            $correctionRecoveryHp = $this->BattleCorrectionConfig->getSeisinKaifukuDefault();
+            $correctionRecoverySp = $this->BattleCorrectionConfig->getSeisinKaifukuDefault();
         }
 
         $this->recoverySp = $this->useCombo * $correctionRecoverySp;
+
+        $format = Configure::read('Battle.narration.NARR_BATTLE_SEISHIN');
+        $this->isSeishinString = __($format,
+            $this->useCombo,
+            $correctionRecoverySp,
+            $this->recoverySp,
+        );
     }
 
     public function determineRecoveryHp()
@@ -838,6 +855,13 @@ class DetermineBattleComponent extends Component
         }
 
         $this->recoveryHp = $this->useCombo * $correctionRecoveryHp;
+
+        $format = Configure::read('Battle.narration.NARR_BATTLE_SENI');
+        $this->isSeniString = __($format,
+            $this->useCombo,
+            $correctionRecoveryHp,
+            $this->recoveryHp,
+        );
     }
 
     public function determineComboUp()
@@ -1324,6 +1348,8 @@ class DetermineBattleComponent extends Component
 
         $this->attackBattleCharacter->temporary_strength += $this->useCombo + $correctionStr;
         $this->attackBattleCharacter->temporary_hit_rate += $this->useCombo * $correctionHitRate;
+
+        $this->log('useCombo=' .$this->useCombo .' / correctionStr=' .$correctionStr .' / correctionHitRate=' .$correctionHitRate, "debug");
     }
 
 }
