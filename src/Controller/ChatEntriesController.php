@@ -11,7 +11,7 @@ namespace App\Controller;
  */
 class ChatEntriesController extends AppController
 {
-    public function topList()
+    public function topListTable()
     {
         $this->viewBuilder()->setLayout('none');
 

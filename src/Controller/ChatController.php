@@ -521,6 +521,15 @@ class ChatController extends AppController
         $this->set(compact('chatLogs'));
     }
 
+    public function chatMessageHistory()
+    {
+        $chatLogs = $this->ChatLogs->find()
+            ->where(['chat_character_key' => 0]) // システム
+            ->order(['id' => 'DESC'])
+            ->limit(200);
+        $this->set(compact('chatLogs'));
+    }
+
     public function viewCount()
     {
         $now = date('Y-m-d H:i:s');

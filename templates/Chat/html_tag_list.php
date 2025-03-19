@@ -1,9 +1,18 @@
 <style>
+/* チャットタグ用 */
 .bold { font-weight: bold; }
 .oblique { font-style: oblique; }
 .line-through { text-decoration: line-through; }
-.font50 { font-size: 50%; } .font150 { font-size: 150%; } .font200 { font-size: 200%; }
-<?php foreach ($colorCodes as $value) { ?><?php echo "." .$value['name'] ?> { color: <?= $value['code'] ?>; } <?php } ?>
+.font50 { font-size: 50%; } .font75 { font-size: 75%; } .font125 { font-size: 125%; } .font150 { font-size: 150%; } .font175 { font-size: 175%; } .font200 { font-size: 200%; } .font300 { font-size: 300%; }
+.rainbow01 { background: linear-gradient(to right, #c70000, #d28300, #dfd000, #00873c, #005aa0, #181878, #800073); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.rainbow02 { background: linear-gradient(to right, #c70000, #d28300, #dfd000, #00873c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.rainbow03 { background: linear-gradient(to right, #00873c, #005aa0, #181878, #800073); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.rainbow04 { background: linear-gradient(to bottom, #c70000, #d28300, #dfd000, #00873c, #005aa0, #181878, #800073); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.rainbow05 { background: linear-gradient(to bottom, #c70000, #d28300, #dfd000, #00873c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.rainbow06 { background: linear-gradient(to bottom, #00873c, #005aa0, #181878, #800073); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+<?php foreach ($colorCodes as $value) { ?><?php echo "." .$value['name'] ?> { color: <?= $value['code'] ?>; } <?php }
+// 下記改行用空白
+?>
 
 </style>
 <div class="row">
@@ -79,14 +88,64 @@
                         <td><?php echo h('<span class="font50">サンプル</span>'); ?></td>
                     </tr>
                     <tr>
+                        <td>font75</td>
+                        <td><span class="font75">サンプル</span></td>
+                        <td><?php echo h('<span class="font75">サンプル</span>'); ?></td>
+                    </tr>
+                    <tr>
+                        <td>font125</td>
+                        <td><span class="font125">サンプル</span></td>
+                        <td><?php echo h('<span class="font125">サンプル</span>'); ?></td>
+                    </tr>
+                    <tr>
                         <td>font150</td>
                         <td><span class="font150">サンプル</span></td>
                         <td><?php echo h('<span class="font150">サンプル</span>'); ?></td>
                     </tr>
                     <tr>
+                        <td>font175</td>
+                        <td><span class="font175">サンプル</span></td>
+                        <td><?php echo h('<span class="font175">サンプル</span>'); ?></td>
+                    </tr>
+                    <tr>
                         <td>font200</td>
                         <td><span class="font200">サンプル</span></td>
                         <td><?php echo h('<span class="font200">サンプル</span>'); ?></td>
+                    </tr>
+                    <tr>
+                        <td>font300</td>
+                        <td><span class="font300">サンプル</span></td>
+                        <td><?php echo h('<span class="font300">サンプル</span>'); ?></td>
+                    </tr>
+                    <tr>
+                        <td>rainbow01</td>
+                        <td><span class="rainbow01">サンプル</span></td>
+                        <td><?php echo h('<span class="rainbow01">サンプル</span>'); ?></td>
+                    </tr>
+                    <tr>
+                        <td>rainbow02</td>
+                        <td><span class="rainbow02">サンプル</span></td>
+                        <td><?php echo h('<span class="rainbow02">サンプル</span>'); ?></td>
+                    </tr>
+                    <tr>
+                        <td>rainbow03</td>
+                        <td><span class="rainbow03">サンプル</span></td>
+                        <td><?php echo h('<span class="rainbow03">サンプル</span>'); ?></td>
+                    </tr>
+                    <tr>
+                        <td>rainbow04</td>
+                        <td><span class="rainbow04">サンプル</span></td>
+                        <td><?php echo h('<span class="rainbow04">サンプル</span>'); ?></td>
+                    </tr>
+                    <tr>
+                        <td>rainbow05</td>
+                        <td><span class="rainbow05">サンプル</span></td>
+                        <td><?php echo h('<span class="rainbow05">サンプル</span>'); ?></td>
+                    </tr>
+                    <tr>
+                        <td>rainbow06</td>
+                        <td><span class="rainbow06">サンプル</span></td>
+                        <td><?php echo h('<span class="rainbow06">サンプル</span>'); ?></td>
                     </tr>
                     <?php foreach ($colorCodes as $value) { ?>
                         <tr>

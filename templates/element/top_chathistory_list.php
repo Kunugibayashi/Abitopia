@@ -1,6 +1,11 @@
 <div class="content" id="id-chathistory">
     <header class="content-header">
         <h3><?= __('履歴') ?></h3>
+        <div class="content-more"><?= $this->Html->link('≫ More', [
+                'controller' => 'Chat',
+                'action' => 'chatMessageHistory'
+            ]); ?>
+        </div>
     </header>
     <div class="table-responsive" id="id-chathistory-table">
     </div>

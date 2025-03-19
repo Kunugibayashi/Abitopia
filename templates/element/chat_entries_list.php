@@ -31,7 +31,7 @@ jQuery(function(){
         jQuery.ajax({
             url: '<?php echo $this->Url->build([
                     'controller' => 'chatEntries',
-                    'action' => 'topList',
+                    'action' => 'topListTable',
                     $chatRoomId,
                 ]); ?>',
             type: 'GET',

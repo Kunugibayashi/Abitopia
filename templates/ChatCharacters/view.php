@@ -47,7 +47,7 @@
                     <th class="table-column-head"><?= __('背景色') ?></th>
                     <td><span style="color:<?= $chatCharacter->backgroundcolor ?>"><?= h($chatCharacter->backgroundcolor) ?></span></td>
                 </tr>
-                <tr class="content-team-wrap">
+                <tr class="content-tag-wrap">
                     <th class="table-column-head"><?= __('タグ') ?></th>
                     <td><?= h($chatCharacter->tag) ?></td>
                 </tr>

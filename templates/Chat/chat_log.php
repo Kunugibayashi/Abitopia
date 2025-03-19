@@ -46,7 +46,13 @@ body { color: #606c76; font-size: 1.6rem; font-weight: 300; letter-spacing: .01e
 .bold { font-weight: bold; }
 .oblique { font-style: oblique; }
 .line-through { text-decoration: line-through; }
-.font50 { font-size: 50%; } .font150 { font-size: 150%; } .font200 { font-size: 200%; }
+.font50 { font-size: 50%; } .font75 { font-size: 75%; } .font125 { font-size: 125%; } .font150 { font-size: 150%; } .font175 { font-size: 175%; } .font200 { font-size: 200%; } .font300 { font-size: 300%; }
+.rainbow01 { background: linear-gradient(to right, #c70000, #d28300, #dfd000, #00873c, #005aa0, #181878, #800073); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.rainbow02 { background: linear-gradient(to right, #c70000, #d28300, #dfd000, #00873c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.rainbow03 { background: linear-gradient(to right, #00873c, #005aa0, #181878, #800073); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.rainbow04 { background: linear-gradient(to bottom, #c70000, #d28300, #dfd000, #00873c, #005aa0, #181878, #800073); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.rainbow05 { background: linear-gradient(to bottom, #c70000, #d28300, #dfd000, #00873c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.rainbow06 { background: linear-gradient(to bottom, #00873c, #005aa0, #181878, #800073); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 <?php foreach ($colorCodes as $value) { ?><?php echo "." .$value['name'] ?> { color: <?= $value['code'] ?>; } <?php }
 // 下記改行用空白
 ?>
