@@ -29,7 +29,7 @@ class DetermineBattleComponent extends Component
     private $attack_skill_attribute;
     private $attack_kill;
     private $attack_skill_code;
-    private $attack_technique_name;
+    private $attack_technique_name = '';
 
     private $useCombo = 0; // 使用コンボ
     private $compatibility = 0; // 攻撃の勢い（有利、不利、拮抗）
@@ -103,7 +103,7 @@ class DetermineBattleComponent extends Component
             if ($this->recoveryHp > 0) {
                 // 発動
                 $format = "";
-                if ($this->BattleRuleConfig->isInputTechniqueName()) {
+                if ($this->BattleRuleConfig->isInputTechniqueName() && $this->attack_technique_name) {
                     $format = Configure::read('Battle.narration.NARR_SENI_UP');
                 } else {
                     $format = Configure::read('Battle.narration.NARR_SENI_UP_NOT_SELECT');
@@ -116,7 +116,7 @@ class DetermineBattleComponent extends Component
             } else {
                 // 不発
                 $format = "";
-                if ($this->BattleRuleConfig->isInputTechniqueName()) {
+                if ($this->BattleRuleConfig->isInputTechniqueName() && $this->attack_technique_name) {
                     $format = Configure::read('Battle.narration.NARR_SENI_FUHATSU');
                 } else {
                     $format = Configure::read('Battle.narration.NARR_SENI_FUHATSU_NOT_SELECT');
@@ -131,7 +131,7 @@ class DetermineBattleComponent extends Component
             if ($this->recoverySp > 0) {
                 // 発動
                 $format = "";
-                if ($this->BattleRuleConfig->isInputTechniqueName()) {
+                if ($this->BattleRuleConfig->isInputTechniqueName() && $this->attack_technique_name) {
                     $format = Configure::read('Battle.narration.NARR_SEISHIN_UP');
                 } else {
                     $format = Configure::read('Battle.narration.NARR_SEISHIN_UP_NOT_SELECT');
@@ -144,7 +144,7 @@ class DetermineBattleComponent extends Component
             } else {
                 // 不発
                 $format = "";
-                if ($this->BattleRuleConfig->isInputTechniqueName()) {
+                if ($this->BattleRuleConfig->isInputTechniqueName() && $this->attack_technique_name) {
                     $format = Configure::read('Battle.narration.NARR_SEISHIN_FUHATSU');
                 } else {
                     $format = Configure::read('Battle.narration.NARR_SEISHIN_FUHATSU_NOT_SELECT');
@@ -159,7 +159,7 @@ class DetermineBattleComponent extends Component
             // 命中していること
             // かすり傷でないこと
             $format = "";
-            if ($this->BattleRuleConfig->isInputTechniqueName()) {
+            if ($this->BattleRuleConfig->isInputTechniqueName() && $this->attack_technique_name) {
                 $format = Configure::read('Battle.narration.NARR_MEITYU');
             } else {
                 $format = Configure::read('Battle.narration.NARR_MEITYU_NOT_SELECT');
@@ -176,7 +176,7 @@ class DetermineBattleComponent extends Component
             // 外れの場合
             // かすり傷でもナレーションを入れる
             $format = "";
-            if ($this->BattleRuleConfig->isInputTechniqueName()) {
+            if ($this->BattleRuleConfig->isInputTechniqueName() && $this->attack_technique_name) {
                 $format = Configure::read('Battle.narration.NARR_HAZURE');
             } else {
                 $format = Configure::read('Battle.narration.NARR_HAZURE_NOT_SELECT');
@@ -959,7 +959,7 @@ class DetermineBattleComponent extends Component
         $damage = round($damage);
 
         $format = "";
-        if ($this->BattleRuleConfig->isInputTechniqueName()) {
+        if ($this->BattleRuleConfig->isInputTechniqueName() && $this->attack_technique_name) {
             $format = Configure::read('Battle.narration.NARR_BATTLE_DMG');
         } else {
             $format = Configure::read('Battle.narration.NARR_BATTLE_DMG_NOT_SELECT');
