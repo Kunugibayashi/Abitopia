@@ -6,7 +6,7 @@
 ?>
 <div class="row">
     <aside class="column-side">
-        <?= $this->Form->create($searchForm, []) ?>
+        <?= $this->Form->create($searchForm, ['url' => ['action' => 'search'], ]) ?>
             <?php echo $this->Form->control('keyword', ['label' => '検索キーワード']); ?>
             <?= $this->Form->button(__('検索'), [
                     'type' => 'submit',
