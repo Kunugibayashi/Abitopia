@@ -76,6 +76,11 @@ $routes->scope('/', function (RouteBuilder $builder) {
      */
     $builder->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
 
+    $builder->connect('/chat-log-warehouses/dl-all-data', ['controller' => 'ChatLogWarehouses', 'action' => 'dlAllData']);
+
+    $builder->connect('/private/logstorage/{filename}', ['controller' => 'Private', 'action' => 'logstorage'])
+        ->setPass(['filename']);
+
     $builder->connect('/chat/chat-log-window/{chatRoomId}/{openLogWindow}', ['controller' => 'Chat', 'action' => 'chatLogWindow'])
         ->setPatterns(['chatRoomId' => '\d+'])
         ->setPatterns(['openLogWindow' => '\d+'])
@@ -83,6 +88,7 @@ $routes->scope('/', function (RouteBuilder $builder) {
     $builder->connect('/chat/{chatRoomId}', ['controller' => 'Chat', 'action' => 'index'])
         ->setPatterns(['chatRoomId' => '\d+'])
         ->setPass(['chatRoomId']);
+
     $builder->connect('/{controller}/{action}/{chatRoomId}/{chatEntryKey}')
         ->setPatterns(['chatRoomId' => '\d+'])
         ->setPass(['chatRoomId', 'chatEntryKey']);

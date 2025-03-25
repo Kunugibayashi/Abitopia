@@ -63,6 +63,8 @@ class AppController extends Controller
         // サイトの定数設定
         $this->set('siteTitle', Configure::read('Site.title'));
         $this->set('siteLetterflg', Configure::read('Site.letterflg'));
+        $this->set('siteLogfileflg', Configure::read('Site.logfileflg'));
+        $this->set('siteLogfilepath', Configure::read('Site.logfilepath'));
         // 管理ページか？
         $isAdmin = $this->request->getParam('prefix') === 'Admin' ? 1 : 0;
         $this->set('isAdmin', $isAdmin);

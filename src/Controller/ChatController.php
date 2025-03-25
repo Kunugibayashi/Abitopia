@@ -6,6 +6,8 @@ namespace App\Controller;
 use Cake\Core\Configure;
 use Cake\Datasource\ConnectionManager;
 use Cake\Utility\Xml;
+use Cake\I18n\DateTime;
+use Cake\Utility\Filesystem;
 
 /**
  * Chat Controller
@@ -259,9 +261,31 @@ class ChatController extends AppController
         $chatLogWarehouse->set('logs', $logs);
         $chatLogWarehouse->set('characters', $charactersString);
 
-        if (!$this->ChatLogWarehouses->save($chatLogWarehouse)) {
-            // 保存に失敗してもエラーログのみ表示
-            $this->log(__CLASS__.":".__FUNCTION__.":" ."Error out put log. chatEntryKey = $chatEntryKey", 'error');
+        // ログ出力方法の取得
+        $logfileflg = Configure::read('Site.logfileflg');
+
+        // ファイルへのログ出力フラグが立っている場合、ファイルへ出力し、一覧表示のためにログ内容以外を保存
+        // 立っていない場合、DBへ全て保存
+        if ($logfileflg == 1) {
+            $filesystem = new Filesystem();
+
+            if (!$this->ChatLogWarehouses->save($chatLogWarehouse)) {
+                // 保存に失敗してもエラーログのみ表示
+                $this->log(__CLASS__.":".__FUNCTION__.":" ."Error out put log. chatEntryKey = $chatEntryKey", 'error');
+            }
+
+            $logfilePath = ROOT .Configure::read('Site.logfilepath');
+            $time = DateTime::parse($chatLogWarehouse->created);
+            $chatroom = h($chatLogWarehouse->chat_room_title);
+            $logfileName = $time->format('Ymd_His_') .trim($chatroom) .'.html';
+            $logfile = $logfilePath .$logfileName;
+            $tmplogs = (string)$logs;
+            $filesystem->dumpFile($logfile, $tmplogs);
+        } else {
+            if (!$this->ChatLogWarehouses->save($chatLogWarehouse)) {
+                // 保存に失敗してもエラーログのみ表示
+                $this->log(__CLASS__.":".__FUNCTION__.":" ."Error out put log. chatEntryKey = $chatEntryKey", 'error');
+            }
         }
     }
 

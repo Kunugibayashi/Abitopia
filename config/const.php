@@ -1,6 +1,6 @@
 <?php
 // CSS更新用文字列
-define('CSS_UPDATE_DATE', '202501260001'); // リリース時用文字列。'202412120101' など数値のみ日付推奨。テスト時推奨： define('CSS_UPDATE_DATE', date("YmdHis"));
+define('CSS_UPDATE_DATE', '202503240001'); // リリース時用文字列。'202412120101' など数値のみ日付推奨。テスト時推奨： define('CSS_UPDATE_DATE', date("YmdHis"));
 define('SITE_DEBUG_MODE', 0); // テスト用。デバッグ用の関数や出力を表示。リリース時は0にすること。テスト時推奨： define('SITE_DEBUG_MODE', 1);
 // PHPメモリ上限
 define('PHP_MEMORY_LIMIT', '3072M');
@@ -88,10 +88,14 @@ define('BT_CORRECTION_KAUNTA_STR'     , 110); // カウンター
 define('BT_CORRECTION_KAUNTA_KAIHI'   , 111); // カウンター
 return [
     'Site' => [
-        'title'     => 'Abitopia', // サイト名
-        'admin'     => 1, // 管理者の登録可能人数
-        'logmax'    => 10000, // ログを残す行数（全部屋合計）
-        'letterflg' => 0, // 私書を表示するか（0：表示しない／1：表示する）
+        'title'       => 'Abitopia', // サイト名
+        'admin'       => 1, // 管理者の登録可能人数
+        'logmax'      => 10000, // ログを残す行数（全部屋合計）
+        'letterflg'   => 1, // 私書を表示するか（0：表示しない／1：表示する）
+        'logfileflg'  => 1, // ログをファイル出力するか（0：DB出力のみ／1：DB出力＆ファイル出力＆一括DL使用可能）
+        'logfilepath' => '/private/logstorage/', // ログをファイル出力する場所
+        'logzippath'  => '/private/logzip/', // 一括DLファイルを一時保存する場所
+        'logzipname'  => 'AllLogData.zip', // 一括DLファイル名
     ],
     'Room' => [
         'entering'  => '{0}に{1}が入室しました。',
