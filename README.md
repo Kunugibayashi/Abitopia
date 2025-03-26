@@ -4,3 +4,4 @@ https://opensource.org/licenses/mit-license.php
 
 # Wiki
 https://seesaawiki.jp/abitopia/  
+https://seesaawiki.jp/abitopia3/  

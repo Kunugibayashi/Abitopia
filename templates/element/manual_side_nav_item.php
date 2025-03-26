@@ -84,6 +84,9 @@
         <li><?= $this->Html->link(__('戦闘の流れ'), [
             'controller' => 'Manual', 'action' => 'battleSystem', '#' => 'nagare'], ['class' => 'side-nav-item']) ?>
         </li>
+        <li><?= $this->Html->link(__('戦闘スキルヒント'), [
+            'controller' => 'Manual', 'action' => 'battleSystem', '#' => 'hinto'], ['class' => 'side-nav-item']) ?>
+        </li>
         <li><?= $this->Html->link(__('中断再開'), [
             'controller' => 'Manual', 'action' => 'battleSystem', '#' => 'tyudan'], ['class' => 'side-nav-item']) ?>
         </li>
