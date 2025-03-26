@@ -13,6 +13,9 @@
         <li>
             <?php echo $this->Html->link('戦闘補正値カスタム画面', '/admin/BattleCorrectionConfigs/indexCustom'); ?>
         </li>
+        <li>
+            <?php echo $this->Html->link('DBチャットログをファイルに即時一括出力（※重くなります）', '/admin/DlAllLog/outputChatLog'); ?>
+        </li>
     </ul>
 </div>
 <div class="index content">
