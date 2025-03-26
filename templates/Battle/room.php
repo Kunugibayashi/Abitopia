@@ -8,6 +8,9 @@ if ($chatRoomCss) {
     <div class="form content" >
         <?php echo $this->element('battle_form'); ?>
     </div>
+    <div class="form content" >
+        <?php echo $this->element('battle_danger'); ?>
+    </div>
 </aside>
 <div class="column-responsive main-container" >
     <div class="form content" >
@@ -95,6 +98,7 @@ jQuery(function(){
         jQuery('#id-chatentrieslist-reload').trigger('click');
         jQuery('#id-chatlog-reload').trigger('click');
         jQuery('#id-battlecommentary-reload').trigger('click');
+        jQuery('#id-battledanger-reload').trigger('click');
         return false;
     });
     jQuery('#id-send-battle-message-button').on('click', function(){

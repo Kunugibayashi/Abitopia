@@ -4,6 +4,8 @@ webroot/img/room/*.png
 webroot/img/room/*.gif
 webroot/img/room/*.jpg
 webroot/css/user-edit.css
+private/logstorage/*.html
+private/logzip/*.zip
 
 # CakePHP specific files #
 ##########################

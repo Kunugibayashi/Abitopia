@@ -39,6 +39,7 @@ class BattleController extends AppController
         $this->loadComponent('DetermineBattle');
         $this->loadComponent('ActionLog');
         $this->loadComponent('BattleRuleConfig');
+        $this->loadComponent('BattleCorrectionConfig');
 
         $this->ChatEntries = $this->fetchTable('ChatEntries');
         $this->ChatCharacters = $this->fetchTable('ChatCharacters');
@@ -542,6 +543,274 @@ class BattleController extends AppController
         $this->set(compact('attackChatCharacter'));
         $this->set(compact('defenseBattleCharacter'));
         $this->set(compact('defenseChatCharacter'));
+
+        return $this->render();
+    }
+
+    public function danger()
+    {
+        $this->viewBuilder()->setLayout('none');
+
+        $userId = $this->Authentication->getIdentityData('id');
+        $chatCharacterId = $this->ChatSession->getChatCharacterId();
+        $chatCharacterId = $this->CheckChat->userCharacterId($userId, $chatCharacterId);
+        $this->ChatSession->setChatCharacterId($chatCharacterId);
+        // Routesにて、正規表現で数値制限済み
+        $chatRoomId = $this->request->getParam('chatRoomId');
+
+        // 各スキル格納配列
+        $attackDamages = [];
+        $incomingDamages = [];
+
+        $battleId = $this->request->getQuery('battle_id');
+        if (!$battleId) {
+            $battleId = 0;
+        }
+
+        $battleTurn = $this->BattleTurns->find()
+            ->where(['id' => $battleId])
+            ->first();
+        // 終了した場合は消えるため、ここで終える
+        if (!$battleTurn) {
+            $this->set(compact('battleTurn'));
+            $this->set(compact('chatRoomId'));
+            $this->set(compact('attackDamages'));
+            $this->set(compact('incomingDamages'));
+            return $this->render();
+        }
+
+        $beforeBattleCharacter = $this->BattleCharacters->find()
+            ->where(['battle_turn_id' => $battleId])
+            ->where(['chat_character_id' => $battleTurn->vs_before_key])
+            ->first();
+        $afterBattleCharacter = $this->BattleCharacters->find()
+            ->where(['battle_turn_id' => $battleId])
+            ->where(['chat_character_id' => $battleTurn->vs_after_key])
+            ->first();
+
+        // 戦闘開始していない場合は空をセットして終了
+        if(empty($beforeBattleCharacter) || empty($afterBattleCharacter)) {
+            $this->set(compact('battleTurn'));
+            $this->set(compact('chatRoomId'));
+            $this->set(compact('attackDamages'));
+            $this->set(compact('incomingDamages'));
+            return $this->render();
+        }
+
+        if ($chatCharacterId == $beforeBattleCharacter->chat_character_id) {
+            $myCharacter = $beforeBattleCharacter;
+            $vsCharacter = $afterBattleCharacter;
+        } else {
+            $myCharacter = $afterBattleCharacter;
+            $vsCharacter = $beforeBattleCharacter;
+        }
+
+        // 部位破壊補正値
+        if ($this->BattleCorrectionConfig->isCorrectBuiStr()) {
+            $correctionASkill = $this->BattleCorrectionConfig->getBuiStrValue();
+        } else {
+            $correctionASkill = $this->BattleCorrectionConfig->getBuiStrDefault();
+        }
+        // コンビネーション補正値
+        $correctionStr = 0;
+        if ($this->BattleCorrectionConfig->isCorrectKonbiStr()) {
+            $correctionStr = $this->BattleCorrectionConfig->getKonbiStrValue();
+        } else {
+            $correctionStr = $this->BattleCorrectionConfig->getKonbiStrDefault();
+        }
+
+        $myHp = $myCharacter->hp;
+        $mySp = $myCharacter->sp;
+        $mySp2 = (($myCharacter->sp - 2) >= 0) ? true : false;
+        $mySp3 = (($myCharacter->sp - 3) >= 0) ? true : false;
+        $mySp4 = (($myCharacter->sp - 4) >= 0) ? true : false;
+        $myStr = (5 + $myCharacter->strength) + $myCharacter->permanent_strength + $myCharacter->temporary_strength;
+        $myCombo = $myCharacter->combo;
+
+        $vsHp = $vsCharacter->hp;
+        $vsSp = $vsCharacter->sp;
+        $vsSp2 = (($vsCharacter->sp - 2) >= 0) ? true : false;
+        $vsSp3 = (($vsCharacter->sp - 3) >= 0) ? true : false;
+        $vsSp4 = (($vsCharacter->sp - 4) >= 0) ? true : false;
+        $vsStr = (5 + $vsCharacter->strength) + $vsCharacter->permanent_strength + $vsCharacter->temporary_strength;
+        $vsCombo = $vsCharacter->combo;
+
+        // 一撃圏内攻撃スキル
+        // 通常攻撃
+        $damage = round(($myStr));
+        if (($vsHp - $damage) <= 0) {
+            $attackDamages['通常'] = $damage;
+        }
+        $damage = round(($myStr) * 1.25);
+        if (($vsHp - $damage) <= 0 && $mySp2) {
+            $attackDamages['通常（小）'] = $damage;
+        }
+        $damage = round(($myStr) * 2);
+        if (($vsHp - $damage) <= 0 && $mySp3) {
+            $attackDamages['通常（中）'] = $damage;
+        }
+        $damage = round(($myStr) * 2.5);
+        if (($vsHp - $damage) <= 0 && $mySp4) {
+            $attackDamages['通常（大）'] = $damage;
+        }
+
+        // 部位破壊
+        $damage = round(($myStr + $correctionASkill));
+        if (($vsHp - $damage) <= 0) {
+            $attackDamages['部位破壊'] = $damage;
+        }
+        $damage = round(($myStr + $correctionASkill) * 1.25);
+        if (($vsHp - $damage) <= 0 && $mySp2) {
+            $attackDamages['部位破壊（小）'] = $damage;
+        }
+        $damage = round(($myStr + $correctionASkill) * 2);
+        if (($vsHp - $damage) <= 0 && $mySp3) {
+            $attackDamages['部位破壊（中）'] = $damage;
+        }
+        $damage = round(($myStr + $correctionASkill) * 2.5);
+        if (($vsHp - $damage) <= 0 && $mySp4) {
+            $attackDamages['部位破壊（大）'] = $damage;
+        }
+
+        // コンビネーション
+        $damage = round(($myStr + $myCombo + $correctionStr));
+        if (($vsHp - $damage) <= 0 && $myCombo) {
+            $attackDamages['コンビネーション'] = $damage;
+        }
+        $damage = round(($myStr + $myCombo + $correctionStr) * 1.25);
+        if (($vsHp - $damage) <= 0 && $mySp2 && $myCombo) {
+            $attackDamages['コンビネーション（小）'] = $damage;
+        }
+        $damage = round(($myStr + $myCombo + $correctionStr) * 2);
+        if (($vsHp - $damage) <= 0 && $mySp3 && $myCombo) {
+            $attackDamages['コンビネーション（中）'] = $damage;
+        }
+        $damage = round(($myStr + $myCombo + $correctionStr) * 2.5);
+        if (($vsHp - $damage) <= 0 && $mySp4 && $myCombo) {
+            $attackDamages['コンビネーション（大）'] = $damage;
+        }
+
+        // 明鏡止水のみ
+        $damage = round(($myStr) * 1.25 * 0.75);
+        if (($vsHp - $damage) <= 0 && $mySp2) {
+            $attackDamages['明鏡止水のみ（小）'] = $damage;
+        }
+        $damage = round(($myStr) * 2 * 0.75);
+        if (($vsHp - $damage) <= 0 && $mySp3) {
+            $attackDamages['明鏡止水のみ（中）'] = $damage;
+        }
+        $damage = round(($myStr) * 2.5 * 0.75);
+        if (($vsHp - $damage) <= 0 && $mySp4) {
+            $attackDamages['明鏡止水のみ（大）'] = $damage;
+        }
+
+        // 明鏡vs覚悟
+        $damage = round(($myStr) * 1.25 * 2);
+        if (($vsHp - $damage) <= 0 && $mySp2) {
+            $attackDamages['明鏡vs覚悟（小）'] = $damage;
+        }
+        $damage = round(($myStr) * 2 * 2);
+        if (($vsHp - $damage) <= 0 && $mySp3) {
+            $attackDamages['明鏡vs覚悟（中）'] = $damage;
+        }
+        $damage = round(($myStr) * 2.5 * 2);
+        if (($vsHp - $damage) <= 0 && $mySp4) {
+            $attackDamages['明鏡vs覚悟（大）'] = $damage;
+        }
+
+        // 相手からの一撃圏内攻撃スキル
+        // 通常攻撃
+        $damage = round(($vsStr));
+        if (($myHp - $damage) <= 0) {
+            $incomingDamages['通常'] = $damage;
+        }
+        $damage = round(($vsStr) * 1.25);
+        if (($myHp - $damage) <= 0 && $vsSp2) {
+            $incomingDamages['通常（小）'] = $damage;
+        }
+        $damage = round(($vsStr) * 2);
+        if (($myHp - $damage) <= 0 && $vsSp3) {
+            $incomingDamages['通常（中）'] = $damage;
+        }
+        $damage = round(($vsStr) * 2.5);
+        if (($myHp - $damage) <= 0 && $vsSp4) {
+            $incomingDamages['通常（大）'] = $damage;
+        }
+
+        // 部位破壊
+        $damage = round(($vsStr + $correctionASkill));
+        if (($myHp - $damage) <= 0) {
+            $incomingDamages['部位破壊'] = $damage;
+        }
+        $damage = round(($vsStr + $correctionASkill) * 1.25);
+        if (($myHp - $damage) <= 0 && $vsSp2) {
+            $incomingDamages['部位破壊（小）'] = $damage;
+        }
+        $damage = round(($vsStr + $correctionASkill) * 2);
+        if (($myHp - $damage) <= 0 && $vsSp3) {
+            $incomingDamages['部位破壊（中）'] = $damage;
+        }
+        $damage = round(($vsStr + $correctionASkill) * 2.5);
+        if (($myHp - $damage) <= 0 && $vsSp4) {
+            $incomingDamages['部位破壊（大）'] = $damage;
+        }
+
+        // コンビネーション
+        $damage = round(($vsStr + $vsCombo + $correctionStr));
+        if (($myHp - $damage) <= 0 && $vsCombo) {
+            $incomingDamages['コンビネーション'] = $damage;
+        }
+        $damage = round(($vsStr + $vsCombo + $correctionStr) * 1.25);
+        if (($myHp - $damage) <= 0 && $vsSp2 && $vsCombo) {
+            $incomingDamages['コンビネーション（小）'] = $damage;
+        }
+        $damage = round(($vsStr + $vsCombo + $correctionStr) * 2);
+        if (($myHp - $damage) <= 0 && $vsSp3 && $vsCombo) {
+            $incomingDamages['コンビネーション（中）'] = $damage;
+        }
+        $damage = round(($vsStr + $vsCombo + $correctionStr) * 2.5);
+        if (($myHp - $damage) <= 0 && $vsSp4 && $vsCombo) {
+            $incomingDamages['コンビネーション（大）'] = $damage;
+        }
+
+        // 明鏡止水のみ
+        $damage = round(($vsStr) * 1.25 * 0.75);
+        if (($myHp - $damage) <= 0 && $vsSp2) {
+            $incomingDamages['明鏡止水のみ（小）'] = $damage;
+        }
+        $damage = round(($vsStr) * 2 * 0.75);
+        if (($myHp - $damage) <= 0 && $vsSp3) {
+            $incomingDamages['明鏡止水のみ（中）'] = $damage;
+        }
+        $damage = round(($vsStr) * 2.5 * 0.75);
+        if (($myHp - $damage) <= 0 && $vsSp4) {
+            $incomingDamages['明鏡止水のみ（大）'] = $damage;
+        }
+
+        // 明鏡vs覚悟
+        $damage = round(($vsStr) * 1.25 * 2);
+        if (($myHp - $damage) <= 0 && $vsSp2) {
+            $incomingDamages['明鏡vs覚悟（小）'] = $damage;
+        }
+        $damage = round(($vsStr) * 2 * 2);
+        if (($myHp - $damage) <= 0 && $vsSp3) {
+            $incomingDamages['明鏡vs覚悟（中）'] = $damage;
+        }
+        $damage = round(($vsStr) * 2.5 * 2);
+        if (($myHp - $damage) <= 0 && $vsSp4) {
+            $incomingDamages['明鏡vs覚悟（大）'] = $damage;
+        }
+
+        // デバッグ用
+        $debugStatus = [];
+        array_push($debugStatus, [$myHp, $mySp], [$mySp2, $mySp3, $mySp4], [$myStr]);
+        array_push($debugStatus, [$vsHp, $vsSp], [$vsSp2, $vsSp3, $vsSp4], [$vsStr]);
+        // print_r($debugStatus);
+
+        $this->set(compact('battleTurn'));
+        $this->set(compact('chatRoomId'));
+        $this->set(compact('attackDamages'));
+        $this->set(compact('incomingDamages'));
 
         return $this->render();
     }

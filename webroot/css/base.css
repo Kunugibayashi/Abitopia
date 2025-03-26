@@ -91,6 +91,30 @@ blockquote {
     background: #ffffff;
 }
 
+h4.battle-danger-title {
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 0rem;
+    border-bottom: 4px double #606c76;
+}
+h6.battle-danger-title {
+    font-weight: bold;
+}
+ul.baulttleform-danger-skill-wrap {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.5rem;
+    margin: 0;
+    padding: 0;
+    padding-top: 0.2rem;
+}
+ul.baulttleform-danger-skill-wrap > li {
+    margin: 0;
+    padding: 0;
+}
+.battle-danger-info {
+    font-size: 1.2rem;
+    margin-top: 1rem;
+}
 
 /* ************************************************************************* */
 /* button                                                                    */
@@ -620,6 +644,13 @@ table tbody tr td:last-of-type {
 }
 #id-battlecommentary-data {
     overflow-x: auto;
+}
+.battleform-danger-container {
+    margin: 0.5rem 0;
+}
+.battleform-danger-container li {
+    margin: 0;
+    padding: 0;
 }
 
 /* ************************************************************************* */
