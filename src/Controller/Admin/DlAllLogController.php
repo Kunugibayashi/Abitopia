@@ -42,7 +42,7 @@ class DlAllLogController  extends AppController
             $chatroom = h($chatLogWarehouse->chat_room_title);
             $logfileName = $time->format('Ymd_His_') .trim($chatroom) .'.html';
             $logfile = $logfilePath .$logfileName;
-            $tmplogs = (string)$logs;
+            $tmplogs = (string)$chatLogWarehouse->logs;
 
             if (file_exists($logfile)) {
                 // メモリ開放用
