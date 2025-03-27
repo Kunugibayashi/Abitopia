@@ -99,6 +99,11 @@ h4.battle-danger-title {
 h6.battle-danger-title {
     font-weight: bold;
 }
+.battle-danger-kakusei-title {
+    font-weight: bold;
+    font-size: 1.5rem;
+    margin-top: 0.2rem;
+}
 ul.baulttleform-danger-skill-wrap {
     display: flex;
     justify-content: space-between;

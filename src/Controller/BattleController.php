@@ -561,6 +561,8 @@ class BattleController extends AppController
         // 各スキル格納配列
         $attackDamages = [];
         $incomingDamages = [];
+        $myKakuseiDamage = '―';
+        $vsKakuseiDamage = '―';
 
         $battleId = $this->request->getQuery('battle_id');
         if (!$battleId) {
@@ -576,6 +578,8 @@ class BattleController extends AppController
             $this->set(compact('chatRoomId'));
             $this->set(compact('attackDamages'));
             $this->set(compact('incomingDamages'));
+            $this->set(compact('myKakuseiDamage'));
+            $this->set(compact('vsKakuseiDamage'));
             return $this->render();
         }
 
@@ -594,6 +598,8 @@ class BattleController extends AppController
             $this->set(compact('chatRoomId'));
             $this->set(compact('attackDamages'));
             $this->set(compact('incomingDamages'));
+            $this->set(compact('myKakuseiDamage'));
+            $this->set(compact('vsKakuseiDamage'));
             return $this->render();
         }
 
@@ -626,6 +632,7 @@ class BattleController extends AppController
         $mySp4 = (($myCharacter->sp - 4) >= 0) ? true : false;
         $myStr = (5 + $myCharacter->strength) + $myCharacter->permanent_strength + $myCharacter->temporary_strength;
         $myCombo = $myCharacter->combo;
+        $myKakuseiFlg = $myCharacter->is_limit;
 
         $vsHp = $vsCharacter->hp;
         $vsSp = $vsCharacter->sp;
@@ -634,6 +641,7 @@ class BattleController extends AppController
         $vsSp4 = (($vsCharacter->sp - 4) >= 0) ? true : false;
         $vsStr = (5 + $vsCharacter->strength) + $vsCharacter->permanent_strength + $vsCharacter->temporary_strength;
         $vsCombo = $vsCharacter->combo;
+        $vsKakuseiFlg = $vsCharacter->is_limit;
 
         // 一撃圏内攻撃スキル
         // 通常攻撃
@@ -801,6 +809,17 @@ class BattleController extends AppController
             $incomingDamages['明鏡vs覚悟（大）'] = $damage;
         }
 
+        // 覚醒まで残り
+        $myKakuseiDamage = ceil($myHp/2);
+        $vsKakuseiDamage = ceil($vsHp/2);
+        // 覚醒済みの場合は上書き
+        if ($myKakuseiFlg) {
+            $myKakuseiDamage = 0;
+        }
+        if ($vsKakuseiFlg) {
+            $vsKakuseiDamage = 0;
+        }
+
         // デバッグ用
         $debugStatus = [];
         array_push($debugStatus, [$myHp, $mySp], [$mySp2, $mySp3, $mySp4], [$myStr]);
@@ -811,6 +830,8 @@ class BattleController extends AppController
         $this->set(compact('chatRoomId'));
         $this->set(compact('attackDamages'));
         $this->set(compact('incomingDamages'));
+        $this->set(compact('myKakuseiDamage'));
+        $this->set(compact('vsKakuseiDamage'));
 
         return $this->render();
     }

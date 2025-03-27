@@ -1,10 +1,16 @@
 <?php
+if (!$battleTurn || $battleTurn->battle_status == BT_ST_KETYAKU) {
+    // 戦闘終了の場合は値を表示しない
+    $myKakuseiDamage = '―';
+    $vsKakuseiDamage = '―';
+}
 
 ?>
 <fieldset>
     <h4 class="battle-danger-title"><?= __('戦闘スキルヒント') ?></h4>
     <div class="battleform-fieldset-container">
         <h6 class="battle-danger-title"><?= __('一撃圏内：与ダメージ') ?></h6>
+        <div class="battle-danger-kakusei-title">相手覚醒まで <?php echo h($vsKakuseiDamage) ?> ダメージ</div>
         <ul class="battleform-danger-container">
             <?php if (!$battleTurn || $battleTurn->battle_status == BT_ST_KETYAKU) { ?>
                 <li>―</li>
@@ -22,6 +28,7 @@
     </div>
     <div class="battleform-fieldset-container">
         <h6 class="battle-danger-title"><?= __('一撃圏内：被ダメージ') ?></h6>
+        <div class="battle-danger-kakusei-title">自身覚醒まで <?php echo h($myKakuseiDamage) ?> ダメージ</div>
         <ul class="battleform-danger-container">
             <?php if (!$battleTurn || $battleTurn->battle_status == BT_ST_KETYAKU) { ?>
                 <li>―</li>
@@ -39,10 +46,10 @@
     </div>
     <div class="battleform-fieldset-container">
         <div class="battle-danger-info">
-            与ダメージ：<br>攻撃時に自分が選んだ場合、相手を一撃で戦闘不能にするスキルと必殺の組み合わせ。<br>
+            ■一撃圏内：与ダメージ<br>攻撃時に自分が選んだ場合、相手を一撃で戦闘不能にするスキルと必殺の組み合わせ。<br>
         </div>
         <div class="battle-danger-info">
-            被ダメージ：<br>防御時に相手が選んだ場合、自分が一撃で戦闘不能になるスキルと必殺の組み合わせ。<br>
+            ■一撃圏内：被ダメージ<br>防御時に相手が選んだ場合、自分が一撃で戦闘不能になるスキルと必殺の組み合わせ。<br>
         </div>
     </div>
 </fieldset>
