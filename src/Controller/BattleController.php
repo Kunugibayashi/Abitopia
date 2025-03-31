@@ -810,8 +810,24 @@ class BattleController extends AppController
         }
 
         // 覚醒まで残り
-        $myKakuseiDamage = ceil($myHp/2);
-        $vsKakuseiDamage = ceil($vsHp/2);
+        $myKakuseiHp = floor($myHp/2);
+        $vsKakuseiHp = floor($vsHp/2);
+        $myKakuseiDamage = $myHp - $vsKakuseiHp;
+        $vsKakuseiDamage = $vsHp - $myKakuseiHp;
+        // マイナスの場合は上書き
+        if ($myKakuseiDamage < 0) {
+            $myKakuseiDamage = 0;
+        }
+        if ($vsKakuseiDamage < 0) {
+            $vsKakuseiDamage = 0;
+        }
+        // HPが1の場合は相手は覚醒しない
+        if ($myHp == 1) {
+            $vsKakuseiDamage = '―';
+        }
+        if ($vsHp == 1) {
+            $myKakuseiDamage = '―';
+        }
         // 覚醒済みの場合は上書き
         if ($myKakuseiFlg) {
             $myKakuseiDamage = 0;
