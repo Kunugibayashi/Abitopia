@@ -8,9 +8,11 @@ if ($chatRoomCss) {
     <div class="form content" >
         <?php echo $this->element('battle_form'); ?>
     </div>
-    <div class="form content" >
-        <?php echo $this->element('battle_danger'); ?>
-    </div>
+    <?php if (!$battleRules[BT_HIDE_RULE_SKILL_HINTS]['active']) { ?>
+        <div class="form content" >
+            <?php echo $this->element('battle_danger'); ?>
+        </div>
+    <?php } ?>
 </aside>
 <div class="column-responsive main-container" >
     <div class="form content" >

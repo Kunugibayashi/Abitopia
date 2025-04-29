@@ -37,7 +37,7 @@ if (!$battleTurn || $battleTurn->battle_status == BT_ST_KETYAKU) {
         ], ]); ?>
         <?php echo $this->Form->control('attack_skill_code', ['label' => false, 'options' => $attackSkillCodes, ]); ?>
         <?php if ($battleRules[BT_RULE_INPUT_TECHNIQUE_NAME]['active']) { ?>
-            <?php echo $this->Form->control('attack_technique_name', ['label' => '技名', ]); ?>
+            <?php echo $this->Form->control('attack_technique_name', ['label' => '技名（任意）', ]); ?>
         <?php } ?>
         <label id="is-attack-label">
             <?php echo $this->Form->checkbox('is_attack', [

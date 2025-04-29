@@ -1,6 +1,6 @@
 <?php
 // CSS更新用文字列
-define('CSS_UPDATE_DATE', '202503270001'); // リリース時用文字列。'202412120101' など数値のみ日付推奨。テスト時推奨： define('CSS_UPDATE_DATE', date("YmdHis"));
+define('CSS_UPDATE_DATE', '202504250001'); // リリース時用文字列。'202412120101' など数値のみ日付推奨。テスト時推奨： define('CSS_UPDATE_DATE', date("YmdHis"));
 define('SITE_DEBUG_MODE', 0); // テスト用。デバッグ用の関数や出力を表示。リリース時は0にすること。テスト時推奨： define('SITE_DEBUG_MODE', 1);
 // PHPメモリ上限
 define('PHP_MEMORY_LIMIT', '3072M');
@@ -61,6 +61,7 @@ define('BT_RULE_RESURRECTION', 11); // 底力の発動
 define('BT_RULE_SCRATCH', 12); // かすり傷の発動
 define('BT_RULE_1TURN_DEXPLUS', 13); // 1ターンごとの命中率増加
 define('BT_RULE_1TURN_DAMAGE', 14); // 1ターンごとの体力ダメージ
+define('BT_HIDE_RULE_SKILL_HINTS', 15); // 戦闘スキルヒントを隠す
 // 戦闘補正値コード
 define('BT_CORRECTION_1TURN_DEXPLUS', 1); // 1ターン持続命中率増加
 define('BT_CORRECTION_1TURN_DAMAGE' , 2); // 1ターン持続ダメージ
@@ -106,14 +107,19 @@ return [
         'deckreset' => '{0}：[{1}]...山札をリセットしました。',
     ],
     'BattleRule' => [ // ONOFFはDBで管理。INSERTでデータを登録すると文言の変更等がしにくくなるためconstで設定
+        BT_HIDE_RULE_SKILL_HINTS => [
+            'code'  => BT_HIDE_RULE_SKILL_HINTS,
+            'information'  => '戦闘スキルヒントを表示しない',
+            'active'  => 0,
+        ],
         BT_RULE_INPUT_TECHNIQUE_NAME => [
             'code'  => BT_RULE_INPUT_TECHNIQUE_NAME,
-            'information'  => '技名を手動で入力',
+            'information'  => '技名欄を表示する',
             'active'  => 0,
         ],
         BT_RULE_RESURRECTION => [
             'code'  => BT_RULE_RESURRECTION,
-            'information'  => '体力が0になった時、一定の確率で復活（底力）',
+            'information'  => '体力が0になった時、一定の確率で復活する（底力）',
             'active'  => 0,
         ],
         BT_RULE_SCRATCH => [
@@ -123,7 +129,7 @@ return [
         ],
         BT_RULE_1TURN_DEXPLUS => [
             'code'  => BT_RULE_1TURN_DEXPLUS,
-            'information'  => '攻撃時、1ターンごとに命中率が増加（1ターン持続命中率増加）',
+            'information'  => '攻撃時、1ターンごとに命中率が増加する（1ターン持続命中率増加）',
             'active'  => 0,
         ],
         BT_RULE_1TURN_DAMAGE => [

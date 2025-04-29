@@ -16,6 +16,7 @@ class BattleRuleConfigComponent extends Component
     public $isScratch = 0;
     public $is1TurnDexplus = 0;
     public $is1TurnDamage = 0;
+    public $isHideSkillHints = 0;
 
     public function initialize($config): void
     {
@@ -81,6 +82,7 @@ class BattleRuleConfigComponent extends Component
         $this->isScratch = $this->getBattleRuleConfig(BT_RULE_SCRATCH);
         $this->is1TurnDexplus = $this->getBattleRuleConfig(BT_RULE_1TURN_DEXPLUS);
         $this->is1TurnDamage = $this->getBattleRuleConfig(BT_RULE_1TURN_DAMAGE);
+        $this->isHideSkillHints = $this->getBattleRuleConfig(BT_HIDE_RULE_SKILL_HINTS);
     }
 
     public function isInputTechniqueName() {
@@ -101,5 +103,9 @@ class BattleRuleConfigComponent extends Component
 
     public function is1TurnDamage() {
         return $this->is1TurnDamage;
+    }
+
+    public function isHideSkillHints() {
+        return $this->isHideSkillHints;
     }
 }
