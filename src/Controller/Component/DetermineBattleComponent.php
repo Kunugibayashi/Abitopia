@@ -687,11 +687,12 @@ class DetermineBattleComponent extends Component
             return;
         }
 
-        $borderline = round($this->attackBattleCharacter->hp / 2);
-        $hp = ($this->defenseBattleCharacter->hp - $this->damage);
+        $hp = $this->attackBattleCharacter->hp;
+        $defHp = ($this->defenseBattleCharacter->hp - $this->damage);
+        $borderline = $defHp * 2;
 
         // 発動しない場合は処理しない
-        if ($borderline < $hp) {
+        if ($borderline > $hp) {
             return;
         }
         // 発動
